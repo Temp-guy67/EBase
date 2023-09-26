@@ -1,11 +1,13 @@
 import logging
 from util import create_hashed_password, generate_salt
-from schemas import UserCreate 
+from schemas import UserSignUp
 from models import Account
 from util import create_hashed_password, generate_salt
+from sql_constants import CommonConstants
+import random
 
-# from sqlalchemy.orm import Session
-from database import SessionLocal
+from sqlalchemy.orm import Session
+# from database import SessionLocal
 
 
 # def get_user_by_id(db:Session, user_id: int):
@@ -17,20 +19,25 @@ from database import SessionLocal
 #         logging.exception("[main][Exception in signup] {} ".format(ex))
 
 
-def get_user_by_email(db: SessionLocal, email: str):
+def get_user_by_email(db: Session, email: str):
     try:
-        # db = next(db_test)
-        print(" IN get_user_by_email ")
         return db.query(Account).filter(Account.email == email).first()
     except Exception as ex :
-        logging.exception("[main][Exception in get_user_by_email] {} ".format(ex))
+        logging.exception("[crud][Exception in get_user_by_email] {} ".format(ex))
 
-# def get_user_by_phone(phone:str, db: Session):
-#     try:
-#         # db = next(db_test)
-#         return db.query(models.Account).filter(models.Account.phone == phone).first()
-#     except Exception as ex :
-#         logging.exception("[main][Exception in signup] {} ".format(ex))
+
+def get_user_by_username(db: Session, username: str):
+    try:
+        return db.query(Account).filter(Account.username == username).first()
+    except Exception as ex :
+        logging.exception("[crud][Exception in get_user_by_username] {} ".format(ex))
+
+
+def get_user_by_phone(db: Session, phone: str):
+    try:
+        return db.query(Account).filter(Account.phone == phone).first()
+    except Exception as ex :
+        logging.exception("[crud][Exception in get_user_by_phone] {} ".format(ex))
 
 # def get_users(db: Session, skip: int = 0, limit: int = 100):
 #     try:
@@ -39,16 +46,21 @@ def get_user_by_email(db: SessionLocal, email: str):
 #         logging.exception("[main][Exception in signup] {} ".format(ex))
 
 
-async def create_user(db: SessionLocal, user: UserCreate):
+async def create_new_user(db: Session, user: UserSignUp):
     try:
-        print(" create user data ",**user.model_dump())
-
         salt = await generate_salt()
         hashed_password = await create_hashed_password(user.password, salt)
-        db_user = Account(salt=salt, hashed_password=hashed_password, user=user)
-        await db.add(db_user)
+        username = user.username
+        if not username :
+            id_salt = await generate_salt(CommonConstants.RANDOM_ID_LENGTH)
+            rand_int = random.randint(1,999)
+            username = "auto_" + id_salt + str(rand_int)
+
+        db_user = Account(salt=salt, hashed_password=hashed_password, username=username, email=user.email, phone=user.phone)
+        db.add(db_user)
         db.commit()
-        db.refresh(db_user)                               # to know everything is stored
+        db.refresh(db_user)   
+        logging.info("[crud][create_new_user] ADDED SUCCESSFULLY ")                # to know everything is stored
         return db_user
     except Exception as ex :
         logging.exception("[crud][Exception in create_user] {} ".format(ex))
@@ -75,23 +87,6 @@ async def create_user(db: SessionLocal, user: UserCreate):
 #     return None
 
 
-
-async def validatePassword(userId, password):
-    try :
-        pass
-    except Exception as ex :
-        logging.error("[PasswordDB][validatePassword][Exception caught] {} ".format(ex))
-
-
-
-
-
-# def get_user(db: Session, user_id: int):
-#     return db.query(User).filter(models.User.id == user_id).first()
-
-
-# def get_user_by_email(db: Session, email: str):
-#     return db.query(models.User).filter(models.User.email == email).first()
 
 
 # def get_users(db: Session, skip: int = 0, limit: int = 100):
