@@ -2,5 +2,7 @@ fastapi
 uvicorn[standard]
 SQLAlchemy
 python-multipart
-python-jose[cryptography]
+# python-jose[cryptography]
+pyjwt[crypto]
 passlib[bcrypt]
+redis

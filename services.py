@@ -1,7 +1,9 @@
 import logging
+from redis_util import connect_redis
 
 async def onStartService():
     configure_logging()
+    await connect_redis()
 
 
 # Level We have  -> debug,info,warning,error,critical

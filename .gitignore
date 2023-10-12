@@ -1,6 +1,5 @@
 .venv
 Plans.md
-boatdb.db
 app.log
 sql/__pycache__
 __pycache__
