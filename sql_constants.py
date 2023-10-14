@@ -7,19 +7,6 @@ class Roles:
     ADMIN=2
     SUPER_ADMIN=3
 
-class OrderStatus:
-    IN_CART=1
-    ORDERED=2
-    IN_TRANSIT=3
-    DELIVERED=4
-    FAILED=5
-    CANCELLED=6
-
-class PaymentStatus:
-    DUE=1
-    PAID=2
-    FAILED=3
-
 
 class RedisConstant:
     PREFIX="ECOMMERCE_"
