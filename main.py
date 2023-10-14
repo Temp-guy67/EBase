@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from services import onStartService
 from database import engine, Base, SessionLocal
-from sql_constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from sql_constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, Roles
 from fastapi.security import OAuth2PasswordBearer
 import jwt, jwt.exceptions
 import logging
@@ -63,14 +63,13 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
         db_user = crud.get_user_by_email_login(db, email=userlogin.email)
-        print(" DB -SUER ",db_user)
-
+        
         account_obj = db_user[0][0]
         password_obj = db_user[0][1]
-
-        session_map = await account_obj.to_dict()
-        session_map["client_ip"] = client_ip
-        session_map["user_agent"] = user_agent
+        
+        user_obj = await account_obj.to_dict()
+        user_obj["client_ip"] = client_ip
+        user_obj["user_agent"] = user_agent
 
         if not account_obj:
             return HTTPException(status_code=400, detail="User Not Available")
@@ -84,9 +83,12 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         access_token = create_access_token(
             data={"sub": userlogin.email}, expires_delta=access_token_expires
         )
+        user_id = user_obj["user_id"]
 
-        await redis_util.set_hm(access_token, session_map)
-        return {"access_token": access_token, "token_type": "bearer"}
+        await redis_util.set_hm(user_id, user_obj)
+        await redis_util.set_str(access_token, user_id)
+        
+        return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful"}
 
     except Exception as ex :
         logging.exception("[MAIN][Exception in user_login] {} ".format(ex))
@@ -94,10 +96,8 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
 
 async def verify_password(user_password: str, hashed_password : str, salt : str):
     try:
-        print(" DATA RECEIVED IN PASSWORD CHECK ", user_password, salt, hashed_password)
         if hashed_password and salt and user_password :
             temp_hashed_password = await util.create_hashed_password(user_password, salt)
-            print(" TEMP HASHED ", temp_hashed_password)
             return temp_hashed_password == hashed_password
         else :
             return False
@@ -130,14 +130,15 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        redis_data = await redis_util.get_hm(token)
-        print("GET CURRENT USER : DATA ", redis_data)
-        if redis_data:
-            return redis_data
+        user_id_from_token_map = await redis_util.get_str(token)
+        if user_id_from_token_map:
+            user_data = await redis_util.get_hm(user_id_from_token_map)
+            if user_data :
+                return user_data
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-
+        
         if email is None:
             raise credentials_exception
         token_data = TokenData(email=email)
@@ -145,7 +146,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         db_user = crud.get_user_by_email(db=db, email=token_data.email)
         if db_user is None:
             raise credentials_exception
-        return db_user
+        
+        db_data = await db_user.to_dict()
+        await redis_util.set_hm(db_user.user_id, db_data, 1800)
+        return db_data
         
     except Exception as ex :
         logging.exception("[MAIN][Exception in get_current_user] {} ".format(ex))
@@ -172,7 +176,7 @@ async def update_user(user_data : UserUpdate,user: UserInDB = Depends(get_curren
         # verify password and tell them if fails operation stops here with exception and also segregate update column here, we have restrictions while updating , user cant update user name and email except admin support
         password_obj = await crud.get_password_data(db, user_id)
         
-        await verify_password(user_id, password, password_obj.hashed_password, password_obj.salt)
+        await verify_password(password, password_obj.hashed_password, password_obj.salt)
 
 
         data = {"phone": "999000999"} 
@@ -186,42 +190,50 @@ async def update_user(user_data : UserUpdate,user: UserInDB = Depends(get_curren
 @app.post("/user/updatepassword/")
 async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
-        print(" CASJED : ", user)
         user_id = user["user_id"]
         password = user_data.password
         password_obj = await crud.get_password_data(db, user_id)
 
-        if await verify_password(password_obj.hashed_password, password_obj.salt, password):
+        if await verify_password(password, password_obj.hashed_password, password_obj.salt):
             new_password = user_data.new_password
             new_salt = await util.generate_salt()
             new_hashed_password = await util.create_hashed_password(new_password, new_salt)
             data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
-            await crud.update_user(db, user_id, data)
+            res = await crud.update_user(db, user_id, data)
+            if res :
+                await redis_util.delete_from_redis(user_id)
         else :
             return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Password is wrong",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Password is wrong",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     except Exception as ex:
         logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
-    return "pASWSWORD UPDATED"
+        
+    return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
 
 @app.post("/user/delete/")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
-        user_id = user.id
+        user_id = user["user_id"]
         password = user_data.password
-        if await verify_password(user.hashed_password, user.salt, password):
-            print(" password verified | in delete user")
-            if crud.delete_user(db, user_id):
-                return user.username + " DELETED SUCCESSFULLY"
+        password_obj = await crud.get_password_data(db, user_id)
+        
+        if await verify_password(password, password_obj.hashed_password, password_obj.salt):
+            res = crud.delete_user(db, user_id)
+            if res :
+                await redis_util.delete_from_redis(user_id)
+                return  {"user_id" : user_id, "messege":"User has been Deleted Sucessfully"} 
             else:
-                return user.username + " not DELETED"
+                return {"user_id" : user_id, "messege":"Failed to delete user ; Contact Admin Team"} 
         else:
-            pass 
-            # raise invalid password exception
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Password is wrong",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
 
     except Exception as ex:
         logging.exception("[MAIN][Exception in delete_user] {} ".format(ex))
@@ -286,13 +298,34 @@ async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(
 # ===============================ADMIN SPECIAL =====================================
 
 @app.get("/auth/getallorder")
-async def get_all_order(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    return crud.get_all_orders(db)
+async def get_all_orders(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        if user["role"] == Roles.SUPER_ADMIN :
+            return crud.get_all_orders(db)
+        else :
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to this access",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+    except Exception as ex :
+        logging.exception("[MAIN][Exception in get_all_order] {} ".format(ex))
+
 
 
 @app.get("/auth/getalluser")
 async def get_all_user(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    return await crud.get_all_users(db)
+    try:
+        if user["role"] == Roles.SUPER_ADMIN :
+            return await crud.get_all_users(db)
+        else :
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to this access",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+    except Exception as ex :
+        logging.exception("[MAIN][Exception in get_all_user] {} ".format(ex))
 
 
 # TEST CODE FOR FRONTEND

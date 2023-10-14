@@ -32,19 +32,19 @@ To work on
 
 
 
-1. Introduce Roles in account table
-2. Response object Design
-3. Email and phone verification on Sign Up - if both the email and phone is verified. the person verified
-4. write verify api
+1. Introduce Roles in account table - [Done]
+2. Response object Design - [almost]
+3. Update user data and admin all user method not working [High priority check tommorow]
+
+4. write verify api - [ Will work on tomorrow]
 5. security 
     - user id , order id will be sent as path variable , will be checked on basis of role
     - Exception return model
     - Study
 
 
-1. Making properUserId
-    a. U_1 , SU_
-2. ID AND STATUS will be integer only
+
+1. ID AND STATUS will be integer only
 
 
 
@@ -59,4 +59,19 @@ Caching
     a. key = user_id + prefix
     b. on update / cancel order, redis update will be happend
 
-    
+
+
+
+
+
+
+
+
+
+FLOW =
+sIGNUP - LOGIN 
+update anything - LOGIN
+
+create, update and delete order - redis update and delete
+
+

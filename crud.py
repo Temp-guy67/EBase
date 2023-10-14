@@ -93,9 +93,7 @@ async def create_password(db:Session, user_id:str, password : str):
 
 async def get_password_data(db: Session, user_id: str):
     try :
-        print(" PASS WORD DATA TYPE {} ".format(type(db)))
         password_data = db.query(Password).filter(Password.user_id == user_id).first()
-        print(" PASS WORD DATA IN CRUD {} ".format(password_data))
         return password_data
 
     except Exception as ex :
@@ -104,8 +102,7 @@ async def get_password_data(db: Session, user_id: str):
 
 async def update_user(db: Session, user_id: int, user_update_map: dict):
     try :
-        logging.info("[CRUD][Landed in update_user] {} ".format(user_update_map))
-        db_user = db.query(Account).filter(Account.id == user_id).first()
+        db_user = db.query(Password).filter(Password.user_id == user_id).first()
         if db_user:
             for key, value in user_update_map.items():
                 setattr(db_user, key, value)
@@ -120,11 +117,19 @@ async def update_user(db: Session, user_id: int, user_update_map: dict):
 
 def delete_user(db: Session, user_id: str):
     try:
-        db_user = db.query(Account).filter(Account.id == user_id).first()
+        db_user = db.query(Account).filter(Account.user_id == user_id).first()
+        print("Landed on password delete")
         if db_user:
             db.delete(db_user)
             db.commit()
-            return True
+            print(" Deleted from Account Table")
+            obj = db.query(Password).filter(Password.user_id == user_id).first()
+            print(" Deleted from Account | password obj  ", obj)
+            if obj:
+                db.delete(obj)
+                db.commit()
+                print(" Deleted from Password Table")
+                return True
         return False
     except Exception as ex :
         logging.exception("[CRUD][Exception in delete_user] {} ".format(ex))
@@ -132,9 +137,15 @@ def delete_user(db: Session, user_id: str):
 
 async def get_all_users(db: Session, skip: int = 0, limit: int = 100):
     try:
-        res =  db.query(Account, Orders).join(Orders).filter(Account.id == Orders.owner_id ).all()
+        # Jani na keno ei join krsi 
+        # res =  db.query(Account, Orders).join(Orders).filter(Account.id == Orders.owner_id).all()
         # for e in res :
-        logging.info(" RESULT IS  : {}".format(res))
+        res = db.query(Account).all()
+        res_arr = {}
+        for e in res :
+            dicu = await e.to_dict()
+            res_arr[dicu["user_id"]] = dicu
+        return res_arr
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_all_users] {} ".format(ex))
 
