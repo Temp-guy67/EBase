@@ -2,11 +2,6 @@ class CommonConstants:
     SALT_LENGTH=8
     RANDOM_ID_LENGTH=4
 
-class Roles:
-    USER=1
-    ADMIN=2
-    SUPER_ADMIN=3
-
 
 class RedisConstant:
     PREFIX="ECOMMERCE_"

@@ -4,13 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from services import onStartService
 from database import engine, Base, SessionLocal
-from sql_constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, Roles
+from sql_constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordBearer
 import jwt, jwt.exceptions
 import logging
 from datetime import datetime, timedelta
 from typing import Annotated
 import crud,util,redis_util
+from models import Account
 
 app = FastAPI()
 
@@ -131,8 +132,12 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
     )
     try:
         user_id_from_token_map = await redis_util.get_str(token)
+
+        logging.info(" GOt user_id from token map : {} ".format(user_id_from_token_map))
+
         if user_id_from_token_map:
             user_data = await redis_util.get_hm(user_id_from_token_map)
+            logging.info(" GOt user_data MAP from token map : {} ".format(user_data))
             if user_data :
                 return user_data
 
@@ -199,7 +204,7 @@ async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(g
             new_salt = await util.generate_salt()
             new_hashed_password = await util.create_hashed_password(new_password, new_salt)
             data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
-            res = await crud.update_user(db, user_id, data)
+            res = await crud.update_password_data(db, user_id, data)
             if res :
                 await redis_util.delete_from_redis(user_id)
         else :
@@ -213,6 +218,7 @@ async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(g
         logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
         
     return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
+
 
 @app.post("/user/delete/")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
@@ -297,10 +303,10 @@ async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(
 
 # ===============================ADMIN SPECIAL =====================================
 
-@app.get("/auth/getallorder")
+@app.get("/auth/getallorders")
 async def get_all_orders(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] == Roles.SUPER_ADMIN :
+        if user["role"] == Account.Role.SUPER_ADMIN :
             return crud.get_all_orders(db)
         else :
             return HTTPException(
@@ -316,7 +322,7 @@ async def get_all_orders(user: UserInDB = Depends(get_current_active_user), db: 
 @app.get("/auth/getalluser")
 async def get_all_user(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] == Roles.SUPER_ADMIN :
+        if user["role"] == Account.Role.SUPER_ADMIN or user["role"] == Account.Role.ADMIN:
             return await crud.get_all_users(db)
         else :
             return HTTPException(
@@ -326,6 +332,73 @@ async def get_all_user(user: UserInDB = Depends(get_current_active_user), db: Se
             )
     except Exception as ex :
         logging.exception("[MAIN][Exception in get_all_user] {} ".format(ex))
+
+
+@app.post("/auth/updateuser/")
+async def update_user_role(info: UserUpdate, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        print(" USER to action  is {} ".format(user))
+        if not (int(user["role"]) == Account.Role.SUPER_ADMIN or int(user["role"]) == Account.Role.ADMIN) :
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to this Action",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        
+        opr = info.opr 
+        if not opr :
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Opr param missing",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+
+        admin_id = user["user_id"]
+        password_obj = await crud.get_password_data(db, admin_id)
+
+        if not (await verify_password(info.password, password_obj.hashed_password, password_obj.salt)) :
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                messege="You are not authorized to this Action | Password is Wrong",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+
+        user_id = info.user_id 
+        role = info.new_role
+        success_msg = None
+        response = {}
+
+        
+        if opr == "role_update":
+            new_role = None
+            
+            if Account.Role.USER == role :
+                new_role = Account.Role.USER
+            if Account.Role.ADMIN == role :
+                new_role = Account.Role.ADMIN
+            if Account.Role.SUPER_ADMIN == role :
+                new_role = Account.Role.SUPER_ADMIN
+
+            if new_role:
+                update_info_map = {"role" : new_role}
+                success_msg = "Role updated successfully"
+
+        elif opr == "verify_user":
+            update_info_map = {"is_verified" : Account.Verification.VERIFIED}
+            success_msg = "User has been verified successfully"
+
+        print(" OPR for this one is : " , opr  , update_info_map)
+        if update_info_map :
+            
+            res = await crud.update_account_data(db, user_id, update_info_map)
+            if res :
+                content = {"status":"200OK", "user_id" : user_id, "messege" : success_msg}
+                return content
+
+
+    except Exception as ex :
+        logging.exception("[MAIN][Exception in verify_user] {} ".format(ex))
+
 
 
 # TEST CODE FOR FRONTEND
@@ -348,10 +421,8 @@ async def login_test(form_data: UserSignUp):
 async def get_user():
     return {
   "email": "test3@testmail.com",
-  "salt": "3v9YWoLV",
   "created_time": "2023-09-18T12:30:48",
   "id": 1,
-  "hashed_password": "0956c5c1ff5bcc838b1b02e01e1b3fd2953f59961bcb2a008693b5442d1f124b",
   "username": "test3",
   "phone": "123456711",
 }

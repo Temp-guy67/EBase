@@ -7,7 +7,12 @@ from database import Base
 class Account(Base):
     class Verification:
         NOT_VERIFIED=0
-        VERIFIED=2
+        VERIFIED=1
+
+    class Role:
+        USER=1
+        ADMIN=2
+        SUPER_ADMIN=3
 
     __tablename__ = "account"
 
@@ -18,7 +23,7 @@ class Account(Base):
     phone = Column(String, unique=True, index=True)
     is_verified = Column(Integer, default=Verification.NOT_VERIFIED)
     created_time = Column(DateTime, default=func.now())
-    role = Column(Integer, default=1)
+    role = Column(Integer, default=Role.USER)
     last_login_time = Column(DateTime, onupdate=func.now())
 
     # items = relationship("Order", back_populates="owner")
@@ -28,7 +33,8 @@ class Account(Base):
             'username': self.username,
             'email': self.email,
             'phone': self.phone,
-            'is_verified': self.is_verified
+            'is_verified': self.is_verified,
+            'role': self.role
         }
 
 

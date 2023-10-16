@@ -21,12 +21,16 @@ class UserLogin(BaseModel):
 
 class UserSignUpResponse(User):
     user_id : str
+    is_verified : int
+    role : int
 
 class UserUpdate(BaseModel):
     user_id : str 
     email : str | None = None
     phone : str | None = None
     new_password : str | None = None
+    new_role : int | None = None
+    opr : str | None = None
     password : str 
 
 
