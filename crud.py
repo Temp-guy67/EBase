@@ -14,11 +14,13 @@ def get_user_by_user_id(db: Session, user_id: str):
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_user_id] {} ".format(ex))
 
+
 def get_user_by_email(db: Session, email: str):
     try:
         return db.query(Account).filter(Account.email == email).first()
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_email] {} ".format(ex))
+
 
 def get_user_by_email_login(db: Session, email: str):
     try:
@@ -65,7 +67,8 @@ async def create_new_user(db: Session, user: UserSignUp):
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        test_response = {"email":user.email, "phone":user.phone, "user_id":user_id,"username":username}
+
+        test_response = {"email":user.email, "phone":user.phone, "user_id":user_id,"username":username, "is_verified" : db_user.is_verified , "role" : db_user.role}
         await create_password(db, user_id, password)
 
         response = UserSignUpResponse.model_validate(test_response)
@@ -100,8 +103,9 @@ async def get_password_data(db: Session, user_id: str):
         logging.exception("[CRUD][Exception in get_password_data] {} ".format(ex))
 
 
-async def update_user(db: Session, user_id: int, user_update_map: dict):
+async def update_password_data(db: Session, user_id: int, user_update_map: dict):
     try :
+        print(" DATA RECEIVED FOR update_user ",user_update_map)
         db_user = db.query(Password).filter(Password.user_id == user_id).first()
         if db_user:
             for key, value in user_update_map.items():
@@ -113,6 +117,19 @@ async def update_user(db: Session, user_id: int, user_update_map: dict):
     except Exception as ex :
         logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
 
+async def update_account_data(db: Session, user_id: int, user_update_map: dict):
+    try :
+        print(" DATA RECEIVED FOR update_user ",user_update_map)
+        db_user = db.query(Account).filter(Account.user_id == user_id).first()
+        if db_user:
+            for key, value in user_update_map.items():
+                setattr(db_user, key, value)
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        return None
+    except Exception as ex :
+        logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
 
 
 def delete_user(db: Session, user_id: str):
