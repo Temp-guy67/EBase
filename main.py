@@ -254,15 +254,23 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(get_curre
 async def order_info_receiver(order_info: OrderCreate, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
         print(" CREATED NEW ORDER [MAIN] {}".format(user.id))
-
-        if int(order_info.user_id) == user.id :
-            # order = await create_order(order_info)
-            print("[MAIN] INSDIDE IF BLOCAL ",order_info)
+        
+        if not user.is_verified:
+            return  HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Sorry, You are not Verified yet",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        
+        if order_info.user_id == user["user_id"] :
             order = await crud.create_new_order(db, order_info)
-
             return order
         else :
-            print(" ELSE BLOCk {}".format(order_info))
+            return  HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Wrong Path",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
 
     except Exception as ex:
         logging.exception("[main][Exception in read_users_me] {} ".format(ex))
@@ -279,10 +287,14 @@ async def order(user: UserInDB = Depends(get_current_active_user), db: Session =
         logging.exception("[main][Exception in order] {} ".format(ex))
     return all_orders
 
+
+
 @app.get("/order/{order_id}")
 async def order_status(order_id: str, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     print(" LANDED ")
     return crud.get_order_by_id(db, order_id)
+
+
 
 
 # update and cancel and all

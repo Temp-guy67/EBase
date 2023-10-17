@@ -53,6 +53,7 @@ class OrderCreate(BaseModel):
     user_id : str
     product_id : str
     delivery_address : str 
+    receiver_phone : str 
 
 class OrderToDB(OrderCreate):
     owner_id : int

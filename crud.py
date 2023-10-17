@@ -171,7 +171,7 @@ async def get_all_users(db: Session, skip: int = 0, limit: int = 100):
 
 # ==================== Orders CRUD METHODS =================================
 
-async def create_new_Orders(db: Session, Orders_info: OrderCreate):
+async def create_new_order(db: Session, Orders_info: OrderCreate):
     try :
         Orders_obj = Orders(product_id=Orders_info.product_id, owner_id=Orders_info.user_id, delivery_address=Orders_info.delivery_address)
         db.add(Orders_obj)
@@ -179,29 +179,34 @@ async def create_new_Orders(db: Session, Orders_info: OrderCreate):
         db.refresh(Orders_obj)
         return Orders_obj
     except Exception as ex :
-        logging.exception("[CRUD][Exception in create_new_Orders]",ex)
+        logging.exception("[CRUD][Exception in create_new_order]",ex)
 
 
-def get_all_Orderss_by_user(db: Session, user_id: str):
+def get_all_orders_by_user(db: Session, user_id: str):
     try:
         return db.query(Orders).filter(Orders.owner_id == int(user_id)).all()
 
     except Exception as ex:
-        logging.exception("[crud][Exception in get_all_Orderss_by_user] {} ".format(ex))
+        logging.exception("[crud][Exception in get_all_orders_by_user] {} ".format(ex))
 
 
-def get_Orders_by_id(db: Session, id: str):
+def get_order_by_order_id(db: Session, id: str):
     try:
         return db.query(Orders).filter(Orders.Orders_id == int(id)).first()
     except Exception as ex :
-        logging.exception("[crud][Exception in get_Orders_by_id] {} ".format(ex))
-
-def get_Orders_status(db: Session, Orders_id: int):
-    Orders = get_Orders_by_id(db, Orders_id)
-    return Orders
+        logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
 
 
-async def update_Orders_status(db: Session, Orders_id: int, Orders_status: dict):
+def get_orders_status(db: Session, Orders_id: int):
+    try:
+        order = get_order_by_order_id(db, Orders_id)
+        return order
+    except Exception as ex :
+        logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
+    
+
+
+async def update_order_status(db: Session, Orders_id: int, Orders_status: dict):
     try :
         logging.info("[CRUD][Landed in update_Orders_status] {} ".format(Orders_status))
         Orders_obj = db.query(Orders).filter(Orders.Orders_id == Orders_id).first()
@@ -216,7 +221,20 @@ async def update_Orders_status(db: Session, Orders_id: int, Orders_status: dict)
         logging.exception("[CRUD][Exception in update_Orders_status] {} ".format(ex))
 
 
-def get_all_Orderss(db: Session, skip: int = 0, limit: int = 100):
+def delete_order(db: Session, order_id: str):
+    try:
+        order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
+        if order_obj:
+            db.delete(order_obj)
+            db.commit()
+            return True
+    except Exception as ex :
+        logging.exception("[CRUD][Exception in delete_order] {} ".format(ex))
+    return False
+
+
+
+def get_all_orderss(db: Session, skip: int = 0, limit: int = 100):
     try:
         return db.query(Orders).offset(skip).limit(limit).all()
     except Exception as ex :
