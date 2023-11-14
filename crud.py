@@ -2,7 +2,7 @@ import logging
 from util import create_hashed_password, generate_salt
 from schemas import UserSignUp, OrderCreate, UserSignUpResponse
 from models import Account, Orders, Password
-from util import create_hashed_password, generate_salt
+from util import create_hashed_password, generate_salt, create_order_id
 from sql_constants import CommonConstants
 import random
 from sqlalchemy.orm import Session
@@ -139,7 +139,6 @@ def delete_user(db: Session, user_id: str):
         if db_user:
             db.delete(db_user)
             db.commit()
-            print(" Deleted from Account Table")
             obj = db.query(Password).filter(Password.user_id == user_id).first()
             print(" Deleted from Account | password obj  ", obj)
             if obj:
@@ -173,10 +172,12 @@ async def get_all_users(db: Session, skip: int = 0, limit: int = 100):
 
 async def create_new_order(db: Session, orders_info: OrderCreate):
     try :
-        order_obj = Orders(product_id=orders_info.product_id, owner_id=orders_info.user_id, delivery_address=orders_info.delivery_address)
+        ord_id = await create_order_id(orders_info.owner_id)
+        order_obj = Orders(order_id=ord_id, product_id=orders_info.product_id, owner_id=orders_info.owner_id,receivers_mobile= orders_info.receivers_mobile, delivery_address=orders_info.delivery_address)
         db.add(order_obj)
         db.commit()
         db.refresh(order_obj)
+        print(" Order Generated ")
         return order_obj.to_dict()
     except Exception as ex :
         logging.exception("[CRUD][Exception in create_new_order]",ex)
