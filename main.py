@@ -12,12 +12,16 @@ from datetime import datetime, timedelta
 from typing import Annotated
 import crud,util,redis_util
 from models import Account
+from sql_constants import RedisConstant
 
 app = FastAPI()
 
+origins = ["http://localhost:3000"]  
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with your allowed origins (e.g., ["https://example.com"])
+    allow_origins=origins,
+    allow_credentials=True, 
     allow_methods=["*"],  # Allow all HTTP methods or specify specific methods (e.g., ["GET", "POST"])
     allow_headers=["*"],  # Allow all headers or specify specific headers (e.g., ["Authorization"])
 )
@@ -40,7 +44,7 @@ async def startService():
 
 #====================================== USER ============================
 
-@app.post("/user/signup")
+@app.post("/public/signup")
 async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
     try:
         db_user = crud.get_user_by_email(db=db, email=user.email)
@@ -58,7 +62,7 @@ async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
         logging.exception("[MAIN][Exception in sign_up] {} ".format(ex))
 
 
-@app.post("/user/login")
+@app.post("/public/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
         client_ip = req.client.host
@@ -139,7 +143,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
             user_data = await redis_util.get_hm(user_id_from_token_map)
             logging.info(" GOt user_data MAP from token map : {} ".format(user_data))
             if user_data :
+                print(" RETRUNING USER DATA ")
                 return user_data
+            else :
+                print(" ELSE CASE HAPPENING ")
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -251,19 +258,19 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(get_curre
 # ==================== ORDERS ========================
 
 @app.post("/order/create")
-async def order_info_receiver(order_info: OrderCreate, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    try:
-        print(" CREATED NEW ORDER [MAIN] {}".format(user.id))
-        
-        if not user.is_verified:
+async def create_order(order_info: OrderCreate, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    try: 
+        print(" USER Lnaded {} ".format(user))  
+        if not int(user["is_verified"]):
             return  HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Sorry, You are not Verified yet",
                 headers={"WWW-Authenticate": "Bearer"}
             )
-        
+
         if order_info.user_id == user["user_id"] :
             order = await crud.create_new_order(db, order_info)
+            redis_util.set_hm(RedisConstant.ORDER_OBJ + order["order_id"], order, 1800)
             return order
         else :
             return  HTTPException(
@@ -273,15 +280,34 @@ async def order_info_receiver(order_info: OrderCreate, user: UserInDB = Depends(
             )
 
     except Exception as ex:
-        logging.exception("[main][Exception in read_users_me] {} ".format(ex))
+        logging.exception("[main][Exception in create_order] {} ".format(ex))
 
 
 @app.get("/order/")
 async def order(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
-        print("[MAIN] getting all order of this user id {}".format(user.id))
-        all_orders = crud.get_all_orders_by_user(db, user.id)
-        redis_util.set_hm(user.user_id, all_orders)
+        user_id = user["user_id"]
+        orders_list = []
+        all_orders = []
+
+        if await redis_util.is_exists((RedisConstant.USER_ORDERS + user_id)) :
+            all_orders_id = await redis_util.get_set(RedisConstant.USER_ORDERS + user_id)
+
+            for single_order_id in all_orders_id:
+                single_order_obj = await get_single_order(single_order_id)
+                all_orders.append(single_order_obj)
+            return all_orders
+
+
+        all_orders = await crud.get_all_orders_by_user(db, user["user_id"])
+
+        for ele in all_orders:
+            single_order = ele.to_dict()
+            order_id = single_order["order_id"]
+            orders_list.append(order_id)
+            redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, single_order, 1800)
+
+        redis_util.add_to_set(RedisConstant.USER_ORDERS + user_id, orders_list)
 
     except Exception as ex:
         logging.exception("[main][Exception in order] {} ".format(ex))
@@ -290,27 +316,42 @@ async def order(user: UserInDB = Depends(get_current_active_user), db: Session =
 
 
 @app.get("/order/{order_id}")
-async def order_status(order_id: str, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    print(" LANDED ")
-    return crud.get_order_by_id(db, order_id)
+async def get_single_order_info(order_id: str, user: UserInDB = Depends(get_current_active_user)):
+    try:
+        return await get_single_order(order_id)
+    except Exception as ex :
+        logging.exception("[main][Exception in get_single_order_info] {} ".format(ex))
 
+
+async def get_single_order(order_id: str, db: Session = Depends(get_db)):
+    try:
+        if(await redis_util.is_exists(RedisConstant.ORDER_OBJ + order_id)):
+            single_order = redis_util.get_hm(RedisConstant.ORDER_OBJ + order_id)
+        else :
+            single_order =  crud.get_order_by_order_id(db, order_id)
+            await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, single_order, 1800)
+        return single_order
+
+    except Exception as ex :
+        logging.exception("[main][Exception in get_single_order] {} ".format(ex))
+    return single_order
 
 
 
 # update and cancel and all
 @app.post("/order/update")
 async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    pass
-    # dicu = order_query.model_dump()
-    
-    # id = int(order_query.order_id)
-    # del dicu["order_id"]
-    # print(" LANDED update_order_status - ", dicu)
-    # await crud.update_order_status(db, id , dicu)
+    try:
+        user_id = user["user_id"]
+        print(" Update order data ",order_query.model_dump())
+        # updated_order_obj = await crud.update_order_data(db, user_id, data)
+        #     if res :
+        #         await redis_util.delete_from_redis(user_id)
 
-    # delete from redis 
-    # update in db
-    # then put the data in redis again
+    except Exception as ex:
+        logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
+        
+    return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
 
 
 # ===============================ADMIN SPECIAL =====================================

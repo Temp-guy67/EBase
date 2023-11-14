@@ -171,28 +171,28 @@ async def get_all_users(db: Session, skip: int = 0, limit: int = 100):
 
 # ==================== Orders CRUD METHODS =================================
 
-async def create_new_order(db: Session, Orders_info: OrderCreate):
+async def create_new_order(db: Session, orders_info: OrderCreate):
     try :
-        Orders_obj = Orders(product_id=Orders_info.product_id, owner_id=Orders_info.user_id, delivery_address=Orders_info.delivery_address)
-        db.add(Orders_obj)
+        order_obj = Orders(product_id=orders_info.product_id, owner_id=orders_info.user_id, delivery_address=orders_info.delivery_address)
+        db.add(order_obj)
         db.commit()
-        db.refresh(Orders_obj)
-        return Orders_obj
+        db.refresh(order_obj)
+        return order_obj.to_dict()
     except Exception as ex :
         logging.exception("[CRUD][Exception in create_new_order]",ex)
 
 
 def get_all_orders_by_user(db: Session, user_id: str):
     try:
-        return db.query(Orders).filter(Orders.owner_id == int(user_id)).all()
-
+        single_order_obj = db.query(Orders).filter(Orders.owner_id == user_id).all()
+        return single_order_obj
     except Exception as ex:
         logging.exception("[crud][Exception in get_all_orders_by_user] {} ".format(ex))
 
 
-def get_order_by_order_id(db: Session, id: str):
+def get_order_by_order_id(db: Session, order_id: str):
     try:
-        return db.query(Orders).filter(Orders.Orders_id == int(id)).first()
+        return db.query(Orders).filter(Orders.order_id == order_id).first()
     except Exception as ex :
         logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
 
@@ -206,7 +206,7 @@ def get_orders_status(db: Session, Orders_id: int):
     
 
 
-async def update_order_status(db: Session, Orders_id: int, Orders_status: dict):
+async def update_order_status(db: Session, Orders_id: str, Orders_status: dict):
     try :
         logging.info("[CRUD][Landed in update_Orders_status] {} ".format(Orders_status))
         Orders_obj = db.query(Orders).filter(Orders.Orders_id == Orders_id).first()

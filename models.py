@@ -63,10 +63,12 @@ class Orders(Base):
 
 
     __tablename__ = "orders"
-    order_id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    order_id = Column(Integer, primary_key=True, unique=True)
     product_id = Column(String, nullable=False)
+    order_quantity = Column(Integer, default=1)
     order_status = Column(Integer, default=OrderStatus.ORDERED)
     payment_status = Column(Integer, default= PaymentStatus.DUE)
+    receivers_mobile = Column(String, nullable=False)
     delivery_address = Column(String, nullable=False)
     owner_id = Column(String, ForeignKey("account.user_id"))
     created_time = Column(DateTime, default=func.now())
@@ -84,7 +86,9 @@ class Orders(Base):
             'payment_status': self.payment_status,
             'delivery_address': self.delivery_address,
             'created_time' : self.created_time,
-            'owner_id' : self.owner_id
+            'owner_id' : self.owner_id,
+            'receivers_mobile' : self.receivers_mobile,
+            'order_quantity' : self.order_quantity
         }
 
 

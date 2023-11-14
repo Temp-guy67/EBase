@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict
+from pydantic import EmailStr
 
 class User(BaseModel):
     email: str
@@ -50,24 +51,19 @@ class TokenData(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    user_id : str
+    owner_id : str
     product_id : str
     delivery_address : str 
-    receiver_phone : str 
+    receivers_mobile : str 
+    order_quantity : int
 
-class OrderToDB(OrderCreate):
-    owner_id : int
-    order_status : int | None = None
-    payment_status : int | None = None
-
-class OrderToClient(OrderToDB):
-    order_id : str 
 
 class OrderQuery(BaseModel):
     order_id : str 
-    order_status : str | None = None 
+    order_status : int | None = None 
+    order_quantity : int | None = None
     delivery_address : str | None = None
-
+    receivers_mobile : str | None = None
 
 class ResponseModel(BaseModel):
     status : int

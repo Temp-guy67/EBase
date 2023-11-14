@@ -20,8 +20,9 @@ async def connect_redis():
 
 async def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
     try:
-        redis_client.hmset(key,val)
-        redis_client.expire(key, ttl_in_sec)
+        if key and val :
+            redis_client.hmset(key, val)
+            redis_client.expire(key, ttl_in_sec)
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in set_data_in_redis] {} ".format(ex))
 
@@ -63,3 +64,35 @@ async def is_exists(key : str):
         return redis_client.exists(key)
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in is_exists] {} ".format(ex))
+
+
+async def add_to_set(set_name:str, val:dict, ttl_in_sec: int = 3600):
+    try:
+        redis_client.sadd(set_name,val)
+        redis_client.expire(set_name, ttl_in_sec)
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in add_to_set] {} ".format(ex))
+
+
+async def get_set(set_name:str):
+    try:
+        set_items = redis_client.smembers(set_name)
+        return set_items
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in get_set] {} ".format(ex))
+
+async def is_member_is_set(set_name:str, item:str):
+    try:
+        is_member = redis_client.sismember(set_name, item)
+        return is_member
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in is_member_is_set] {} ".format(ex))
+
+
+async def remove_from_set(set_name:str, item:str):
+    try:
+        removed = redis_client.srem(set_name, item)
+        return removed
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in remove_from_set] {} ".format(ex))
+

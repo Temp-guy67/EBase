@@ -28,6 +28,15 @@ async def generate_salt(saltLength : int or None = None):
         logging.exception("[util][Exception in signup] {} ".format(ex))
 
 
+async def create_order_id(user_id : str):
+    try :
+        random = ''.join([random.choice(string.ascii_letters
+            + string.digits) for n in range(32)])
+        x = user_id[5:] + random
+        return x
+    
+    except Exception as ex :
+        logging.exception("[util][Exception in create_order_id] {} ".format(ex))
 
 
 
