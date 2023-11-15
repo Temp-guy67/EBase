@@ -30,9 +30,8 @@ async def generate_salt(saltLength : int or None = None):
 
 async def create_order_id(user_id : str):
     try :
-        random = ''.join([random.choice(string.ascii_letters
-            + string.digits) for n in range(32)])
-        x = user_id[5:] + random
+        ord_id = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(10)])
+        x = user_id[5:] + "_" + ord_id
         return x
     
     except Exception as ex :

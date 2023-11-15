@@ -63,7 +63,7 @@ class Orders(Base):
 
 
     __tablename__ = "orders"
-    order_id = Column(Integer, primary_key=True, unique=True)
+    order_id = Column(String, primary_key=True, unique=True)
     product_id = Column(String, nullable=False)
     order_quantity = Column(Integer, default=1)
     order_status = Column(Integer, default=OrderStatus.ORDERED)
@@ -72,7 +72,7 @@ class Orders(Base):
     delivery_address = Column(String, nullable=False)
     owner_id = Column(String, ForeignKey("account.user_id"))
     created_time = Column(DateTime, default=func.now())
-    last_update_time = Column(DateTime, onupdate=func.now())
+    last_update_time = Column(DateTime, onupdate=func.now(), nullable=True)
 
     # owner = relationship("Account", back_populates="order")
 

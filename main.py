@@ -268,9 +268,9 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(get_cur
                 headers={"WWW-Authenticate": "Bearer"}
             )
 
-        if order_info.user_id == user["user_id"] :
+        if order_info.owner_id == user["user_id"] :
             order = await crud.create_new_order(db, order_info)
-            redis_util.set_hm(RedisConstant.ORDER_OBJ + order["order_id"], order, 1800)
+            await redis_util.set_hm(RedisConstant.ORDER_OBJ + order["order_id"], order, 1800)
             return order
         else :
             return  HTTPException(
