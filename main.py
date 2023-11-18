@@ -268,9 +268,17 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(get_cur
                 headers={"WWW-Authenticate": "Bearer"}
             )
 
-        if order_info.owner_id == user["user_id"] :
+        user_id = user["user_id"]
+        if order_info.owner_id ==  user_id:
             order = await crud.create_new_order(db, order_info)
             await redis_util.set_hm(RedisConstant.ORDER_OBJ + order["order_id"], order, 1800)
+
+            if await redis_util.is_exists((RedisConstant.USER_ORDERS + user_id)):
+                orders_list = await redis_util.get_set(RedisConstant.USER_ORDERS + user_id)
+                orders_list.append(order["order_id"])
+                await redis_util.add_to_set(RedisConstant.USER_ORDERS + user_id, orders_list)
+
+
             return order
         else :
             return  HTTPException(
@@ -290,24 +298,25 @@ async def order(user: UserInDB = Depends(get_current_active_user), db: Session =
         orders_list = []
         all_orders = []
 
-        if await redis_util.is_exists((RedisConstant.USER_ORDERS + user_id)) :
+        if not await redis_util.is_exists((RedisConstant.USER_ORDERS + user_id)) :
+            print("From DB")
+            all_orders = crud.get_all_orders_by_user(db, user["user_id"])
+            for ele in all_orders:
+                single_order = ele.to_dict()
+                order_id = single_order["order_id"]
+                orders_list.append(order_id)
+                await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, single_order, 1800)
+            
+        else :
             all_orders_id = await redis_util.get_set(RedisConstant.USER_ORDERS + user_id)
 
             for single_order_id in all_orders_id:
                 single_order_obj = await get_single_order(single_order_id)
                 all_orders.append(single_order_obj)
-            return all_orders
 
+            await redis_util.add_to_set(RedisConstant.USER_ORDERS + user_id, all_orders_id)
 
-        all_orders = await crud.get_all_orders_by_user(db, user["user_id"])
-
-        for ele in all_orders:
-            single_order = ele.to_dict()
-            order_id = single_order["order_id"]
-            orders_list.append(order_id)
-            redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, single_order, 1800)
-
-        redis_util.add_to_set(RedisConstant.USER_ORDERS + user_id, orders_list)
+        return all_orders
 
     except Exception as ex:
         logging.exception("[main][Exception in order] {} ".format(ex))
@@ -316,26 +325,11 @@ async def order(user: UserInDB = Depends(get_current_active_user), db: Session =
 
 
 @app.get("/order/{order_id}")
-async def get_single_order_info(order_id: str, user: UserInDB = Depends(get_current_active_user)):
+async def get_single_order_info(order_id: str, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
-        return await get_single_order(order_id)
+        return await crud.get_single_order(db, order_id)
     except Exception as ex :
         logging.exception("[main][Exception in get_single_order_info] {} ".format(ex))
-
-
-async def get_single_order(order_id: str, db: Session = Depends(get_db)):
-    try:
-        if(await redis_util.is_exists(RedisConstant.ORDER_OBJ + order_id)):
-            single_order = redis_util.get_hm(RedisConstant.ORDER_OBJ + order_id)
-        else :
-            single_order =  crud.get_order_by_order_id(db, order_id)
-            await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, single_order, 1800)
-        return single_order
-
-    except Exception as ex :
-        logging.exception("[main][Exception in get_single_order] {} ".format(ex))
-    return single_order
-
 
 
 # update and cancel and all
@@ -343,7 +337,9 @@ async def get_single_order(order_id: str, db: Session = Depends(get_db)):
 async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
         user_id = user["user_id"]
-        print(" Update order data ",order_query.model_dump())
+        order_data = order_query.model_dump()
+        print(" Update order data ", order_data)
+
         # updated_order_obj = await crud.update_order_data(db, user_id, data)
         #     if res :
         #         await redis_util.delete_from_redis(user_id)

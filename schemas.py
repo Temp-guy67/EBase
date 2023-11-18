@@ -55,7 +55,7 @@ class OrderCreate(BaseModel):
     product_id : str
     delivery_address : str 
     receivers_mobile : str 
-    order_quantity : str
+    order_quantity : int
 
 
 class OrderQuery(BaseModel):
