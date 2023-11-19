@@ -208,16 +208,20 @@ def get_orders_status(db: Session, Orders_id: int):
     
 
 
-async def update_order_status(db: Session, Orders_id: str, Orders_status: dict):
+async def update_order_status(db: Session, order_id: str, orders_status: dict):
     try :
-        logging.info("[CRUD][Landed in update_Orders_status] {} ".format(Orders_status))
-        Orders_obj = db.query(Orders).filter(Orders.Orders_id == Orders_id).first()
-        if Orders_obj:
-            for key, value in Orders_status.items():
-                setattr(Orders_obj, key, value)
+        logging.info("[CRUD][Landed in update_Orders_status] {} ".format(orders_status))
+        order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
+  
+        if order_obj:
+            for key, value in orders_status.items():
+                if key and value :
+                    setattr(order_obj, key, value)
             db.commit()
-            db.refresh(Orders_obj)
-            return Orders_obj
+            db.refresh(order_obj)
+            updated_order_obj =  db.query(Orders).filter(Orders.order_id == order_id).first()
+            print(" UPDATED updated_order_obj : ",updated_order_obj)
+            return updated_order_obj.to_dict()
         return None
     except Exception as ex :
         logging.exception("[CRUD][Exception in update_Orders_status] {} ".format(ex))

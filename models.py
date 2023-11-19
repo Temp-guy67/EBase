@@ -16,8 +16,8 @@ class Account(Base):
 
     __tablename__ = "account"
 
-    id = Column(Integer, primary_key=True,index=True, autoincrement=True)
-    user_id = Column(String,  index=True, unique=True)
+    id = Column(Integer, primary_key=True, index=True,autoincrement=True)
+    user_id = Column(String, index=True, unique=True)
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, index=True)
     phone = Column(String, unique=True, index=True)
@@ -63,7 +63,8 @@ class Orders(Base):
 
 
     __tablename__ = "orders"
-    order_id = Column(String, primary_key=True, unique=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    order_id = Column(String, unique=True)
     product_id = Column(String, nullable=False)
     order_quantity = Column(Integer, default=1)
     order_status = Column(Integer, default=OrderStatus.ORDERED)
@@ -85,10 +86,11 @@ class Orders(Base):
             'order_status': self.order_status,
             'payment_status': self.payment_status,
             'delivery_address': self.delivery_address,
-            'created_time' : self.created_time,
+            'created_time' : str(self.created_time),
             'owner_id' : self.owner_id,
             'receivers_mobile' : self.receivers_mobile,
-            'order_quantity' : self.order_quantity
+            'order_quantity' : self.order_quantity,
+            'last_update_time' : str(self.last_update_time)
         }
 
 

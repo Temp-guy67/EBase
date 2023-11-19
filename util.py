@@ -38,7 +38,25 @@ async def create_order_id(user_id : str):
         logging.exception("[util][Exception in create_order_id] {} ".format(ex))
 
 
-
+async def zipper(arr : list):
+    try :
+        s = "_!_".join(arr)
+        print("Zipped data ", s)
+        return s
+        
+    except Exception as ex :
+        logging.exception("[util][Exception in zipper] {} ".format(ex))
+        
+        
+async def unzipper(s : str):
+    try :
+        arr = s.split("_!_")
+        print("UN Zipped data ", s)
+        return arr
+        
+    except Exception as ex :
+        logging.exception("[util][Exception in unzipper] {} ".format(ex))
+    
 
 
 
