@@ -345,14 +345,30 @@ async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(
         order_id = order_data["order_id"]
         
         if order_id  :
-            updated_order_obj = await crud.update_order_status(db, order_id, order_data)
+            updated_order_obj = await crud.update_order_status(db, order_id)
             await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, updated_order_obj, 1800)
             return {"user_id" : user_id, "order_id" : order_id, "messege":"Order has been Updated Sucessfully"}
     
     except Exception as ex:
         logging.exception("[MAIN][Exception in update_order_status] {} ".format(ex))
-        
     
+    
+    
+@app.get("/order/delete/{order_id}")
+async def delete_order(order_id: str, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        user_id = user["user_id"]
+
+        if order_id  :
+            status = crud.delete_order(db, order_id, user_id)
+            if status :
+                await redis_util.delete_from_redis(RedisConstant.ORDER_OBJ + order_id)
+                return {"user_id" : user_id, "order_id" : order_id, "messege":"Order has been Deleted Sucessfully"}
+            else :
+                return {"user_id" : user_id, "order_id" : order_id, "messege":"Not Authorized"}
+                
+    except Exception as ex:
+        logging.exception("[MAIN][Exception in delete_order] {} ".format(ex))
 
 
 # ===============================ADMIN SPECIAL =====================================

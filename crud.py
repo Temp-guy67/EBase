@@ -227,9 +227,12 @@ async def update_order_status(db: Session, order_id: str, orders_status: dict):
         logging.exception("[CRUD][Exception in update_Orders_status] {} ".format(ex))
 
 
-def delete_order(db: Session, order_id: str):
+def delete_order(db: Session, order_id: str, user_id : str):
     try:
         order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
+        if order_obj.owner_id != user_id :
+            logging.info("[CRUD][Not authorizede to delete this order][Order_Id] {} [User_id] {}".format(order_id, user_id))
+            return False
         if order_obj:
             db.delete(order_obj)
             db.commit()
