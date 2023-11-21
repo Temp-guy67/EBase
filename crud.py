@@ -1,5 +1,4 @@
 import logging
-from util import create_hashed_password, generate_salt
 from schemas import UserSignUp, OrderCreate, UserSignUpResponse
 from models import Account, Orders, Password
 from util import create_hashed_password, generate_salt, create_order_id
@@ -82,7 +81,7 @@ async def create_new_user(db: Session, user: UserSignUp):
 
 async def create_password(db:Session, user_id:str, password : str):
     try:
-        salt = await generate_salt()
+        salt = await generate_salt(CommonConstants.SALT_LENGTH)
         hashed_password = await create_hashed_password(password, salt)
         db_user = Password(user_id=user_id, hashed_password=hashed_password, salt=salt )
         db.add(db_user)

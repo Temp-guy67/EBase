@@ -17,7 +17,7 @@ async def create_hashed_password(password, salt):
 
 
 
-async def generate_salt(saltLength : int or None = None):
+async def generate_salt(saltLength : int):
     try:
         if not saltLength :
             saltLength = CommonConstants.SALT_LENGTH
