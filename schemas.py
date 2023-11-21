@@ -6,7 +6,7 @@ from typing import Union
 class User(BaseModel):
     email: str
     phone : str
-    username:  Union  Union[str, None] = None
+    username: Union[str, None] = None
 
 class UserSignUp(User):
     password : str
