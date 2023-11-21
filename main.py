@@ -214,6 +214,8 @@ async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(g
             res = await crud.update_password_data(db, user_id, data)
             if res :
                 await redis_util.delete_from_redis(user_id)
+                
+            return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
         else :
             return HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -224,7 +226,7 @@ async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(g
     except Exception as ex:
         logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
         
-    return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
+    
 
 
 @app.post("/user/delete/")
@@ -295,7 +297,7 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(get_cur
 async def order(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
         user_id = user["user_id"]
-        orders_list = []
+        all_orders_id = set()
         all_orders = []
 
         if not await redis_util.is_exists((RedisConstant.USER_ORDERS + user_id)) :
@@ -304,17 +306,18 @@ async def order(user: UserInDB = Depends(get_current_active_user), db: Session =
             for ele in all_orders:
                 single_order = ele.to_dict()
                 order_id = single_order["order_id"]
-                orders_list.append(order_id)
+                all_orders_id.add(order_id)
                 await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, single_order, 1800)
+            await redis_util.set_str(RedisConstant.USER_ORDERS + user_id, await util.zipper(all_orders_id))
             
         else :
-            all_orders_id = await redis_util.get_set(RedisConstant.USER_ORDERS + user_id)
-
-            for single_order_id in all_orders_id:
-                single_order_obj = await get_single_order(single_order_id)
-                all_orders.append(single_order_obj)
-
-            await redis_util.add_to_set(RedisConstant.USER_ORDERS + user_id, all_orders_id)
+            all_orders_id_str = await redis_util.get_str(RedisConstant.USER_ORDERS + user_id)
+            all_orders_id = await util.unzipper(all_orders_id_str)
+            print("From REDIS ", all_orders_id)
+            if all_orders_id :
+                for single_order_id in all_orders_id:
+                    single_order_obj = await crud.get_single_order(db, single_order_id)
+                    all_orders.append(single_order_obj)
 
         return all_orders
 
@@ -339,15 +342,33 @@ async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(
         user_id = user["user_id"]
         order_data = order_query.model_dump()
         print(" Update order data ", order_data)
-
-        # updated_order_obj = await crud.update_order_data(db, user_id, data)
-        #     if res :
-        #         await redis_util.delete_from_redis(user_id)
-
-    except Exception as ex:
-        logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
+        order_id = order_data["order_id"]
         
-    return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
+        if order_id  :
+            updated_order_obj = await crud.update_order_status(db, order_id)
+            await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, updated_order_obj, 1800)
+            return {"user_id" : user_id, "order_id" : order_id, "messege":"Order has been Updated Sucessfully"}
+    
+    except Exception as ex:
+        logging.exception("[MAIN][Exception in update_order_status] {} ".format(ex))
+    
+    
+    
+@app.get("/order/delete/{order_id}")
+async def delete_order(order_id: str, user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        user_id = user["user_id"]
+
+        if order_id  :
+            status = crud.delete_order(db, order_id, user_id)
+            if status :
+                await redis_util.delete_from_redis(RedisConstant.ORDER_OBJ + order_id)
+                return {"user_id" : user_id, "order_id" : order_id, "messege":"Order has been Deleted Sucessfully"}
+            else :
+                return {"user_id" : user_id, "order_id" : order_id, "messege":"Not Authorized"}
+                
+    except Exception as ex:
+        logging.exception("[MAIN][Exception in delete_order] {} ".format(ex))
 
 
 # ===============================ADMIN SPECIAL =====================================
@@ -356,11 +377,11 @@ async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(
 async def get_all_orders(user: UserInDB = Depends(get_current_active_user), db: Session = Depends(get_db)):
     try:
         if user["role"] == Account.Role.SUPER_ADMIN :
-            return crud.get_all_orders(db)
+            return await crud.get_all_orders(db)
         else :
             return HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="You are not authorized to this access",
+                detail="You are not authorized to this Action",
                 headers={"WWW-Authenticate": "Bearer"}
             )
     except Exception as ex :
@@ -376,11 +397,11 @@ async def get_all_user(user: UserInDB = Depends(get_current_active_user), db: Se
         else :
             return HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="You are not authorized to this access",
+                detail="You are not authorized to this Action",
                 headers={"WWW-Authenticate": "Bearer"}
             )
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_all_user] {} ".format(ex))
+        logging.exception("[MAIN][Exception in get_all_userA] {} ".format(ex))
 
 
 @app.post("/auth/updateuser/")

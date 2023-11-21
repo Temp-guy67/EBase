@@ -3,11 +3,17 @@ import redis,logging
 redis_client = None
 async def connect_redis():
     global redis_client
-    # redis_client = redis.Redis(
-    # host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
-    # port=15144,
-    # password='test_pass1', decode_responses=True)
-    redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    
+    # for AWS redis
+    
+    redis_client = redis.Redis(
+    host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
+    port=15144,
+    password='test_pass1', decode_responses=True)
+    
+    # for local redis
+    # redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    
     logging.info("Redis Inititated for this session Successfully {} ".format(redis_client))
 
 # Convert the Redis Hash back to a Python dictionary
