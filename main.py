@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import Annotated
 import crud,util,redis_util
 from models import Account
-from sql_constants import RedisConstant
+from sql_constants import RedisConstant,CommonConstants
 
 app = FastAPI()
 
@@ -112,7 +112,7 @@ async def verify_password(user_password: str, hashed_password : str, salt : str)
 
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta):
     try :
         to_encode = data.copy()
         if expires_delta:
@@ -208,7 +208,7 @@ async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(g
 
         if await verify_password(password, password_obj.hashed_password, password_obj.salt):
             new_password = user_data.new_password
-            new_salt = await util.generate_salt()
+            new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
             new_hashed_password = await util.create_hashed_password(new_password, new_salt)
             data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
             res = await crud.update_password_data(db, user_id, data)
@@ -470,7 +470,6 @@ async def update_user_role(info: UserUpdate, user: UserInDB = Depends(get_curren
         logging.exception("[MAIN][Exception in verify_user] {} ".format(ex))
 
 
-
 # TEST CODE FOR FRONTEND
 # =========================================================================================================
 @app.get("/test")
@@ -479,7 +478,7 @@ async def hello():
 
 
 @app.post("/test/login")
-async def login_test(form_data: UserSignUp):
+async def login_test():
     try:
         return {"access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJcInRlc3QzXCIiLCJleHAiOjE2OTU3MTQzNzB9.LGXf2RVsbtrEiVTvQGRg3T1UzqmnEDEIQi8MF3AC-kI", "token_type" : "bearer"}
     
@@ -487,7 +486,7 @@ async def login_test(form_data: UserSignUp):
         logging.exception("[main][Exception in signup] {} ".format(ex))
 
 
-@app.get("/test/getuser", response_model=UserInDB)
+@app.get("/test/getuser")
 async def get_user():
     return {
   "email": "test3@testmail.com",

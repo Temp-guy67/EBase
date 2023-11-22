@@ -1,11 +1,11 @@
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, Union
 from pydantic import EmailStr
 
 class User(BaseModel):
     email: str
     phone : str
-    username: str | None = None
+    username: Union[str, None] = None
 
 class UserSignUp(User):
     password : str
@@ -16,8 +16,8 @@ class UserInDB(User):
     id : int
 
 class UserLogin(BaseModel):
-    username : str | None = None
-    email: str | None = None
+    username : Union[str, None] = None
+    email:  Union[str, None] = None
     password: str 
 
 class UserSignUpResponse(User):
@@ -27,18 +27,17 @@ class UserSignUpResponse(User):
 
 class UserUpdate(BaseModel):
     user_id : str 
-    email : str | None = None
-    phone : str | None = None
-    new_password : str | None = None
-    new_role : int | None = None
-    opr : str | None = None
+    email : Union[str, None] = None
+    phone : Union[str, None] = None
+    new_password : Union[str, None] = None
+    opr : Union[str, None] = None
     password : str 
 
 
 class UserDelete(BaseModel):
     user_id : str 
-    email : str | None = None
-    phone : str | None = None
+    email : Union[str, None] = None
+    phone : Union[str, None] = None
     password : str 
 
 class Token(BaseModel):
@@ -47,7 +46,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    email: str | None = None
+    email: Union[str, None] = None
 
 
 class OrderCreate(BaseModel):
@@ -60,10 +59,10 @@ class OrderCreate(BaseModel):
 
 class OrderQuery(BaseModel):
     order_id : str 
-    order_status : int | None = None 
-    order_quantity : int | None = None
-    delivery_address : str | None = None
-    receivers_mobile : str | None = None
+    order_status : Union[int, None] = None
+    order_quantity : Union[int, None] = None
+    delivery_address : Union[str, None] = None
+    receivers_mobile : Union[str, None] = None
 
 class ResponseModel(BaseModel):
     status : int

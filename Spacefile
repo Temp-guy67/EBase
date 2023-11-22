@@ -1,5 +1,5 @@
 # Spacefile Docs: https://go.deta.dev/docs/spacefile/v0
-v: 0.0.1
+v: 0
 micros:
   - name: boAt-clone-bakend
     src: ./
@@ -7,3 +7,25 @@ micros:
     primary: true
     run: uvicorn main:app
     dev: uvicorn main:app --reload
+    public: true
+    # public_routes:
+    #   - name: "Test Route"
+    #     path: "/test"
+    #     description: "Route for testing purposes"
+
+    #   - name: "Order Routes"
+    #     path_prefix: "/order/*"
+    #     description: "Routes related to orders"
+        
+    #   - name: "Authentication Routes"
+    #     path_prefix: "/auth/*"
+    #     description: "Routes related to user authentication"
+
+    #   - name: "User Routes"
+    #     path_prefix: "/user/*"
+    #     description: "Routes related to user profiles and settings"
+      # - "/test"
+      # - "/order/*"
+      # - "/auth/*"
+      # - "/user/*"
+
