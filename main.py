@@ -54,7 +54,7 @@ async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
         
         db_user = crud.get_user_by_phone(db, phone=user.phone)
         if db_user:
-            return HTTPException(status_code=400, detail="Phone Number already registered")
+            return HTTPException(status_code=400, detail="Mobile Number already registered")
         res = await crud.create_new_user(db=db, user=user)
         return res
 
