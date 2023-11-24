@@ -474,7 +474,7 @@ async def update_user_role(info: UserUpdate, user: UserInDB = Depends(get_curren
 # =========================================================================================================
 @app.get("/test")
 async def hello():
-    return {"message" : "working fine"}
+    return {"message" : "Hello Murali 😀"}
 
 
 @app.post("/test/login")
