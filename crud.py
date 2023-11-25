@@ -1,5 +1,4 @@
 import logging
-from util import create_hashed_password, generate_salt
 from schemas import UserSignUp, OrderCreate, UserSignUpResponse
 from models import Account, Orders, Password
 from util import create_hashed_password, generate_salt, create_order_id

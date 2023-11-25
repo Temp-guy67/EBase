@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict, Union
 from pydantic import EmailStr
+from typing import Union
 
 class User(BaseModel):
     email: str
@@ -17,7 +18,7 @@ class UserInDB(User):
 
 class UserLogin(BaseModel):
     username : Union[str, None] = None
-    email:  Union[str, None] = None
+    email: Union[str, None] = None
     password: str 
 
 class UserSignUpResponse(User):
@@ -30,6 +31,7 @@ class UserUpdate(BaseModel):
     email : Union[str, None] = None
     phone : Union[str, None] = None
     new_password : Union[str, None] = None
+    new_role : Union[int, None] = None
     opr : Union[str, None] = None
     password : str 
 
@@ -59,7 +61,7 @@ class OrderCreate(BaseModel):
 
 class OrderQuery(BaseModel):
     order_id : str 
-    order_status : Union[int, None] = None
+    order_status : Union[int, None] = None 
     order_quantity : Union[int, None] = None
     delivery_address : Union[str, None] = None
     receivers_mobile : Union[str, None] = None

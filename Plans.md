@@ -17,3 +17,14 @@ Today :
 1. Write delete order 
 2. Write account for user too 
 3. 
+
+
+
+fastapi
+uvicorn[standard]
+SQLAlchemy
+python-multipart
+# python-jose[cryptography]
+pyjwt[crypto]
+passlib[bcrypt]
+redis
