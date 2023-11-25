@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, Union
 from pydantic import EmailStr
 from typing import Union
 

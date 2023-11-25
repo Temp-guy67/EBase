@@ -54,7 +54,7 @@ async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
         
         db_user = crud.get_user_by_phone(db, phone=user.phone)
         if db_user:
-            return HTTPException(status_code=400, detail="Phone Number already registered")
+            return HTTPException(status_code=400, detail="Mobile Number already registered")
         res = await crud.create_new_user(db=db, user=user)
         return res
 
@@ -470,16 +470,15 @@ async def update_user_role(info: UserUpdate, user: UserInDB = Depends(get_curren
         logging.exception("[MAIN][Exception in verify_user] {} ".format(ex))
 
 
-
 # TEST CODE FOR FRONTEND
 # =========================================================================================================
 @app.get("/test")
 async def hello():
-    return {"message" : "working fine"}
+    return {"message" : "Hello Murali 😀"}
 
 
 @app.post("/test/login")
-async def login_test(form_data: UserSignUp):
+async def login_test():
     try:
         return {"access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJcInRlc3QzXCIiLCJleHAiOjE2OTU3MTQzNzB9.LGXf2RVsbtrEiVTvQGRg3T1UzqmnEDEIQi8MF3AC-kI", "token_type" : "bearer"}
     
@@ -487,7 +486,7 @@ async def login_test(form_data: UserSignUp):
         logging.exception("[main][Exception in signup] {} ".format(ex))
 
 
-@app.get("/test/getuser", response_model=UserInDB)
+@app.get("/test/getuser")
 async def get_user():
     return {
   "email": "test3@testmail.com",
