@@ -52,7 +52,6 @@ class TokenData(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    owner_id : str
     product_id : str
     delivery_address : str 
     receivers_mobile : str 

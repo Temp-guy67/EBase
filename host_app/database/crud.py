@@ -1,11 +1,12 @@
 import logging
-from schemas import UserSignUp, OrderCreate, UserSignUpResponse
-from models import Account, Orders, Password
-from util import create_hashed_password, generate_salt, create_order_id
-from sql_constants import CommonConstants, RedisConstant
+from .schemas import UserSignUp, OrderCreate, UserSignUpResponse
+from .models import Account, Orders, Password
+from host_app.common.util import create_hashed_password, generate_salt, create_order_id
+from .sql_constants import CommonConstants
+from host_app.caching.redis_constant import RedisConstant
 import random
 from sqlalchemy.orm import Session
-import redis_util
+from host_app.caching import redis_util
 
 
 def get_user_by_user_id(db: Session, user_id: str):
@@ -190,15 +191,15 @@ def get_all_orders_by_user(db: Session, user_id: str):
         logging.exception("[crud][Exception in get_all_orders_by_user] {} ".format(ex))
 
 
-def get_order_by_order_id(db: Session, order_id: str):
+def get_order_by_order_id(db: Session, user_id : str, order_id: str):
     try:
-        print(" order_id is : ",order_id , " TYE ", type(db))
-        return db.query(Orders).filter(Orders.order_id == order_id).first()
+        order_obj =  db.query(Orders).filter(Orders.order_id == order_id, Orders.owner_id== user_id).first()
+        
     except Exception as ex :
         logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
 
 
-def get_orders_status(db: Session, Orders_id: int):
+def get_orders_status(db: Session, user_id : str, Orders_id: int):
     try:
         order = get_order_by_order_id(db, Orders_id)
         return order
@@ -207,20 +208,21 @@ def get_orders_status(db: Session, Orders_id: int):
     
 
 
-async def update_order_status(db: Session, order_id: str, orders_status: dict):
+async def update_order_status(db: Session, user_id : str, order_id: str, orders_status: dict):
     try :
         logging.info("[CRUD][Landed in update_Orders_status] {} ".format(orders_status))
         order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
   
         if order_obj:
-            for key, value in orders_status.items():
-                if key and value :
-                    setattr(order_obj, key, value)
-            db.commit()
-            db.refresh(order_obj)
-            updated_order_obj =  db.query(Orders).filter(Orders.order_id == order_id).first()
-            print(" UPDATED updated_order_obj : ",updated_order_obj)
-            return updated_order_obj.to_dict()
+            if order_obj.owner_id == user_id:
+                for key, value in orders_status.items():
+                    if key and value :
+                        setattr(order_obj, key, value)
+                db.commit()
+                db.refresh(order_obj)
+                updated_order_obj =  db.query(Orders).filter(Orders.order_id == order_id).first()
+                print(" UPDATED updated_order_obj : ",updated_order_obj)
+                return updated_order_obj.to_dict()
         return None
     except Exception as ex :
         logging.exception("[CRUD][Exception in update_Orders_status] {} ".format(ex))
@@ -249,26 +251,22 @@ def get_all_orderss(db: Session, skip: int = 0, limit: int = 100):
         logging.exception("[CRUD][Exception in get_all_Orderss] {} ".format(ex))
 
 
-async def get_single_order(db: Session, order_id: str):
+async def get_single_order(db: Session, user_id: str, order_id: str):
     try:
-        print(" RECEIVDED IN ORDER ID ",order_id)
         if(await redis_util.is_exists(RedisConstant.ORDER_OBJ + order_id)):
-            print(" gettgin order from REDIS")
             single_order = await redis_util.get_hm(RedisConstant.ORDER_OBJ + order_id)
+            if single_order["user_id"] == user_id :
+                return single_order
         else :
-            print(" gettgin order from DB")
             single_order = get_order_by_order_id(db, order_id)
 
-            data = single_order.to_dict()
-            
-            creted_time = data["created_time"]
-            print(" gettgin SINGLE ORDER ", data , " creted time ", creted_time)
-
-            data["created_time"] = str(creted_time)
-            print(" gettgin DATETIME NOW ", data["created_time"] , " TYPE ", type(data["created_time"] ))
-
-            await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, data, 1800)
-        return single_order
+            if single_order.user_id == user_id :
+                data = single_order.to_dict()
+                creted_time = data["created_time"]
+                data["created_time"] = str(creted_time)
+                await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, data, 1800)
+    
+                return single_order
 
     except Exception as ex :
         logging.exception("[MAIN][Exception in get_single_order] {} ".format(ex))
