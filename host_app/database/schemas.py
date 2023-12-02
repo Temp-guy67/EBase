@@ -70,3 +70,16 @@ class ResponseModel(BaseModel):
     message : str 
 
 
+class ClientSignup(BaseModel):
+    service_name : str
+    service_initials : str 
+    subscription : Union[str, None] = None
+    daily_request_counts : Union[str, None] = None
+    registration_mail : str 
+    ip_ports : str
+
+    
+
+
+
+

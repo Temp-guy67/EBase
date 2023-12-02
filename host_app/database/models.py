@@ -95,4 +95,51 @@ class Orders(Base):
 
 
 
+class Service(Base):
+    class Subsription:
+        TEST="TEST"
+        FREE="FREE"
+        NOOB="NOOB"
+        PRO="PRO"
+        ULTRA_PRO="ULTRA_PRO"
 
+    class RequestCounts:
+        TEST=5
+        FREE=50
+        NOOB=500
+        PRO=1000
+        ULTRA_PRO=2000
+    
+    class ClientVerification:
+        NOT_VERIFIED=0
+        VERIFIED=1
+
+    __tablename__ = "orders"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    service_id = Column(String, unique=True, nullable=False)              #zsoid
+    service_initials = Column(String, nullable=False, unique=True)
+    service_name = Column(String, nullable=False, unique=True)
+    subscription = Column(String, default=Subsription.ORDERED)
+    daily_request_counts = Column(Integer, default=Subsription.TEST)
+    registration_time = Column(DateTime, default=RequestCounts.TEST)
+    registration_mail = Column(String, nullable=False)
+    ip_ports = Column(String)
+    last_update_time = Column(DateTime, onupdate=func.now(), nullable=True)
+    is_verified = Column(Integer, default=ClientVerification.NOT_VERIFIED)
+
+    # owner = relationship("Account", back_populates="order")
+
+
+
+    def to_dict(self):
+        return {
+            'service_id': self.service_id,
+            'service_initials': self.service_initials,
+            'service_name': self.service_name,
+            'subscription': self.subscription,
+            'daily_request_counts': self.daily_request_counts,
+            'registration_time': str(self.registration_time),
+            'registration_mail' : self.registration_mail,
+            'last_update_time' : str(self.last_update_time),
+            'ip_ports' : self.ip_ports
+        }
