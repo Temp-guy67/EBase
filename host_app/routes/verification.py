@@ -8,6 +8,7 @@ from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
 from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
+import secrets
 
 from host_app.caching import redis_util
 from host_app.database import crud, schemas
@@ -23,7 +24,7 @@ async def verify_password(user_password: str, hashed_password : str, salt : str)
             return False
 
     except Exception as ex:
-        logging.exception("[MAIN][Exception in verify_password] {} ".format(ex))
+        logging.exception("[VERIFICATION][Exception in verify_password] {} ".format(ex))
 
 
 def create_access_token(data: dict, expires_delta: timedelta):
@@ -38,7 +39,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
         return encoded_jwt
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in create_access_token] {} ".format(ex))
+        logging.exception("[VERIFICATION][Exception in create_access_token] {} ".format(ex))
         
 
 
@@ -79,9 +80,37 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         return db_data
         
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_current_user] {} ".format(ex))
+        logging.exception("[VERIFICATION][Exception in get_current_user] {} ".format(ex))
         raise credentials_exception
 
 
 async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depends(get_current_user)]):
     return current_user
+
+
+async def get_api_key():
+    try:
+        api_key = secrets.token_urlsafe(32)
+        return api_key
+
+    except Exception as ex :
+        logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
+
+async def get_encrypted_api_key(api_key:str, ip_ports: list):
+    try:
+        encoded_api_key = jwt.encode({'api_key': api_key, 'ip_ports':ip_ports}, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_api_key
+
+    except Exception as ex :
+        logging.exception("[VERIFICATION][Exception in get_encrypted_api_key] {} ".format(ex))
+    
+        
+async def decrypt_api_key(ip_ports: str):
+    try:
+        api_key = secrets.token_urlsafe(32)
+        print(" API KEY : ", api_key)
+        encoded_jwt = jwt.encode({'api_key': api_key, 'ip_ports':ip_ports}, SECRET_KEY, algorithm=ALGORITHM)
+        return {'encrypted_api_key': encoded_jwt}
+
+    except Exception as ex :
+        logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))

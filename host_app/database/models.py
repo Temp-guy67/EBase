@@ -114,18 +114,20 @@ class Service(Base):
         NOT_VERIFIED=0
         VERIFIED=1
 
-    __tablename__ = "orders"
+    __tablename__ = "services"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     service_id = Column(String, unique=True, nullable=False)              #zsoid
-    service_initials = Column(String, nullable=False, unique=True)
-    service_name = Column(String, nullable=False, unique=True)
-    subscription = Column(String, default=Subsription.ORDERED)
-    daily_request_counts = Column(Integer, default=Subsription.TEST)
-    registration_time = Column(DateTime, default=RequestCounts.TEST)
+    service_org = Column(String, nullable=False, unique=True)
+    service_name = Column(String, nullable=False)
+    subscription_mode = Column(String, default=Subsription.TEST)
+    daily_request_counts = Column(Integer, default=RequestCounts.TEST)
+    registration_time = Column(DateTime, default=func.now())
     registration_mail = Column(String, nullable=False)
     ip_ports = Column(String)
     last_update_time = Column(DateTime, onupdate=func.now(), nullable=True)
     is_verified = Column(Integer, default=ClientVerification.NOT_VERIFIED)
+    api_key = Column(String, nullable=False)
+    
 
     # owner = relationship("Account", back_populates="order")
 
@@ -134,12 +136,13 @@ class Service(Base):
     def to_dict(self):
         return {
             'service_id': self.service_id,
-            'service_initials': self.service_initials,
+            'service_org': self.service_org,
             'service_name': self.service_name,
-            'subscription': self.subscription,
+            'subscription_mode': self.subscription_mode,
             'daily_request_counts': self.daily_request_counts,
             'registration_time': str(self.registration_time),
             'registration_mail' : self.registration_mail,
             'last_update_time' : str(self.last_update_time),
-            'ip_ports' : self.ip_ports
+            'ip_ports' : self.ip_ports,
+            'api_key' : self.api_key
         }

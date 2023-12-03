@@ -12,7 +12,7 @@ async def connect_redis():
     password='test_pass1', decode_responses=True)
     
     # for local redis
-    redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    # redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
     
     logging.info("Redis Inititated for this session Successfully {} ".format(redis_client))
 
