@@ -3,10 +3,11 @@ from typing import Dict, Union
 from pydantic import EmailStr
 from typing import Union
 
+
 class User(BaseModel):
     email: str
     phone : str
-    username: Union[str, None] = None
+    service_org : str
 
 class UserSignUp(User):
     password : str
@@ -70,15 +71,15 @@ class ResponseModel(BaseModel):
     message : str 
 
 
-class ClientSignup(BaseModel):
+class ServiceSignup(BaseModel):
     service_name : str
-    service_initials : str 
-    subscription : Union[str, None] = None
+    service_org : str 
+    subscription_mode : Union[str, None] = None
     daily_request_counts : Union[str, None] = None
     registration_mail : str 
-    ip_ports : str
+    ip_ports : list
 
-    
+            
 
 
 

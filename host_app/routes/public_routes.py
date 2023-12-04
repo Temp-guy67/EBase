@@ -1,19 +1,19 @@
 from fastapi import Depends, HTTPException, status, Request, APIRouter
-from host_app.database.schemas import UserSignUp, UserLogin, ClientSignup
+from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordBearer
 import jwt, jwt.exceptions
 import logging
 from datetime import timedelta
-from host_app.database import crud, client_dbutils
+from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.caching import redis_util
 from host_app.common import util
 from host_app.routes import verification
 
 
-user_router = APIRouter(
+public_router = APIRouter(
     prefix='/public',
     tags=['public']
 )
@@ -23,7 +23,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 #====================================== USER ============================
 
-@user_router.post("/signup")
+@public_router.post("/signup")
 async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
     try:
         db_user = crud.get_user_by_email(db=db, email=user.email)
@@ -41,7 +41,7 @@ async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
         logging.exception("[MAIN][Exception in sign_up] {} ".format(ex))
 
 
-@user_router.post("/login")
+@public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
         client_ip = req.client.host
@@ -78,23 +78,26 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         logging.exception("[MAIN][Exception in user_login] {} ".format(ex))
 
 
-@user_router.post("/createclient")
-async def sign_up(client: ClientSignup, db: Session = Depends(get_db)):
+@public_router.post("/createservice")
+async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
-        db_client = client_dbutils.get_client_by_email(db=db, email=client.registration_mail)
+        
+        print(" Landed in create Service ", service_user.registration_mail)
+        db_client = service_crud.get_service_by_email(db=db, email=service_user.registration_mail)
 
         if db_client:
-            return HTTPException(status_code=400, detail="Email already registered as Client")
+            return HTTPException(status_code=400, detail="Email already registered as Service Owner")
         
-        db_client = client_dbutils.get_client_by_service_initials(db, phone=client.service_initials)
+        db_client = service_crud.get_service_by_service_org(db, service_org=service_user.service_org)
         if db_client:
-            return HTTPException(status_code=400, detail="Service Initials already registered")
+            return HTTPException(status_code=400, detail="Service ORG already registered")
         
 
-        res = await client_dbutils.create_new_client(db=db, client=client)
+        res = await service_crud.create_new_service(db=db, service_user=service_user)
+        print(" RES RECEVED IN PUBLIC ROUTES : " , res)
         return res
 
     except Exception as ex :
-        logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
+        logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
 
 

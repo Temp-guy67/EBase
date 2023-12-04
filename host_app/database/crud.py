@@ -59,7 +59,6 @@ async def create_new_user(db: Session, user: UserSignUp):
         alpha_int = random.randint(1,26)
         if not username :
             rand_int = random.randint(1,999)
-            
             username = "auto_" + str(rand_int) + chr(64 + alpha_int) 
 
         user_id = "user_" + chr(64 + alpha_int) + str(random.randint(1,999))
