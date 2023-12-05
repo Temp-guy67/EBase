@@ -1,4 +1,4 @@
-import hashlib,string,random, logging
+import hashlib,string,random, logging, secrets
 from host_app.database.sql_constants import CommonConstants
 
 # signup_map = {**signup_model.model_dump()}   # to get from model object to dictionary
@@ -41,7 +41,7 @@ async def create_order_id(user_id : str):
 async def zipper(arr : list):
     try :
         s = "_!_".join(arr)
-        print("Zipped data ", s)
+        # print("Zipped data ", s)
         return s
         
     except Exception as ex :
@@ -51,7 +51,7 @@ async def zipper(arr : list):
 async def unzipper(s : str):
     try :
         arr = s.split("_!_")
-        print("UN Zipped data ", s)
+        # print("UN Zipped data ", s)
         return arr
         
     except Exception as ex :
@@ -59,6 +59,9 @@ async def unzipper(s : str):
     
 
 
-
+async def generate_secure_random_string():
+    length = 5
+    letters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(letters) for _ in range(length))
    
 

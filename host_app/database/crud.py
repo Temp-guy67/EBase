@@ -7,6 +7,7 @@ from host_app.caching.redis_constant import RedisConstant
 import random
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
+from host_app.common import util
 
 
 def get_user_by_user_id(db: Session, user_id: str):
@@ -55,20 +56,20 @@ def get_user_by_phone(db: Session, phone: str):
 async def create_new_user(db: Session, user: UserSignUp):
     try:
         username = user.username
+        service_org = user.service_org
         password = user.password
         alpha_int = random.randint(1,26)
         if not username :
             rand_int = random.randint(1,999)
-            username = "auto_" + str(rand_int) + chr(64 + alpha_int) 
+            username = service_org + "_" + await util.generate_secure_random_string()
 
-        user_id = "user_" + chr(64 + alpha_int) + str(random.randint(1,999))
-        db_user = Account(email=user.email, phone=user.phone, user_id=user_id,
-                          username=username)
+        user_id = service_org + "_" + chr(64 + alpha_int) + "_" + str(random.randint(1000,9999))
+        db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org)
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
 
-        test_response = {"email":user.email, "phone":user.phone, "user_id":user_id,"username":username, "is_verified" : db_user.is_verified , "role" : db_user.role}
+        test_response = {"email":user.email, "phone":user.phone, "user_id":user_id,"username":username, "is_verified" : db_user.is_verified , "role" : db_user.role, "service_org" : db_user.service_org}
         await create_password(db, user_id, password)
 
         response = UserSignUpResponse.model_validate(test_response)

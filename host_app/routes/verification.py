@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
 from host_app.common import util
-from fastapi import status, Depends, HTTPException
+from fastapi import Header, status, Depends, HTTPException, Request
 from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
 from typing import Annotated
 import jwt, jwt.exceptions
@@ -43,7 +43,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
         
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -51,8 +51,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
     )
     try:
         user_id_from_token_map = await redis_util.get_str(token)
-
-        logging.info(" GOt user_id from token map : {} ".format(user_id_from_token_map))
+        print(" REQUEST thing ", req.client.host)
 
         if user_id_from_token_map:
             user_data = await redis_util.get_hm(user_id_from_token_map)
@@ -88,6 +87,25 @@ async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depe
     return current_user
 
 
+
+async def verify_api_key(req: Request, db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="API is not correct",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        client_ip = req.client.host
+        user_agent = req.headers.get("user-agent")
+        api_key = req.headers.get("api_key")
+        print("HEADER : ", client_ip , user_agent, api_key)
+        
+    except Exception as ex :
+        logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
+        raise credentials_exception
+    
+
+
 async def get_api_key():
     try:
         api_key = secrets.token_urlsafe(32)
@@ -95,6 +113,7 @@ async def get_api_key():
 
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
+
 
 async def get_encrypted_api_key(api_key:str, ip_ports: list):
     try:

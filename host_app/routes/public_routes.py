@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, status, Request, APIRouter
+from typing import Annotated
+from fastapi import Depends, HTTPException, Header, status, Request, APIRouter
 from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
@@ -22,10 +23,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 # Dependency
 
 #====================================== USER ============================
-
+# = Depends(verification.verify_api_key)
 @public_router.post("/signup")
-async def sign_up(user: UserSignUp, db: Session = Depends(get_db)):
+async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
+
+
+        verification.verify_api_key
+        print(" Lnaded in sign up ", user)
         db_user = crud.get_user_by_email(db=db, email=user.email)
 
         if db_user:
@@ -81,8 +86,6 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
 @public_router.post("/createservice")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
-        
-        print(" Landed in create Service ", service_user.registration_mail)
         db_client = service_crud.get_service_by_email(db=db, email=service_user.registration_mail)
 
         if db_client:
@@ -94,7 +97,6 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         
 
         res = await service_crud.create_new_service(db=db, service_user=service_user)
-        print(" RES RECEVED IN PUBLIC ROUTES : " , res)
         return res
 
     except Exception as ex :

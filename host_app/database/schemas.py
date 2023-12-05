@@ -11,6 +11,8 @@ class User(BaseModel):
 
 class UserSignUp(User):
     password : str
+    username : Union[str, None] = None
+
 
 class UserInDB(User):
     hashed_password : str 
@@ -26,6 +28,7 @@ class UserSignUpResponse(User):
     user_id : str
     is_verified : int
     role : int
+    username : str
 
 class UserUpdate(BaseModel):
     user_id : str 

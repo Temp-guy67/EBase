@@ -53,7 +53,6 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
         enc_api_key = await verification.get_encrypted_api_key(api_key, ip_ports_str)
 
         response = await ServiceSignupResponse(db_user, enc_api_key)
-        print("respons ei s : ", response)
         return response
 
     except Exception as ex :
