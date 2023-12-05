@@ -28,8 +28,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
 
-
-        verification.verify_api_key
+        await verification.verify_api_key(req)
         print(" Lnaded in sign up ", user)
         db_user = crud.get_user_by_email(db=db, email=user.email)
 
