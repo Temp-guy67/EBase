@@ -86,7 +86,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: R
 async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depends(get_current_user)]):
     return current_user
 
-
+# PASTRY : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiY3hYLWRsS0xnVnlMNml1YXpPU3M4LWJpY1hBT3RZajlUUlFUV2Y5TUdfYyIsImlwX3BvcnRzIjoiMTI3LjAuMC4xOjgwMDBfIV8wLjAuMC4wIn0.n8-j1ERFPNRkEA1qThDECEI5p2bbGKk33_smFvRseQY
 
 async def verify_api_key(req: Request, db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
@@ -99,6 +99,15 @@ async def verify_api_key(req: Request, db: Session = Depends(get_db)):
         user_agent = req.headers.get("user-agent")
         api_key = req.headers.get("api_key")
         print("HEADER : ", client_ip , user_agent, api_key)
+        
+        payload = jwt.decode(api_key, SECRET_KEY, algorithms=[ALGORITHM])
+
+        api_key: str = payload.get("api_key")
+        ip_ports_str: str = payload.get("ip_ports")
+        
+        ip_ports = await util.unzipper(ip_ports_str)
+        print(" IP PORTS : ", ip_ports," API ",api_key)
+        # WILL CHECK IF THE CLIENT API COMES UNDER THIS LIST OR NOT, AND THE COUNT .. AND THE THE API KEY IS RIGHT OR NOT. 
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
