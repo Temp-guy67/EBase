@@ -103,11 +103,8 @@ async def verify_api_key(req: Request, db: Session = Depends(get_db)):
         payload = jwt.decode(api_key, SECRET_KEY, algorithms=[ALGORITHM])
 
         api_key: str = payload.get("api_key")
-        ip_ports_str: str = payload.get("ip_ports")
-        
-        ip_ports = await util.unzipper(ip_ports_str)
-        print(" IP PORTS : ", ip_ports," API ",api_key)
-        # WILL CHECK IF THE CLIENT API COMES UNDER THIS LIST OR NOT, AND THE COUNT .. AND THE THE API KEY IS RIGHT OR NOT. 
+
+        # fetch client address and store it in redis for one day. will verify the ip and ports as an set
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
@@ -126,19 +123,9 @@ async def get_api_key():
 
 async def get_encrypted_api_key(api_key:str, ip_ports: list):
     try:
-        encoded_api_key = jwt.encode({'api_key': api_key, 'ip_ports':ip_ports}, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_api_key = jwt.encode({'api_key': api_key}, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_api_key
 
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_encrypted_api_key] {} ".format(ex))
     
-        
-async def decrypt_api_key(ip_ports: str):
-    try:
-        api_key = secrets.token_urlsafe(32)
-        print(" API KEY : ", api_key)
-        encoded_jwt = jwt.encode({'api_key': api_key, 'ip_ports':ip_ports}, SECRET_KEY, algorithm=ALGORITHM)
-        return {'encrypted_api_key': encoded_jwt}
-
-    except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
