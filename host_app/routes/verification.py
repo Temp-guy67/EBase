@@ -88,23 +88,19 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: R
 async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depends(get_current_user)]):
     return current_user
 
-# PASTRY : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiY3hYLWRsS0xnVnlMNml1YXpPU3M4LWJpY1hBT3RZajlUUlFUV2Y5TUdfYyIsImlwX3BvcnRzIjoiMTI3LjAuMC4xOjgwMDBfIV8wLjAuMC4wIn0.n8-j1ERFPNRkEA1qThDECEI5p2bbGKk33_smFvRseQY
 
 async def verify_api_key(req: Request, db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="API is not correct",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
         enc_api_key = req.headers.get("api_key")
-        print("HEADER : ", client_ip , user_agent, api_key)
+        print("HEADER : ", client_ip , user_agent, enc_api_key)
         
         payload = jwt.decode(enc_api_key, SECRET_KEY, algorithms=[ALGORITHM])
 
         api_key: str = payload.get("api_key")
+        
+        print(" API Key : ", api_key)
 
         ip_ports_set = None
         daily_req_left = None
@@ -121,7 +117,7 @@ async def verify_api_key(req: Request, db: Session = Depends(get_db)):
 
         else :
 
-            service_obj = await service_crud.get_service_by_api_key(api_key)
+            service_obj = await service_crud.get_service_by_api_key(db=db, api_key=api_key)
             need_to_update_redis = True
 
             if service_obj:
@@ -137,13 +133,13 @@ async def verify_api_key(req: Request, db: Session = Depends(get_db)):
                 redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, daily_req_left - 1, 86400) 
                 redis_util.set_str(api_key + RedisConstant.IS_SERVICE_VERIFIED, is_service_verified, 86400) 
 
-                for e in ip_ports_list:
-                    await redis_util.add_to_set_str_val(api_key + RedisConstant.IP_PORTS_SET, e, 86400)
+                for ip_port in ip_ports_list:
+                    await redis_util.add_to_set_str_val(api_key + RedisConstant.IP_PORTS_SET, ip_port, 86400)
 
 
         if daily_req_left :
             redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, daily_req_left - 1, 86400)  # for one day
-            return 1
+            return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left- 1 , "is_service_verified" : is_service_verified }
         elif daily_req_left == 0 :
             return Exceptions.REQUEST_LIMIT_EXHAUST 
 
@@ -161,6 +157,9 @@ async def get_api_key():
 
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
+
+
+#Boat : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiTjRPUWdzMGNnWlRYMTBwRTdNdEpveGxLYWY1eEhLdnhfQWtVZHhJcm50VSJ9.wGxmrPHsSD4w_JDKcfN0fBjl9HjWQn6vkZf6qxhSpqo
 
 
 async def get_encrypted_api_key(api_key:str, ip_ports: list):
