@@ -28,7 +28,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
 
-        await verification.verify_api_key(req)
+        verification_result = await verification.verify_api_key(req)
+
+        if verification_result != 1 :
+            return verification_result
+
         print(" Lnaded in sign up ", user)
         db_user = crud.get_user_by_email(db=db, email=user.email)
 
@@ -48,6 +52,11 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
+        verification_result = await verification.verify_api_key(req)
+
+        if verification_result != 1 :
+            return verification_result
+
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
         db_user = crud.get_user_by_email_login(db, email=userlogin.email)

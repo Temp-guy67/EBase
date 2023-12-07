@@ -9,9 +9,11 @@ from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
 import secrets
+from host_app.common.exceptions import Exceptions
 
 from host_app.caching import redis_util
-from host_app.database import crud, schemas
+from host_app.caching.redis_constant import RedisConstant
+from host_app.database import crud, schemas,service_crud
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -97,18 +99,58 @@ async def verify_api_key(req: Request, db: Session = Depends(get_db)):
     try:
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
-        api_key = req.headers.get("api_key")
+        enc_api_key = req.headers.get("api_key")
         print("HEADER : ", client_ip , user_agent, api_key)
         
-        payload = jwt.decode(api_key, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(enc_api_key, SECRET_KEY, algorithms=[ALGORITHM])
 
         api_key: str = payload.get("api_key")
 
-        # fetch client address and store it in redis for one day. will verify the ip and ports as an set
+        ip_ports_set = None
+        daily_req_left = None
+
+        need_to_update_redis = False
+
+        if await redis_util.is_exists(api_key + RedisConstant.SERVICE_ID):
+            ip_ports_set = await redis_util.get_str(api_key + RedisConstant.IP_PORTS_SET)
+
+            daily_req_left = await redis_util.get_str(api_key + RedisConstant.DAILY_REQUEST_LEFT)
+
+            is_service_verified = await redis_util.get_str(api_key + RedisConstant.IS_SERVICE_VERIFIED)
+
+
+        else :
+
+            service_obj = await service_crud.get_service_by_api_key(api_key)
+            need_to_update_redis = True
+
+            if service_obj:
+                ip_ports_str = service_obj.ip_ports
+                ip_ports_list = util.unzipper(ip_ports_str)
+                
+                if not client_ip in ip_ports_list :
+                    return Exceptions.WRONG_API
+
+                daily_req_left = service_obj.daily_request_counts
+                is_service_verified = service_obj.is_verified
+
+                redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, daily_req_left - 1, 86400) 
+                redis_util.set_str(api_key + RedisConstant.IS_SERVICE_VERIFIED, is_service_verified, 86400) 
+
+                for e in ip_ports_list:
+                    await redis_util.add_to_set_str_val(api_key + RedisConstant.IP_PORTS_SET, e, 86400)
+
+
+        if daily_req_left :
+            redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, daily_req_left - 1, 86400)  # for one day
+            return 1
+        elif daily_req_left == 0 :
+            return Exceptions.REQUEST_LIMIT_EXHAUST 
+
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
-        raise credentials_exception
+    return Exceptions.CREDENTIAL_ERROR_EXCEPTION
     
 
 

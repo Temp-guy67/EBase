@@ -44,7 +44,7 @@ async def get_hm(key:str):
         logging.exception("[REDIS_UTIL][Exception in get_data_in_redis] {} ".format(ex))
     
 
-async def set_str(key: str, val:str, ttl_in_sec:int = 3600):
+def set_str(key: str, val:str, ttl_in_sec:int = 3600):
     try:
         redis_client.set(key, val)
         redis_client.expire(key, ttl_in_sec)
@@ -81,6 +81,12 @@ async def add_to_set(set_name:str, val:dict, ttl_in_sec: int = 3600):
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in add_to_set] {} ".format(ex))
 
+async def add_to_set_str_val(set_name:str, val:str, ttl_in_sec: int = 3600):
+    try:
+        redis_client.sadd(set_name,val)
+        redis_client.expire(set_name, ttl_in_sec)
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in add_to_set_str_val] {} ".format(ex))
 
 async def get_set(set_name:str):
     try:

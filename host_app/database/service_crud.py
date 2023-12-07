@@ -18,6 +18,13 @@ def get_service_by_service_id(db: Session, service_id: str):
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_service_id] {} ".format(ex))
 
+def get_service_by_api_key(db: Session, api_key: str) -> dict:
+    try:
+        return db.query(Service).filter(Service.api_key == api_key).first()
+    
+    except Exception as ex :
+        logging.exception("[SERVICE_CRUD][Exception in get_service_by_api_key] {} ".format(ex))
+
 
 def get_service_by_email(db: Session, email: str):
     try:
