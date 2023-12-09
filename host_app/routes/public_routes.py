@@ -29,13 +29,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
-
-        verification_result = await verify_api_key(req)
-        print(" TYPE OF VER RESULT ", type(verification_result))
-        if verification_result != 1 :
+        verification_result = await verification.verify_api_key(req, db)
+        if type(verification_result) != type(dict()) :
             return verification_result
+        
+        if not int(verification_result["is_service_verified"]) :
+            return Exceptions.SERVICE_NOT_VERIFIED
 
-        print(" Lnaded in sign up ", user)
         db_user = crud.get_user_by_email(db=db, email=user.email)
 
         if db_user:
@@ -54,10 +54,13 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
-        verification_result = await verification.verify_api_key(req)
 
-        if verification_result != 1 :
+        verification_result = await verification.verify_api_key(req, db)
+        if type(verification_result) != type(dict()) :
             return verification_result
+        
+        if not int(verification_result["is_service_verified"]) :
+            return Exceptions.SERVICE_NOT_VERIFIED
 
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
@@ -93,6 +96,8 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         logging.exception("[MAIN][Exception in user_login] {} ".format(ex))
 
 
+# =========================== SERVICES ==============================
+
 @public_router.post("/createservice")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
@@ -113,61 +118,24 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
 
 
-async def verify_api_key(req: Request, db: Session = Depends(get_db)):
+
+
+
+
+
+
+
+# ======================= Test ===========================
+
+
+@public_router.get("/test")
+async def testing_data(db: Session = Depends(get_db)):
     try:
-        client_ip = req.client.host
-        user_agent = req.headers.get("user-agent")
-        enc_api_key = req.headers.get("api_key")
-        print("HEADER : ", client_ip , user_agent, enc_api_key)
-        
-        payload = jwt.decode(enc_api_key, SECRET_KEY, algorithms=[ALGORITHM])
-
-        api_key: str = payload.get("api_key")
-        
-        print(" API Key : ", api_key)
-
-        ip_ports_set = None
-        daily_req_left = None
-
-        need_to_update_redis = False
-
-        if await redis_util.is_exists(api_key + RedisConstant.SERVICE_ID):
-            ip_ports_set = await redis_util.get_str(api_key + RedisConstant.IP_PORTS_SET)
-
-            daily_req_left = await redis_util.get_str(api_key + RedisConstant.DAILY_REQUEST_LEFT)
-
-            is_service_verified = await redis_util.get_str(api_key + RedisConstant.IS_SERVICE_VERIFIED)
+        api_key = "N4OQgs0cgZTX10pE7MtJoxlKaf5xHKvx_AkUdxIrntU"
+        service_obj = service_crud.get_service_by_api_key(db=db, api_key=api_key)
+        print(" SERVICE OBJ ", service_obj.to_dict())
+        return service_obj
 
 
-        else :
-
-            service_obj = await service_crud.get_service_by_api_key(db=db, api_key=api_key)
-            need_to_update_redis = True
-
-            if service_obj:
-                ip_ports_str = service_obj.ip_ports
-                ip_ports_list = util.unzipper(ip_ports_str)
-                
-                if not client_ip in ip_ports_list :
-                    return Exceptions.WRONG_API
-
-                daily_req_left = service_obj.daily_request_counts
-                is_service_verified = service_obj.is_verified
-
-                redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, daily_req_left - 1, 86400) 
-                redis_util.set_str(api_key + RedisConstant.IS_SERVICE_VERIFIED, is_service_verified, 86400) 
-
-                for ip_port in ip_ports_list:
-                    await redis_util.add_to_set_str_val(api_key + RedisConstant.IP_PORTS_SET, ip_port, 86400)
-
-
-        if daily_req_left :
-            redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, daily_req_left - 1, 86400)  # for one day
-            return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left- 1 , "is_service_verified" : is_service_verified }
-        elif daily_req_left == 0 :
-            return Exceptions.REQUEST_LIMIT_EXHAUST 
-
-        
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
-    return Exceptions.CREDENTIAL_ERROR_EXCEPTION

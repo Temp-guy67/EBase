@@ -107,7 +107,7 @@ class Service(Base):
 
     class RequestCounts:
         TEST=5
-        FREE=50
+        FREE=5
         NOOB=500
         PRO=1000
         ULTRA_PRO=2000

@@ -20,3 +20,15 @@ class Exceptions:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    WRONG_IP = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="This IP is not configured for this API",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    SERVICE_NOT_VERIFIED = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Your service request is not Verified yet, You can't make any action Now",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
