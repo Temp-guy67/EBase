@@ -12,6 +12,7 @@ class User(BaseModel):
 class UserSignUp(User):
     password : str
     username : Union[str, None] = None
+    role : Union[str, None] = None
 
 
 class UserInDB(User):
@@ -77,6 +78,8 @@ class ResponseModel(BaseModel):
 class ServiceSignup(BaseModel):
     service_name : str
     service_org : str 
+    phone : str
+    password : str
     subscription_mode : Union[str, None] = None
     daily_request_counts : Union[str, None] = None
     registration_mail : str 

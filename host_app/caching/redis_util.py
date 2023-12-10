@@ -6,13 +6,13 @@ async def connect_redis():
     
     # for AWS redis
     
-    # redis_client = redis.Redis(
-    # host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
-    # port=15144,
-    # password='test_pass1', decode_responses=True)
+    redis_client = redis.Redis(
+    host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
+    port=15144,
+    password='test_pass1', decode_responses=True)
     
     # for local redis
-    redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    # redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
     
     logging.info("Redis Inititated for this session Successfully {} ".format(redis_client))
 
@@ -46,7 +46,6 @@ async def get_hm(key:str):
 
 def set_str(key: str, val:str, ttl_in_sec:int = 3600):
     try:
-        print(" dfata recieved in set_str ", key, val)
         redis_client.set(key, val)
         redis_client.expire(key, ttl_in_sec)
     except Exception as ex :
@@ -70,7 +69,8 @@ async def delete_from_redis(key:str):
 
 async def is_exists(key : str):
     try:
-        return redis_client.exists(key)
+        res =  redis_client.exists(key)
+        return True if res else False
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in is_exists] {} ".format(ex))
 

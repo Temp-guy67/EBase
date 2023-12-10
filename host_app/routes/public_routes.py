@@ -14,6 +14,7 @@ from host_app.database.database import get_db
 from host_app.caching import redis_util
 from host_app.common import util
 from host_app.routes import verification
+from host_app.database import models
 
 
 public_router = APIRouter(
@@ -88,7 +89,7 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         user_id = user_obj["user_id"]
 
         await redis_util.set_hm(user_id, user_obj)
-        await redis_util.set_str(access_token, user_id)
+        redis_util.set_str(access_token, user_id)
         
         return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful"}
 
@@ -101,26 +102,43 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
 @public_router.post("/createservice")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
-        db_client = service_crud.get_service_by_email(db=db, email=service_user.registration_mail)
+        
+        service_email = service_user.registration_mail
+        service_org = service_user.service_org
+        db_client = service_crud.get_service_by_email(db=db, email=service_email)
 
         if db_client:
             return HTTPException(status_code=400, detail="Email already registered as Service Owner")
         
-        db_client = service_crud.get_service_by_service_org(db, service_org=service_user.service_org)
+        db_client = service_crud.get_service_by_service_org(db, service_org=service_org)
         if db_client:
             return HTTPException(status_code=400, detail="Service ORG already registered")
         
 
-        res = await service_crud.create_new_service(db=db, service_user=service_user)
-        return res
+        service_res = await service_crud.create_new_service(db=db, service_user=service_user)
+        
+        
+        db_user = crud.get_user_by_email(db=db, email=service_email)
+
+        if db_user:
+            return HTTPException(status_code=400, detail="Email already registered as User")
+
+
+        user_signup_model = dict()
+        user_signup_model["email"] = service_email
+        user_signup_model["password"] = service_user.password
+        user_signup_model["phone"] = service_user.phone
+        user_signup_model["service_org"] = service_org
+        user_signup_model["role"] = str(models.Account.Role.ADMIN)
+
+        user_model = UserSignUp.model_validate(user_signup_model)
+        
+        user_res = await crud.create_new_user(db=db, user=user_model)
+        
+        return {"Service Details" : service_res, "Admin Account" : user_res}
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
-
-
-
-
-
 
 
 
