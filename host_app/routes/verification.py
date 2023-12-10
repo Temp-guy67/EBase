@@ -9,6 +9,7 @@ from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
 from host_app.common.exceptions import Exceptions
+from host_app.database.sql_constants import APIConstants
 
 from host_app.caching import redis_util
 from host_app.caching.redis_constant import RedisConstant
@@ -103,11 +104,12 @@ async def verify_api_key(req: Request, db: Session):
         user_agent = req.headers.get("user-agent")
         enc_api_key = req.headers.get("api_key")
 
+
         api_key = await decrypt_enc_api_key(enc_api_key)
 
         ip_ports_set = None
         daily_req_left = None
-        # await delete_api_cache_from_redis()
+        # await delete_api_cache_from_redis(api_key)
         need_to_update_redis = False
 
         if await redis_util.is_exists(api_key + RedisConstant.SERVICE_ID):
@@ -158,6 +160,7 @@ async def verify_api_key(req: Request, db: Session):
 
 async def decrypt_enc_api_key(enc_api_key: str) -> str:
     try:
+        enc_api_key = enc_api_key[APIConstants.ENC_API_PREFIX_LEN:]
         payload = jwt.decode(enc_api_key, SECRET_KEY, algorithms=[ALGORITHM])
 
         api_key: str = payload.get("api_key")
@@ -184,16 +187,15 @@ async def get_api_key() -> str:
 async def get_encrypted_api_key(api_key:str, ip_ports: list):
     try:
         encoded_api_key = jwt.encode({'api_key': api_key}, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_api_key
+        return APIConstants.ENC_API_PREFIX + encoded_api_key
 
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_encrypted_api_key] {} ".format(ex))
     
 
 
-async def delete_api_cache_from_redis():
+async def delete_api_cache_from_redis(api_key: str):
     try:
-        api_key = "N4OQgs0cgZTX10pE7MtJoxlKaf5xHKvx_AkUdxIrntU"
         await redis_util.delete_from_redis(api_key + RedisConstant.IP_PORTS_SET)
         await redis_util.delete_from_redis(api_key + RedisConstant.DAILY_REQUEST_LEFT)
         await redis_util.delete_from_redis(api_key + RedisConstant.SERVICE_ID)

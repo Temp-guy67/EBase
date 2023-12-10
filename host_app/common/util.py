@@ -61,7 +61,7 @@ async def unzipper(s : str):
 
 async def generate_secure_random_string():
     length = 5
-    letters = string.ascii_letters + string.digits + string.punctuation
+    letters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(letters) for _ in range(length))
    
 

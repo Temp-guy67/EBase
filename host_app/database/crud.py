@@ -58,13 +58,18 @@ async def create_new_user(db: Session, user: UserSignUp):
         username = user.username
         service_org = user.service_org
         password = user.password
+        role = user.role
+        if not role :
+            role = Account.Role.USER
+        role = int(role)
+            
         alpha_int = random.randint(1,26)
         if not username :
-            rand_int = random.randint(1,999)
-            username = service_org + "_" + await util.generate_secure_random_string()
+            username = service_org + "_" + str(role) +"_"+ await util.generate_secure_random_string()
 
-        user_id = service_org + "_" + chr(64 + alpha_int) + "_" + str(random.randint(1000,9999))
-        db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org)
+        user_id = service_org + "_" + str(role) + "_" +chr(64 + alpha_int)+ str(random.randint(1000,9999))
+        
+        db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org, role=role)
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
