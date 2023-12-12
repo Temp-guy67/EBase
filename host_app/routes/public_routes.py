@@ -11,8 +11,7 @@ import logging
 from datetime import timedelta
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
-from host_app.caching import redis_util
-from host_app.common import util
+from host_app.common import user_util
 from host_app.routes import verification
 from host_app.database import models
 
@@ -25,8 +24,7 @@ public_router = APIRouter(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 # Dependency
 
-#====================================== USER ============================
-# = Depends(verification.verify_api_key)
+
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
@@ -49,7 +47,7 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
         return res
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in sign_up] {} ".format(ex))
+        logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
 
 
 @public_router.post("/login")
@@ -77,7 +75,7 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         if not account_obj:
             return HTTPException(status_code=400, detail="User Not Available")
         
-        res = await verification.verify_password( userlogin.password, password_obj.hashed_password, password_obj.salt)
+        res = await verification.verify_password(userlogin.password, password_obj.hashed_password, password_obj.salt)
 
         if not res:
             return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password",headers={"WWW-Authenticate": "Bearer"})
@@ -88,13 +86,13 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         )
         user_id = user_obj["user_id"]
 
-        await redis_util.set_hm(user_id, user_obj)
-        redis_util.set_str(access_token, user_id)
+        await user_util.update_user_details_int_redis(user_id, access_token, user_obj);
         
         return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful", "role" : user_obj["role"]}
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in user_login] {} ".format(ex))
+        logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))
+
 
 
 # =========================== SERVICES ==============================
@@ -155,4 +153,4 @@ async def testing_data(db: Session = Depends(get_db)):
 
 
     except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
+        logging.exception("[PUBLIC_ROUTES][Exception in verify_api_key] {} ".format(ex))

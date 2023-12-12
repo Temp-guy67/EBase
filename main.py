@@ -37,11 +37,13 @@ async def startService():
     await onStartService()
 
 
-
+@app.get("/")
+async def hello():
+    return {"message" : "Entry Screen"}
 
 @app.get("/test")
 async def hello():
-    return {"message" : "Hello Murali 😀"}
+    return {"message" : "Hello Boss"}
 
 
 @app.post("/test/login")
@@ -56,9 +58,9 @@ async def login_test():
 @app.get("/test/getuser")
 async def get_user():
     return {
-  "email": "test3@testmail.com",
-  "created_time": "2023-09-18T12:30:48",
-  "id": 1,
-  "username": "test3",
-  "phone": "123456711",
-}
+        "email": "test3@testmail.com",
+        "created_time": "2023-09-18T12:30:48",
+        "id": 1,
+        "username": "test3",
+        "phone": "123456711",
+    }
