@@ -91,7 +91,7 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         await redis_util.set_hm(user_id, user_obj)
         redis_util.set_str(access_token, user_id)
         
-        return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful"}
+        return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful", "role" : user_obj["role"]}
 
     except Exception as ex :
         logging.exception("[MAIN][Exception in user_login] {} ".format(ex))
@@ -102,7 +102,6 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
 @public_router.post("/createservice")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
-        
         service_email = service_user.registration_mail
         service_org = service_user.service_org
         db_client = service_crud.get_service_by_email(db=db, email=service_email)

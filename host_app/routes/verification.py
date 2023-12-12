@@ -61,7 +61,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: R
             return Exceptions.SERVICE_NOT_VERIFIED
 
         user_id_from_token_map = await redis_util.get_str(token)
-        print(" REQUEST thing ", req.client.host)
 
         if user_id_from_token_map:
             user_data = await redis_util.get_hm(user_id_from_token_map)

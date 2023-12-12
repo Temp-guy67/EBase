@@ -8,7 +8,7 @@ Weekend Plan:
     b. client db and access
 
     [Client must have a password will be added while sign up]
-    # what client admin can do 
+    ## what client admin can do 
         - ) admin login - [Done] 
         i) verify admin + Verify User
             - this will be automated
@@ -24,3 +24,7 @@ Weekend Plan:
     a. superadmin login and
     b. super admin access 
 
+
+UpdatTION Sync
+1. get separate method from get from db, update data in redis
+2. Redis Map - DO IT NOW

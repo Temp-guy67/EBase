@@ -6,13 +6,13 @@ async def connect_redis():
     
     # for AWS redis
     
-    redis_client = redis.Redis(
-    host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
-    port=15144,
-    password='test_pass1', decode_responses=True)
+    # redis_client = redis.Redis(
+    # host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
+    # port=15144,
+    # password='test_pass1', decode_responses=True)
     
     # for local redis
-    # redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
     
     logging.info("Redis Inititated for this session Successfully {} ".format(redis_client))
 
@@ -51,6 +51,7 @@ def set_str(key: str, val:str, ttl_in_sec:int = 3600):
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in set_str] {} ".format(ex))
 
+
 async def get_str(key: str):
     try:
         byte_data = redis_client.get(key)
@@ -82,6 +83,7 @@ async def add_to_set(set_name:str, val:dict, ttl_in_sec: int = 3600):
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in add_to_set] {} ".format(ex))
 
+
 async def add_to_set_str_val(set_name:str, val:str, ttl_in_sec: int = 3600):
     try:
         redis_client.sadd(set_name,val)
@@ -89,12 +91,14 @@ async def add_to_set_str_val(set_name:str, val:str, ttl_in_sec: int = 3600):
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in add_to_set_str_val] {} ".format(ex))
 
+
 async def get_set(set_name:str):
     try:
         set_items = redis_client.smembers(set_name)
         return set_items
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in get_set] {} ".format(ex))
+
 
 async def is_member_is_set(set_name:str, item:str):
     try:

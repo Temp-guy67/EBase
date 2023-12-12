@@ -25,7 +25,7 @@ class Account(Base):
     created_time = Column(DateTime, default=func.now())
     role = Column(Integer, default=Role.USER)
     last_login_time = Column(DateTime, onupdate=func.now())
-    service_org = Column(String)
+    service_org = Column(String, unique=True, nullable=False)
 
     # items = relationship("Order", back_populates="owner")
     async def to_dict(self):
@@ -76,6 +76,7 @@ class Orders(Base):
     owner_id = Column(String, ForeignKey("account.user_id"))
     created_time = Column(DateTime, default=func.now())
     last_update_time = Column(DateTime, onupdate=func.now(), nullable=True)
+    service_org = Column(String, unique=True, nullable=False)
 
     # owner = relationship("Account", back_populates="order")
 
@@ -92,7 +93,8 @@ class Orders(Base):
             'owner_id' : self.owner_id,
             'receivers_mobile' : self.receivers_mobile,
             'order_quantity' : self.order_quantity,
-            'last_update_time' : str(self.last_update_time)
+            'last_update_time' : str(self.last_update_time),
+            'service_org' : self.service_org
         }
 
 
@@ -107,7 +109,7 @@ class Service(Base):
 
     class RequestCounts:
         TEST=5
-        FREE=5
+        FREE=50
         NOOB=500
         PRO=1000
         ULTRA_PRO=2000

@@ -32,3 +32,9 @@ class Exceptions:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    NOT_AUTHORIZED = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="You are not a Admin",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+

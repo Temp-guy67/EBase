@@ -8,10 +8,14 @@ import random
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
 from host_app.common import util
+from typing import Optional
 
 
-def get_user_by_user_id(db: Session, user_id: str):
+def get_user_by_user_id(db: Session, user_id: str, org: Optional[str] = None):
     try:
+        if org :
+            return db.query(Account).filter(Account.user_id == user_id, Account.service_org == org).first()
+
         return db.query(Account).filter(Account.user_id == user_id).first()
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_user_id] {} ".format(ex))
@@ -123,6 +127,7 @@ async def update_password_data(db: Session, user_id: int, user_update_map: dict)
     except Exception as ex :
         logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
 
+
 async def update_account_data(db: Session, user_id: int, user_update_map: dict):
     try :
         print(" DATA RECEIVED FOR update_user ",user_update_map)
@@ -136,6 +141,7 @@ async def update_account_data(db: Session, user_id: int, user_update_map: dict):
         return None
     except Exception as ex :
         logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
+
 
 
 def delete_user(db: Session, user_id: str):
@@ -157,21 +163,44 @@ def delete_user(db: Session, user_id: str):
         logging.exception("[CRUD][Exception in delete_user] {} ".format(ex))
 
 
-async def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+async def get_all_users(db: Session, org: Optional[str] = None, skip: int = 0, limit: int = 100):
     try:
         # Jani na keno ei join krsi 
         # res =  db.query(Account, Orders).join(Orders).filter(Account.id == Orders.owner_id).all()
         # for e in res :
-        res = db.query(Account).all()
+        if org :
+            res = db.query(Account).filter(Account.service_org == org).all()
+        else :
+            res = db.query(Account).all()
+
         res_arr = {}
         for e in res :
             dicu = await e.to_dict()
             res_arr[dicu["user_id"]] = dicu
+
         return res_arr
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_all_users] {} ".format(ex))
 
 
+async def get_all_unverified_users(db: Session, org: Optional[str] = None, skip: int = 0, limit: int = 100):
+    try:
+        # Jani na keno ei join krsi 
+        # res =  db.query(Account, Orders).join(Orders).filter(Account.id == Orders.owner_id).all()
+        # for e in res :
+        if org :
+            res = db.query(Account).filter(Account.is_verified == Account.Verification.NOT_VERIFIED, Account.service_org == org).all()
+        else :
+            res = db.query(Account).filter(Account.is_verified == Account.Verification.NOT_VERIFIED).all()
+
+        res_arr = {}
+        for e in res :
+            dicu = await e.to_dict()
+            res_arr[dicu["user_id"]] = dicu
+
+        return res_arr
+    except Exception as ex :
+        logging.exception("[CRUD][Exception in get_all_users] {} ".format(ex))
 
 
 # ==================== Orders CRUD METHODS =================================
@@ -188,15 +217,19 @@ async def create_new_order(db: Session, orders_info: OrderCreate):
         logging.exception("[CRUD][Exception in create_new_order]",ex)
 
 
-def get_all_orders_by_user(db: Session, user_id: str):
+def get_all_orders_by_user(db: Session, user_id: str, org: Optional[str] = None):
     try:
-        single_order_obj = db.query(Orders).filter(Orders.owner_id == user_id).all()
+        if not org : 
+            single_order_obj = db.query(Orders).filter(Orders.owner_id == user_id).all()
+        else :
+            single_order_obj = db.query(Orders).filter(Orders.owner_id == user_id,Orders.service_org == org ).all()
+
         return single_order_obj
     except Exception as ex:
         logging.exception("[crud][Exception in get_all_orders_by_user] {} ".format(ex))
 
 
-def get_order_by_order_id(db: Session, user_id : str, order_id: str):
+def get_order_by_order_id(db: Session, user_id : str, order_id: str, org: Optional[str] = None):
     try:
         order_obj =  db.query(Orders).filter(Orders.order_id == order_id, Orders.owner_id== user_id).first()
         
@@ -204,7 +237,7 @@ def get_order_by_order_id(db: Session, user_id : str, order_id: str):
         logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
 
 
-def get_orders_status(db: Session, user_id : str, Orders_id: int):
+def get_orders_status(db: Session, user_id : str, Orders_id: int, org: Optional[str] = None):
     try:
         order = get_order_by_order_id(db, Orders_id)
         return order
@@ -213,7 +246,7 @@ def get_orders_status(db: Session, user_id : str, Orders_id: int):
     
 
 
-async def update_order_status(db: Session, user_id : str, order_id: str, orders_status: dict):
+async def update_order_status(db: Session, user_id : str, order_id: str, orders_status: dict, org: Optional[str] = None):
     try :
         logging.info("[CRUD][Landed in update_Orders_status] {} ".format(orders_status))
         order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
@@ -233,7 +266,7 @@ async def update_order_status(db: Session, user_id : str, order_id: str, orders_
         logging.exception("[CRUD][Exception in update_Orders_status] {} ".format(ex))
 
 
-def delete_order(db: Session, order_id: str, user_id : str):
+def delete_order(db: Session, order_id: str, user_id : str, org: Optional[str] = None):
     try:
         order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
         if order_obj.owner_id != user_id :
@@ -249,14 +282,17 @@ def delete_order(db: Session, order_id: str, user_id : str):
 
 
 
-def get_all_orderss(db: Session, skip: int = 0, limit: int = 100):
+def get_all_orderss(db: Session, skip: int = 0, limit: int = 100, org: Optional[str] = None):
     try:
-        return db.query(Orders).offset(skip).limit(limit).all()
+        if not org :
+            return db.query(Orders).offset(skip).limit(limit).all()
+        return db.query(Account).filter(Orders.service_org == org).all()
+        
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_all_Orderss] {} ".format(ex))
 
 
-async def get_single_order(db: Session, user_id: str, order_id: str):
+async def get_single_order(db: Session, user_id: str, order_id: str, org: Optional[str] = None):
     try:
         if(await redis_util.is_exists(RedisConstant.ORDER_OBJ + order_id)):
             single_order = await redis_util.get_hm(RedisConstant.ORDER_OBJ + order_id)

@@ -13,6 +13,16 @@ auth_router = APIRouter(
     tags=['auth']
 )
 
+
+
+
+
+
+
+
+
+# Untested ----------------------
+
 @auth_router.get("/allorders")
 async def get_all_orders(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:

@@ -8,7 +8,7 @@ from host_app.routes.user_routes import user_router
 from host_app.routes.order_routes import order_router
 from host_app.routes.auth_routes import auth_router
 from host_app.routes.public_routes import public_router
-
+from host_app.routes.services_routes import service_router
 
 
 app = FastAPI()
@@ -17,7 +17,7 @@ app.include_router(user_router)
 app.include_router(order_router)
 app.include_router(auth_router)
 app.include_router(public_router)
-
+app.include_router(service_router)
 
 
 origins = ["http://localhost:3000"]  
