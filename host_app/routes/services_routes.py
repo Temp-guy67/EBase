@@ -47,7 +47,6 @@ What an Admin can do is :
 '''
 
 
-
 @service_router.get("/me/")
 async def get_admin(user: UserInDB = Depends(verification.get_current_active_user)):
     try:
@@ -70,7 +69,7 @@ async def update_user_data(user_data : UserUpdate, user: UserInDB = Depends(veri
         password_obj = await crud.get_password_data(db, user_id)
         
         await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
-        
+
         data = {"phone": "999000999"} 
         await crud.update_user(db, user_id, data)
 
