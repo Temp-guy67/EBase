@@ -69,7 +69,7 @@ async def create_new_user(db: Session, user: UserSignUp):
             
         alpha_int = random.randint(1,26)
         if not username :
-            username = service_org + "_" + str(role) +"_"+ await util.generate_secure_random_string()
+            username = "User_" + service_org + "_" + str(role) + await util.generate_secure_random_string()
 
         user_id = service_org + "_" + str(role) + "_" +chr(64 + alpha_int)+ str(random.randint(1000,9999))
         

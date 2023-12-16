@@ -68,6 +68,27 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
     return None
 
 
+
+async def update_service_data(db: Session, service_id: int, service_update_map: dict):
+    try :
+        print(" DATA RECEIVED FOR update_client ",service_update_map)
+        db_user = db.query(Service).filter(Service.service_id == service_id).first()
+        if db_user:
+            for key, value in service_update_map.items():
+                setattr(db_user, key, value)
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        return None
+    except Exception as ex :
+        logging.exception("[SERVICE_CRUD][Exception in update_service_data] {} ".format(ex))
+
+
+
+
+
+
+
 async def ServiceSignupResponse(data: Service, enc_api_key):
     # Your processing logic here
     return {

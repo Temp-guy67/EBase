@@ -7,7 +7,7 @@ import logging
 from host_app.database import crud
 from host_app.database.database import get_db
 from host_app.caching import redis_util
-from host_app.common import util
+from host_app.common import common_util
 from host_app.routes import verification
 
 
@@ -47,26 +47,9 @@ async def update_user(user_data : UserUpdate,user: UserInDB = Depends(verificati
 @user_router.post("/updatepassword/")
 async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        user_id = user["user_id"]
-        password = user_data.password
-        password_obj = await crud.get_password_data(db, user_id)
+        
+        return  await common_util.update_password(user, user_data.password, user_data.new_password)
 
-        if await verification.verify_password(password, password_obj.hashed_password, password_obj.salt):
-            new_password = user_data.new_password
-            new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
-            new_hashed_password = await util.create_hashed_password(new_password, new_salt)
-            data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
-            res = await crud.update_password_data(db, user_id, data)
-            if res :
-                await redis_util.delete_from_redis(user_id)
-                
-            return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
-        else :
-            return HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password is wrong",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
 
     except Exception as ex:
         logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
