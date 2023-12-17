@@ -95,19 +95,35 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
     try:
         # username, email and phone
         user_update_map = dict()
-        possible_update = ["email", "phone", "username"]
+        possible_update = ["email", "phone", "username" , "is_verified"]
         
         for k,v in user_update_map_info.items():
-            if k == 
+            if k == possible_update[0]:
+                res = crud.get_user_by_email()
+                if res :
+                    return "Email already registered"
+                
+            if k == possible_update[1]:
+                res = crud.get_user_by_phone()
+                if res :
+                    return "Phone No already registered"
             if k in possible_update :
                 user_update_map[k] = v
         
-        await crud.update_account_data(db, user_id, user_update_map)
+        updated_user_data = await crud.update_account_data(db, user_id, user_update_map)
+        
+        if updated_user_data :
+            update_user_details_in_redis(user_id, updated_user_data)
+            return 1
+        else :
+            return -1
+        
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in update_account_info] {} ".format(ex))
         
 
+# under supervision
 async def update_service_info(service_id: int, service_update_data: dict, db: Session = Depends(get_db)):
     try:
         
