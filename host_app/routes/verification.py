@@ -9,8 +9,8 @@ from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
 from host_app.common.exceptions import Exceptions
+from host_app.common import common_util
 from host_app.database.sql_constants import APIConstants
-
 from host_app.caching import redis_util
 from host_app.caching.redis_constant import RedisConstant
 from host_app.database import crud, schemas,service_crud
@@ -84,7 +84,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: R
             raise credentials_exception
         
         db_data = await db_user.to_dict()
-        await redis_util.set_hm(db_user.user_id, db_data, 1800)
+        await common_util.update_user_details_in_redis(db_user.user_id, db_data)
         return db_data
         
     except Exception as ex :
@@ -98,7 +98,7 @@ async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depe
 
 async def verify_api_key(req: Request, db: Session):
     try:
-
+    
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
         enc_api_key = req.headers.get("api_key")
@@ -108,10 +108,9 @@ async def verify_api_key(req: Request, db: Session):
 
         ip_ports_set = None
         daily_req_left = None
-        # await delete_api_cache_from_redis(api_key)
-        need_to_update_redis = False
-
-        if await redis_util.is_exists(api_key + RedisConstant.SERVICE_ID):
+        # await common_util.delete_api_cache_from_redis(api_key)
+        
+        if await redis_util.get_str(api_key + RedisConstant.SERVICE_ID):
             print(" checking in redis")
             ip_ports_set = await redis_util.get_str(api_key + RedisConstant.IP_PORTS_SET)
 
@@ -121,10 +120,9 @@ async def verify_api_key(req: Request, db: Session):
             is_service_verified = await redis_util.get_str(api_key + RedisConstant.IS_SERVICE_VERIFIED)
 
         else :
+            
             service_obj = service_crud.get_service_by_api_key(db=db, api_key=api_key)
-            need_to_update_redis = True
-           
-
+            
             if service_obj:
                 ip_ports_str = service_obj.ip_ports
                 ip_ports_list = await util.unzipper(ip_ports_str)
@@ -135,20 +133,16 @@ async def verify_api_key(req: Request, db: Session):
 
                 daily_req_left = service_obj.daily_request_counts
                 is_service_verified = service_obj.is_verified
-
-                redis_util.set_str(api_key + RedisConstant.IS_SERVICE_VERIFIED, str(is_service_verified), 86400) 
-
-                redis_util.set_str(api_key + RedisConstant.SERVICE_ID, service_id , 86400)
-
-                for ip_port in ip_ports_list:
-                    await redis_util.add_to_set_str_val(api_key + RedisConstant.IP_PORTS_SET, ip_port, 86400)
-
+                
+                common_util.add_api_cache_from_redis(api_key,service_id, daily_req_left, is_service_verified, ip_ports_list)
+                
+                
 
         if daily_req_left :
-            redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, str(daily_req_left - 1), 86400)  # for one day
             return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left- 1 , "is_service_verified" : is_service_verified }
         elif daily_req_left == 0 :
             return Exceptions.REQUEST_LIMIT_EXHAUST 
+        
 
         
     except Exception as ex :
@@ -180,7 +174,6 @@ async def get_api_key() -> str:
         logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
 
 
-#Boat : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiTjRPUWdzMGNnWlRYMTBwRTdNdEpveGxLYWY1eEhLdnhfQWtVZHhJcm50VSJ9.wGxmrPHsSD4w_JDKcfN0fBjl9HjWQn6vkZf6qxhSpqo
 
 
 async def get_encrypted_api_key(api_key:str, ip_ports: list):
@@ -193,13 +186,3 @@ async def get_encrypted_api_key(api_key:str, ip_ports: list):
     
 
 
-async def delete_api_cache_from_redis(api_key: str):
-    try:
-        await redis_util.delete_from_redis(api_key + RedisConstant.IP_PORTS_SET)
-        await redis_util.delete_from_redis(api_key + RedisConstant.DAILY_REQUEST_LEFT)
-        await redis_util.delete_from_redis(api_key + RedisConstant.SERVICE_ID)
-        await redis_util.delete_from_redis(api_key + RedisConstant.IS_SERVICE_VERIFIED)
-        print(" Deleted all the cache")
-
-    except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in delete_api_cache_from_redis] {} ".format(ex))

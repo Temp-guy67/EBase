@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
+from host_app.common.util import zipper,unzipper
 
 
 class Account(Base):
@@ -135,7 +136,8 @@ class Service(Base):
 
     # owner = relationship("Account", back_populates="order")
 
-
+    def get_ipports(s:str):
+        return 
 
     def to_dict(self):
         return {

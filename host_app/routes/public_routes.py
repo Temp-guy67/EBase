@@ -8,10 +8,10 @@ from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORIT
 from fastapi.security import OAuth2PasswordBearer
 import jwt, jwt.exceptions
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
-from host_app.common import user_util
+from host_app.common import common_util
 from host_app.routes import verification
 from host_app.database import models
 
@@ -53,10 +53,11 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
-
         verification_result = await verification.verify_api_key(req, db)
+        
         if type(verification_result) != type(dict()) :
             return verification_result
+        
         
         if not int(verification_result["is_service_verified"]) :
             return Exceptions.SERVICE_NOT_VERIFIED
@@ -86,7 +87,8 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         )
         user_id = user_obj["user_id"]
 
-        await user_util.update_user_details_int_redis(user_id, access_token, user_obj);
+        common_util.update_access_token_in_redis(user_id, access_token)
+        await common_util.update_user_details_in_redis(user_id, user_obj)
         
         return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful", "role" : user_obj["role"]}
 
@@ -138,19 +140,3 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
 
 
-
-
-# ======================= Test ===========================
-
-
-@public_router.get("/test")
-async def testing_data(db: Session = Depends(get_db)):
-    try:
-        api_key = "N4OQgs0cgZTX10pE7MtJoxlKaf5xHKvx_AkUdxIrntU"
-        service_obj = service_crud.get_service_by_api_key(db=db, api_key=api_key)
-        print(" SERVICE OBJ ", service_obj.to_dict())
-        return service_obj
-
-
-    except Exception as ex :
-        logging.exception("[PUBLIC_ROUTES][Exception in verify_api_key] {} ".format(ex))

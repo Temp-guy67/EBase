@@ -10,6 +10,7 @@ from host_app.caching import redis_util
 from host_app.common import util
 from host_app.routes import verification
 from host_app.common.exceptions import Exceptions
+from host_app.common import common_util
 
 
 service_router = APIRouter(
@@ -50,7 +51,8 @@ What an Admin can do is :
 @service_router.get("/me/")
 async def get_admin(user: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        print(" USER FUOUND ", user)
+        if int(user["role"]) != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         return user
     except Exception as ex:
@@ -63,50 +65,26 @@ async def update_user_data(user_data : UserUpdate, user: UserInDB = Depends(veri
         if user["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        user_id = user.id
-        password = user_data.password
-        # verify password and tell them if fails operation stops here with exception and also segregate update column here, we have restrictions while updating , user cant update user name and email except admin support
-        password_obj = await crud.get_password_data(db, user_id)
         
-        await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
+        
 
-        data = {"phone": "999000999"} 
-        await crud.update_user(db, user_id, data)
 
     except Exception as ex:
-        logging.exception("[MAIN][Exception in update_user] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
 
 
 
 @service_router.post("/updatepassword/")
-async def update_admin_password(user_data : UserUpdate,user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def update_admin_password(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user)):
     try:
         if user["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        user_id = user["user_id"]
-        password = user_data.password
-        password_obj = await crud.get_password_data(db, user_id)
-
-        if await verification.verify_password(password, password_obj.hashed_password, password_obj.salt):
-            new_password = user_data.new_password
-            new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
-            new_hashed_password = await util.create_hashed_password(new_password, new_salt)
-            data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
-            res = await crud.update_password_data(db, user_id, data)
-            if res :
-                await redis_util.delete_from_redis(user_id)
-                
-            return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
-        else :
-            return HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password is wrong",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        return  await common_util.update_password(user, user_data.password, user_data.new_password)
+  
 
     except Exception as ex:
-        logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
         
     
 
