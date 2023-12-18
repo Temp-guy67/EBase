@@ -31,3 +31,6 @@ UpdatTION Sync
 2. Redis Map - DO IT NOW
 
 Refresh accesstoken
+
+
+SOLVE VERIFICATION AND RATE LIMITER FIRST 

@@ -76,7 +76,7 @@ async def delete_api_cache_from_redis(api_key: str):
         logging.exception("[VERIFICATION][Exception in delete_api_cache_from_redis] {} ".format(ex))
 
 
-async def add_api_cache_from_redis(api_key: str,service_id: str, daily_req_left: int, is_service_verified: int, ip_ports_list: list):
+async def add_api_cache_to_redis(api_key: str,service_id: str, daily_req_left: int, is_service_verified: int, ip_ports_list: list):
     try:
         redis_util.set_str(api_key + RedisConstant.IS_SERVICE_VERIFIED, str(is_service_verified), 86400) 
 
@@ -152,3 +152,22 @@ async def update_service_info(service_id: int, service_update_data: dict, db: Se
         logging.exception("[VERIFICATION][Exception in update_service_info] {} ".format(ex))
 
 
+
+
+async def get_service_details(api_key: str):
+    try:
+        service_obj = await redis_util.get_hm(api_key + RedisConstant.SERVICE_API)
+        
+        if not service_obj :
+            service_obj = service_crud.get_service_by_api_key(api_key)
+            if service_obj :
+                redis_util.set_str(api_key + RedisConstant.SERVICE_API)
+                await update_service_obj_in_redis(api_key, service_obj)
+            
+        return service_obj
+    except Exception as ex :
+        logging.exception("[Common_Util][Exception in get_service_details] {} ".format(ex))
+
+
+async def update_service_obj_in_redis(api_key:str, service_obj: dict):
+    await redis_util.set_hm(api_key + RedisConstant.SERVICE_API, service_obj, 86400)
