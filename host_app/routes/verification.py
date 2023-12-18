@@ -72,7 +72,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: R
 
 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
         email: str = payload.get("sub")
         
         if email is None:
@@ -103,12 +102,11 @@ async def verify_api_key(req: Request, db: Session):
         user_agent = req.headers.get("user-agent")
         enc_api_key = req.headers.get("api_key")
 
-
         api_key = await decrypt_enc_api_key(enc_api_key)
 
         ip_ports_set = None
         daily_req_left = None
-        # await common_util.delete_api_cache_from_redis(api_key)
+        await common_util.delete_api_cache_from_redis(api_key)
         
         if await redis_util.get_str(api_key + RedisConstant.SERVICE_ID):
             print(" checking in redis")
@@ -134,16 +132,13 @@ async def verify_api_key(req: Request, db: Session):
                 daily_req_left = service_obj.daily_request_counts
                 is_service_verified = service_obj.is_verified
                 
-                common_util.add_api_cache_from_redis(api_key,service_id, daily_req_left, is_service_verified, ip_ports_list)
+                await common_util.add_api_cache_from_redis(api_key,service_id, daily_req_left, is_service_verified, ip_ports_list)
                 
-                
-
+            
         if daily_req_left :
             return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left- 1 , "is_service_verified" : is_service_verified }
         elif daily_req_left == 0 :
             return Exceptions.REQUEST_LIMIT_EXHAUST 
-        
-
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
@@ -163,8 +158,6 @@ async def decrypt_enc_api_key(enc_api_key: str) -> str:
         logging.exception("[VERIFICATION][Exception in decrypt_enc_api_key] {} ".format(ex))
 
 
-
-
 async def get_api_key() -> str:
     try:
         api_key = secrets.token_urlsafe(32)
@@ -172,8 +165,6 @@ async def get_api_key() -> str:
 
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
-
-
 
 
 async def get_encrypted_api_key(api_key:str, ip_ports: list):

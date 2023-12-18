@@ -9,7 +9,7 @@ from host_app.database.database import get_db
 from host_app.caching import redis_util
 from host_app.common import util
 from host_app.routes import verification
-from host_app.common.exceptions import Exceptions
+from host_app.common.exceptions import Exceptions,CustomException
 from host_app.common import common_util
 
 
@@ -27,9 +27,9 @@ What an Admin can do is :
 2. get all users under his org - [Done]
     2.1. get any user by user id - [Done]
 3. get all unverified user under his org - [Done]
-4. verify any user under his org by its user_id
-5. Update any user details under his org
-6. delete any user from his org
+4. verify any user under his org by its user_id - [Done]
+5. Update any user details under his org - [done]
+6. delete any user from his org 
 
 7. register for new api key - [ apply only]
     7.1 : request for new plan - [ apply only]
@@ -49,38 +49,55 @@ What an Admin can do is :
 
 
 @service_router.get("/me/")
-async def get_admin(user: UserInDB = Depends(verification.get_current_active_user)):
+async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        print(" USER FUOUND ", user)
-        if int(user["role"]) != models.Account.Role.ADMIN :
+        if int(admin["role"]) != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
-        return user
+        return admin
     except Exception as ex:
         logging.exception("[MAIN][Exception in read_users_me] {} ".format(ex))
 
 
-@service_router.post("/update/")
-async def update_user_data(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
+@service_router.post("/updateuser/")
+async def update_user_data(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
-        
-        
-        
 
+        ord_user_id = user_data.user_id
+        if ord_user_id[:2] != admin["service_org"]:
+            return CustomException(detail="Can update users from Other Org")
+        
 
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
 
 
+@service_router.get("/verifyuser/")
+async def verify_user_under_org(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
+    try:
+        org_user_id = user_data.user_id
+        previleges =  await check_admin_privileges(admin, org_user_id) 
+        print(" TYPE of previleges " , type(type(previleges)))
+        if type(previleges) == type(HTTPException):
+            return previleges
+        
+
+        user_update_map_info = dict()
+        user_update_map_info["is_verified"] = 1
+        await common_util.update_account_info(org_user_id, user_update_map_info)
+
+    except Exception as ex:
+        logging.exception("[SERVICE_ROUTES][Exception in verify_user_under_org] {} ".format(ex))
+
 
 @service_router.post("/updatepassword/")
-async def update_admin_password(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user)):
+async def update_admin_password(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        return  await common_util.update_password(user, user_data.password, user_data.new_password)
+        return  await common_util.update_password(admin, user_data.password, user_data.new_password)
   
 
     except Exception as ex:
@@ -89,9 +106,9 @@ async def update_admin_password(user_data : UserUpdate, user: UserInDB = Depends
     
 
 @service_router.post("/delete/")
-async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def delete_user(user_data : UserDelete, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        user_id = user["user_id"]
+        user_id = admin["user_id"]
         password = user_data.password
         password_obj = await crud.get_password_data(db, user_id)
         
@@ -116,12 +133,12 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
 # ------------- 
 
 @service_router.get("/getalluser/")
-async def get_all_user_under_org(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_all_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        org = user["service_org"] 
+        org = admin["service_org"] 
         res = await crud.get_all_users(db, org)
         return res
 
@@ -130,12 +147,12 @@ async def get_all_user_under_org(user: UserInDB = Depends(verification.get_curre
 
     
 @service_router.get("/getunverifiedusers/")
-async def get_all_unverified_user_under_org(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_all_unverified_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        org = user["service_org"] 
+        org = admin["service_org"] 
         res = await crud.get_all_unverified_users(db, org)
         return res
 
@@ -144,12 +161,12 @@ async def get_all_unverified_user_under_org(user: UserInDB = Depends(verificatio
 
 
 @service_router.get("/getallorders/")
-async def get_all_orders_under_org(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_all_orders_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        org = user["service_org"] 
+        org = admin["service_org"] 
         res = await crud.get_all_orderss(db, org)
         return res
 
@@ -159,12 +176,12 @@ async def get_all_orders_under_org(user: UserInDB = Depends(verification.get_cur
 
 
 @service_router.get("/getordersbyuser/")
-async def get_orders_by_user_under_org(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_orders_by_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        org = user["service_org"] 
+        org = admin["service_org"] 
         res = await crud.get_all_orders_by_user(db, org)
         return res
 
@@ -173,17 +190,30 @@ async def get_orders_by_user_under_org(user: UserInDB = Depends(verification.get
 
 
 
+async def check_admin_privileges(admin : UserInDB, user_id : str ):
+    try:
+        if admin["role"] != models.Account.Role.ADMIN :
+            return Exceptions.NOT_AUTHORIZED
+
+        ord_user_id = user_id
+        if ord_user_id[:2] != admin["service_org"]:
+            return Exceptions.NOT_AUTHORIZED
+
+    except Exception as ex :
+        logging.exception("[MAIN][Exception in check_admin_privileges] {} ".format(ex))
+
+
 
 # ----------- write from here
 
 
 @service_router.get("/getunverifiedusers/")
-async def get_all_unverified_user_under_org(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_all_unverified_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if user["role"] != models.Account.Role.ADMIN :
+        if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
         
-        org = user["service_org"] 
+        org = admin["service_org"] 
         res = await crud.get_all_unverified_users(db, org)
         return res
 

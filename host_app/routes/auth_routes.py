@@ -13,10 +13,20 @@ auth_router = APIRouter(
     tags=['auth']
 )
 
+@auth_router.get("/verifyservice")
+async def verify_service(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        pass
+    except Exception as ex :
+        logging.exception("[AUTH_ROUTES][Exception in verify_service] {} ".format(ex))
 
 
-
-
+@auth_router.get("/verifyuser")
+async def verify_user(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        pass
+    except Exception as ex :
+        logging.exception("[AUTH_ROUTES][Exception in verify_user] {} ".format(ex))
 
 
 

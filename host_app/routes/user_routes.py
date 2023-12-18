@@ -47,10 +47,7 @@ async def update_user(user_data : UserUpdate,user: UserInDB = Depends(verificati
 @user_router.post("/updatepassword/")
 async def update_user_password(user_data : UserUpdate,user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        
         return  await common_util.update_password(user, user_data.password, user_data.new_password)
-
-
     except Exception as ex:
         logging.exception("[MAIN][Exception in update_user_password] {} ".format(ex))
         

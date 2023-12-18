@@ -26,7 +26,7 @@ class Account(Base):
     created_time = Column(DateTime, default=func.now())
     role = Column(Integer, default=Role.USER)
     last_login_time = Column(DateTime, onupdate=func.now())
-    service_org = Column(String, unique=True, nullable=False)
+    service_org = Column(String, nullable=False)
 
     # items = relationship("Order", back_populates="owner")
     async def to_dict(self):
