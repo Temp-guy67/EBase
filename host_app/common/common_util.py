@@ -25,8 +25,19 @@ async def update_user_details_in_redis(user_id:str, user_obj: dict):
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_user_details_in_redis] {} ".format(ex))
-        
 
+async def get_user_details(user_id, db: Session = Depends(get_db)):
+    try :
+        user_details = await redis_util.get_hm(user_id)
+        if not user_details :
+            user_details = crud.get_user_by_user_id(db,user_id)
+
+        return user_details
+
+    except Exception as ex :
+        logging.exception("[common_util][Exception in get_user_details] {} ".format(ex))
+
+        
 
 async def update_password(user:dict, password, new_password, db: Session = Depends(get_db)):
     try:
@@ -51,9 +62,7 @@ async def update_password(user:dict, password, new_password, db: Session = Depen
             )
     except Exception as ex :
         logging.exception("[common_util][Exception in update_password] {} ".format(ex))
-        
-        
-        
+             
         
 async def delete_api_cache_from_redis(api_key: str):
     try:
@@ -65,8 +74,6 @@ async def delete_api_cache_from_redis(api_key: str):
 
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in delete_api_cache_from_redis] {} ".format(ex))
-
-
 
 
 async def add_api_cache_from_redis(api_key: str,service_id: str, daily_req_left: int, is_service_verified: int, ip_ports_list: list):
@@ -101,12 +108,12 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
             if k == possible_update[0]:
                 res = crud.get_user_by_email()
                 if res :
-                    return "Email already registered"
+                    return Exceptions.EMAIL_HAS_BEEN_REGISTERED
                 
             if k == possible_update[1]:
                 res = crud.get_user_by_phone()
                 if res :
-                    return "Phone No already registered"
+                    return Exceptions.PHONE_NUMBER_HAS_BEEN_REGISTERED
             if k in possible_update :
                 user_update_map[k] = v
         
@@ -143,3 +150,5 @@ async def update_service_info(service_id: int, service_update_data: dict, db: Se
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in update_service_info] {} ".format(ex))
+
+

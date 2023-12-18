@@ -57,7 +57,6 @@ def get_user_by_phone(db: Session, phone: str):
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_phone] {} ".format(ex))
 
-
 async def create_new_user(db: Session, user: UserSignUp):
     try:
         username = user.username
