@@ -14,14 +14,15 @@ from host_app.routes import verification
 
 def get_service_by_service_id(db: Session, service_id: str):
     try:
-        return db.query(Service).filter(Service.service_id==service_id).first()
+        service_obj = db.query(Service).filter(Service.service_id==service_id).first()
+        return service_obj
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_service_id] {} ".format(ex))
 
 def get_service_by_api_key(db: Session, api_key: str) -> dict:
     try:
-        print(" IN SERVICE CRUD ", type(db))
-        return db.query(Service).filter(Service.api_key==api_key).first()
+        service_obj = db.query(Service).filter(Service.api_key==api_key).first()
+        return service_obj.to_dict()
     
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_api_key] {} ".format(ex))
@@ -29,14 +30,16 @@ def get_service_by_api_key(db: Session, api_key: str) -> dict:
 
 def get_service_by_email(db: Session, email: str):
     try:
-        return db.query(Service).filter(Service.registration_mail == email).first()
+        service_obj = db.query(Service).filter(Service.registration_mail == email).first()
+        return service_obj.to_dict()
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_email] {} ".format(ex))
 
 
 def get_service_by_service_org(db: Session, service_org: str):
     try:
-        return db.query(Service).filter(Service.service_org == service_org).first()
+        service_obj = db.query(Service).filter(Service.service_org == service_org).first()
+        return service_obj.to_dict()
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_service_org] {} ".format(ex))
 
@@ -45,15 +48,23 @@ def get_service_by_service_org(db: Session, service_org: str):
 async def create_new_service(db: Session, service_user: ServiceSignup):
     try:
         ip_ports = service_user.ip_ports
-        ip_ports_str = await util.zipper(ip_ports)
+        ip_ports_str = str(ip_ports)
         service_org = service_user.service_org
         alpha_int = random.randint(1,26)
 
         service_id = service_org + "_" + chr(64 + alpha_int) + str(random.randint(1,999))
-
+        
         api_key = await verification.get_api_key()
         
-        db_user = Service(service_org=service_org, service_id=service_id, service_name = service_user.service_name, registration_mail=service_user.registration_mail, ip_ports=ip_ports_str, api_key=api_key)
+        subscription_mode = ServiceSignup.subscription_mode
+        if subscription_mode :
+            daily_request_count = Service.get_request_count(subscription_mode)
+            print("daily_request_count" , daily_request_count)
+            db_user = Service(service_org=service_org, service_id=service_id, service_name = service_user.service_name, registration_mail=service_user.registration_mail, ip_ports=ip_ports_str, api_key=api_key, subscription_mode=subscription_mode, daily_request_count=daily_request_count )
+        
+        else:
+            db_user = Service(service_org=service_org, service_id=service_id, service_name = service_user.service_name, registration_mail=service_user.registration_mail, ip_ports=ip_ports_str, api_key=api_key)
+            
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
@@ -86,9 +97,6 @@ async def update_service_data(db: Session, service_id: int, service_update_map: 
 
 
 
-
-
-
 async def ServiceSignupResponse(data: Service, enc_api_key):
     # Your processing logic here
     return {
@@ -99,3 +107,5 @@ async def ServiceSignupResponse(data: Service, enc_api_key):
         "subscription_mode": data.subscription_mode,
         "daily_request_counts": data.daily_request_counts
     }
+    
+    

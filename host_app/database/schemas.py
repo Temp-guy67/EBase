@@ -81,7 +81,6 @@ class ServiceSignup(BaseModel):
     phone : str
     password : str
     subscription_mode : Union[str, None] = None
-    daily_request_counts : Union[str, None] = None
     registration_mail : str 
     ip_ports : list
 

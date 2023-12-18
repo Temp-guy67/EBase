@@ -5,8 +5,8 @@ class CommonConstants:
 
 
 class APIConstants:
-    ENC_API_PREFIX="BAAS"
-    ENC_API_PREFIX_LEN=4
+    ENC_API_PREFIX="CRUX_"
+    ENC_API_PREFIX_LEN=5
     
 
 

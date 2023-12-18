@@ -107,13 +107,19 @@ class Service(Base):
         NOOB="NOOB"
         PRO="PRO"
         ULTRA_PRO="ULTRA_PRO"
+        
+    REQUEST_COUNT = dict()
+    REQUEST_COUNT[Subsription.TEST] = 10
+    REQUEST_COUNT[Subsription.FREE] = 50
+    REQUEST_COUNT[Subsription.NOOB] = 200
+    REQUEST_COUNT[Subsription.PRO] = 500
+    REQUEST_COUNT[Subsription.ULTRA_PRO] = 1000
 
-    class RequestCounts:
-        TEST=5
-        FREE=50
-        NOOB=500
-        PRO=1000
-        ULTRA_PRO=2000
+    def get_request_count(self, sus:str):
+        if self.REQUEST_COUNT.get(sus):
+            return self.REQUEST_COUNT[sus]
+        
+    
     
     class ClientVerification:
         NOT_VERIFIED=0
@@ -125,7 +131,7 @@ class Service(Base):
     service_org = Column(String, nullable=False, unique=True)
     service_name = Column(String, nullable=False)
     subscription_mode = Column(String, default=Subsription.TEST)
-    daily_request_counts = Column(Integer, default=RequestCounts.TEST)
+    daily_request_count = Column(Integer, default=REQUEST_COUNT[Subsription.TEST])
     registration_time = Column(DateTime, default=func.now())
     registration_mail = Column(String, nullable=False)
     ip_ports = Column(String)
@@ -135,9 +141,6 @@ class Service(Base):
     
 
     # owner = relationship("Account", back_populates="order")
-
-    def get_ipports(s:str):
-        return 
 
     def to_dict(self):
         return {

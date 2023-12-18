@@ -8,7 +8,7 @@ from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
 from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
-from host_app.common.exceptions import Exceptions
+from host_app.common.exceptions import Exceptions, CustomException
 from host_app.common import common_util
 from host_app.database.sql_constants import APIConstants
 from host_app.caching import redis_util
@@ -48,7 +48,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Could not validate Token Credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -97,48 +97,34 @@ async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depe
 
 async def verify_api_key(req: Request, db: Session):
     try:
-    
         client_ip = req.client.host
-        user_agent = req.headers.get("user-agent")
         enc_api_key = req.headers.get("api_key")
 
         api_key = await decrypt_enc_api_key(enc_api_key)
+        
+        if not api_key:
+            return CustomException(detail="Add api key in the header")
 
         ip_ports_set = None
         daily_req_left = None
-        await common_util.delete_api_cache_from_redis(api_key)
+        # await common_util.delete_api_cache_from_redis(api_key)
         
-        if await redis_util.get_str(api_key + RedisConstant.SERVICE_ID):
-            print(" checking in redis")
-            ip_ports_set = await redis_util.get_str(api_key + RedisConstant.IP_PORTS_SET)
-
-            daily_req_left = await redis_util.get_str(api_key + RedisConstant.DAILY_REQUEST_LEFT)
-            daily_req_left = int(daily_req_left)
-
-            is_service_verified = await redis_util.get_str(api_key + RedisConstant.IS_SERVICE_VERIFIED)
-
-        else :
+        service_obj = await common_util.get_service_details(api_key) 
+        
+        if service_obj :
+            ip_ports = list(service_obj["ip_ports"])
+            print("IP PORTS RECEIVED ", ip_ports)
             
-            service_obj = service_crud.get_service_by_api_key(db=db, api_key=api_key)
+            if client_ip not in ip_ports:
+                return Exceptions.WRONG_IP
+            daily_req_left = int(service_obj["daily_request_count"]) - 1
+            is_service_verified = service_obj["is_verified"]
+            if daily_req_left :
+                return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left , "is_service_verified" : is_service_verified }
+            elif daily_req_left == 0 :
+                return Exceptions.REQUEST_LIMIT_EXHAUST 
             
-            if service_obj:
-                ip_ports_str = service_obj.ip_ports
-                ip_ports_list = await util.unzipper(ip_ports_str)
-
-                service_id = service_obj.service_id
-                if not client_ip in ip_ports_list :
-                    return Exceptions.WRONG_IP
-
-                daily_req_left = service_obj.daily_request_counts
-                is_service_verified = service_obj.is_verified
-                
-                await common_util.add_api_cache_from_redis(api_key,service_id, daily_req_left, is_service_verified, ip_ports_list)
-                
-            
-        if daily_req_left :
-            return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left- 1 , "is_service_verified" : is_service_verified }
-        elif daily_req_left == 0 :
-            return Exceptions.REQUEST_LIMIT_EXHAUST 
+        return Exceptions.WRONG_API
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
@@ -167,7 +153,7 @@ async def get_api_key() -> str:
         logging.exception("[VERIFICATION][Exception in get_api_key] {} ".format(ex))
 
 
-async def get_encrypted_api_key(api_key:str, ip_ports: list):
+async def get_encrypted_api_key(api_key:str):
     try:
         encoded_api_key = jwt.encode({'api_key': api_key}, SECRET_KEY, algorithm=ALGORITHM)
         return APIConstants.ENC_API_PREFIX + encoded_api_key
