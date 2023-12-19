@@ -44,6 +44,7 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
         if db_user:
             return HTTPException(status_code=400, detail="Mobile Number already registered")
         res = await crud.create_new_user(db=db, user=user)
+        res.daily_request_left = verification_result["daily_req_left"]
         return res
 
     except Exception as ex :
@@ -90,7 +91,7 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         common_util.update_access_token_in_redis(user_id, access_token)
         await common_util.update_user_details_in_redis(user_id, user_obj)
         
-        return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful", "role" : user_obj["role"]}
+        return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful", "role" : user_obj["role"], "daily_req_left" : verification_result["daily_req_left"]}
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))

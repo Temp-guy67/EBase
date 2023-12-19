@@ -108,7 +108,7 @@ async def verify_api_key(req: Request, db: Session):
         ip_ports_set = None
         daily_req_left = None
         # await common_util.delete_api_cache_from_redis(api_key)
-        
+
         service_obj = await common_util.get_service_details(api_key) 
         
         if service_obj :
@@ -117,12 +117,17 @@ async def verify_api_key(req: Request, db: Session):
             
             if client_ip not in ip_ports:
                 return Exceptions.WRONG_IP
+            
             daily_req_left = int(service_obj["daily_request_count"]) - 1
             is_service_verified = service_obj["is_verified"]
+
             if daily_req_left :
-                return {"ip_ports_set": ip_ports_set, "daily_req_left" : daily_req_left , "is_service_verified" : is_service_verified }
+                common_util.update_daily_req_counts(api_key, daily_req_left)
+
+                return {"daily_req_left" : daily_req_left , "is_service_verified" : is_service_verified}
+            
             elif daily_req_left == 0 :
-                return Exceptions.REQUEST_LIMIT_EXHAUST 
+                return Exceptions.REQUEST_LIMIT_EXHAUSTED 
             
         return Exceptions.WRONG_API
         

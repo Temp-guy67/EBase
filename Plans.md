@@ -19,6 +19,8 @@ Weekend Plan:
         iii) update his client data 
         iv) update user data of his own org only
 
+        TO HANDLE THIS , WILL GO FOR A NEW METHOD CALLED CHECK ADMIN ACCESS 
+
 
 
 3. Superadmin routes

@@ -12,7 +12,7 @@ class CustomException(HTTPException):
         super().__init__(status_code=status_code, detail=detail, headers=headers)
         
 class Exceptions:
-    REQUEST_LIMIT_EXHAUST = HTTPException(
+    REQUEST_LIMIT_EXHAUSTED = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Request Limit reached",
         headers={"WWW-Authenticate": "Bearer"},

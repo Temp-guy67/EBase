@@ -30,6 +30,8 @@ class UserSignUpResponse(User):
     is_verified : int
     role : int
     username : str
+    daily_request_left : Union[int, None] = None
+
 
 class UserUpdate(BaseModel):
     user_id : str 
