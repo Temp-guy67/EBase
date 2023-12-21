@@ -15,14 +15,14 @@ from host_app.routes import verification
 def get_service_by_service_id(db: Session, service_id: str):
     try:
         service_obj = db.query(Service).filter(Service.service_id==service_id).first()
-        return service_obj
+        return service_obj.to_dict() if service_obj else None
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_service_id] {} ".format(ex))
 
 def get_service_by_api_key(db: Session, api_key: str) -> dict:
     try:
         service_obj = db.query(Service).filter(Service.api_key==api_key).first()
-        return service_obj.to_dict()
+        return service_obj.to_dict() if service_obj else None
     
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_api_key] {} ".format(ex))
@@ -31,7 +31,7 @@ def get_service_by_api_key(db: Session, api_key: str) -> dict:
 def get_service_by_email(db: Session, email: str):
     try:
         service_obj = db.query(Service).filter(Service.registration_mail == email).first()
-        return service_obj.to_dict()
+        return service_obj.to_dict() if service_obj else None
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_email] {} ".format(ex))
 
@@ -39,7 +39,7 @@ def get_service_by_email(db: Session, email: str):
 def get_service_by_service_org(db: Session, service_org: str):
     try:
         service_obj = db.query(Service).filter(Service.service_org == service_org).first()
-        return service_obj.to_dict()
+        return service_obj.to_dict() if service_obj else None
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_service_org] {} ".format(ex))
 
@@ -56,7 +56,7 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
         
         api_key = await verification.get_api_key()
         
-        subscription_mode = ServiceSignup.subscription_mode
+        subscription_mode = service_user.subscription_mode
         if subscription_mode :
             daily_request_count = Service.get_request_count(subscription_mode)
             print("daily_request_count" , daily_request_count)
@@ -69,7 +69,7 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
         db.commit()
         db.refresh(db_user)
         
-        enc_api_key = await verification.get_encrypted_api_key(api_key, ip_ports_str)
+        enc_api_key = await verification.get_encrypted_api_key(api_key)
 
         response = await ServiceSignupResponse(db_user, enc_api_key)
         return response
@@ -105,7 +105,7 @@ async def ServiceSignupResponse(data: Service, enc_api_key):
         "service_id": data.service_id,
         "enc_api_key": enc_api_key,
         "subscription_mode": data.subscription_mode,
-        "daily_request_counts": data.daily_request_counts
+        "daily_request_count": data.daily_request_count
     }
     
     

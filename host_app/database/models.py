@@ -148,10 +148,11 @@ class Service(Base):
             'service_org': self.service_org,
             'service_name': self.service_name,
             'subscription_mode': self.subscription_mode,
-            'daily_request_counts': self.daily_request_counts,
+            'daily_request_count': self.daily_request_count,
             'registration_time': str(self.registration_time),
             'registration_mail' : self.registration_mail,
             'last_update_time' : str(self.last_update_time),
             'ip_ports' : self.ip_ports,
-            'api_key' : self.api_key
+            'api_key' : self.api_key,
+            'is_verified' : self.is_verified
         }

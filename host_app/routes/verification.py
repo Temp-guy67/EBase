@@ -109,7 +109,7 @@ async def verify_api_key(req: Request, db: Session):
         daily_req_left = None
         # await common_util.delete_api_cache_from_redis(api_key)
 
-        service_obj = await common_util.get_service_details(api_key) 
+        service_obj = await common_util.get_service_details(db, api_key) 
         
         if service_obj :
             ip_ports = list(service_obj["ip_ports"])
