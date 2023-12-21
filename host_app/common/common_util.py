@@ -66,10 +66,12 @@ async def update_password(user:dict, password, new_password, db: Session = Depen
         
 async def delete_api_cache_from_redis(api_key: str):
     try:
-        await redis_util.delete_from_redis(api_key + RedisConstant.IP_PORTS_SET)
-        await redis_util.delete_from_redis(api_key + RedisConstant.DAILY_REQUEST_LEFT)
-        await redis_util.delete_from_redis(api_key + RedisConstant.SERVICE_ID)
-        await redis_util.delete_from_redis(api_key + RedisConstant.IS_SERVICE_VERIFIED)
+        await redis_util.delete_from_redis(RedisConstant.IP_PORTS_SET + api_key )
+        await redis_util.delete_from_redis(RedisConstant.DAILY_REQUEST_LEFT + api_key)
+        await redis_util.delete_from_redis( RedisConstant.SERVICE_ORG + api_key )
+        await redis_util.delete_from_redis(RedisConstant.IS_SERVICE_VERIFIED + api_key)
+    
+        
         print(" Deleted all the cache")
 
     except Exception as ex :
@@ -147,36 +149,37 @@ async def update_service_info(service_id: int, service_update_data: dict, db: Se
         logging.exception("[VERIFICATION][Exception in update_service_info] {} ".format(ex))
 
 
-async def get_service_details(api_key: str):
+async def get_service_details(db: Session, api_key: str):
     try:
         service_obj = dict()
-
+        # await delete_api_cache_from_redis(api_key)
         service_org = await redis_util.get_str(RedisConstant.SERVICE_ORG + api_key)
         if service_org :
             service_org = await redis_util.get_str(RedisConstant.SERVICE_ORG + api_key)
             is_service_verified = await redis_util.get_str(RedisConstant.IS_SERVICE_VERIFIED + api_key)
+            is_service_verified = int(is_service_verified)
             daily_request_count = await redis_util.get_str(RedisConstant.DAILY_REQUEST_LEFT + api_key)
             ip_ports = await redis_util.get_str(RedisConstant.IP_PORTS_SET + api_key)
             
         else :
-            service_db_obj = service_crud.get_service_by_api_key(api_key)
+            service_db_obj = service_crud.get_service_by_api_key(db, api_key)
             if service_db_obj :
-                service_org = service_obj["service_org"]
-                is_service_verified = service_obj["is_service_verified"]
-                daily_request_count = service_obj["daily_request_count"]
-                ip_ports = service_obj["ip_ports"]
+                service_org = service_db_obj["service_org"]
+                is_service_verified = service_db_obj["is_verified"]
+                daily_request_count = service_db_obj["daily_request_count"]
+                ip_ports = service_db_obj["ip_ports"]
             else :
                 return CustomException(detail="User Not Available")
 
         service_obj["service_org"] = service_org
-        service_obj["is_service_verified"] = int(is_service_verified)
+        service_obj["is_service_verified"] = is_service_verified
         service_obj["daily_request_count"] = int(daily_request_count)
         service_obj["ip_ports"] = ip_ports
 
-        await redis_util.set_str(RedisConstant.SERVICE_ORG + api_key, service_org, 86400)
-        await redis_util.set_str(RedisConstant.IS_SERVICE_VERIFIED + api_key, str(is_service_verified), 86400)
-        await redis_util.set_str(RedisConstant.DAILY_REQUEST_LEFT + api_key, str(daily_request_count), 86400)
-        await redis_util.set_str(RedisConstant.IP_PORTS_SET + api_key, ip_ports, 86400)
+        redis_util.set_str(RedisConstant.SERVICE_ORG + api_key, service_org, 86400)
+        redis_util.set_str(RedisConstant.IS_SERVICE_VERIFIED + api_key, str(is_service_verified), 86400)
+        redis_util.set_str(RedisConstant.DAILY_REQUEST_LEFT + api_key, str(daily_request_count), 86400)
+        redis_util.set_str(RedisConstant.IP_PORTS_SET + api_key, ip_ports, 86400)
 
         return service_obj
     
