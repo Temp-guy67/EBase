@@ -1,5 +1,6 @@
 
-### Crux - E-Commerce Backend-as-a-Service (BaaS)
+### Crux 
+## E-Commerce Backend-as-a-Service (BaaS)
 
 Welcome to our E-Commerce Backend-as-a-Service (BaaS) solution! This service is designed to empower frontend applications with a suite of powerful backend functionalities tailored specifically for e-commerce websites.
 
