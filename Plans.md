@@ -2,7 +2,7 @@
 2. 
 
 Current Issue :
-IP Port issue solving, 
+IP Port issue solving,  [Done]
 
 
 

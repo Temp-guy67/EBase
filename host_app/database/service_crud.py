@@ -19,6 +19,7 @@ def get_service_by_service_id(db: Session, service_id: str):
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_service_id] {} ".format(ex))
 
+
 def get_service_by_api_key(db: Session, api_key: str) -> dict:
     try:
         service_obj = db.query(Service).filter(Service.api_key==api_key).first()
@@ -26,6 +27,7 @@ def get_service_by_api_key(db: Session, api_key: str) -> dict:
     
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_api_key] {} ".format(ex))
+
 
 
 def get_service_by_email(db: Session, email: str):
@@ -48,7 +50,7 @@ def get_service_by_service_org(db: Session, service_org: str):
 async def create_new_service(db: Session, service_user: ServiceSignup):
     try:
         ip_ports = service_user.ip_ports
-        ip_ports_str = str(ip_ports)
+        ip_ports_str = await util.zipper(ip_ports)
         service_org = service_user.service_org
         alpha_int = random.randint(1,26)
 
@@ -84,6 +86,7 @@ async def update_service_data(db: Session, service_id: int, service_update_map: 
     try :
         print(" DATA RECEIVED FOR update_client ",service_update_map)
         db_user = db.query(Service).filter(Service.service_id == service_id).first()
+        print(" db_user wewe ", db_user.to_dict())
         if db_user:
             for key, value in service_update_map.items():
                 setattr(db_user, key, value)

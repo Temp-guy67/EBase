@@ -14,6 +14,8 @@ from host_app.common.exceptions import Exceptions, CustomException
 def update_access_token_in_redis(user_id:str, access_token: str):
     try :
         redis_util.set_str(access_token, user_id, 1800)
+        # For logout cases only
+        redis_util.set_str(user_id, access_token, 1800)
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_access_token_in_redis] {} ".format(ex))
@@ -21,14 +23,15 @@ def update_access_token_in_redis(user_id:str, access_token: str):
 
 async def update_user_details_in_redis(user_id:str, user_obj: dict):
     try :
-        await redis_util.set_hm(user_id, user_obj, 1800)
+        await redis_util.set_hm(RedisConstant.USER_OBJECT + user_id, user_obj, 1800)
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_user_details_in_redis] {} ".format(ex))
 
+
 async def get_user_details(user_id, db: Session = Depends(get_db)):
     try :
-        user_details = await redis_util.get_hm(user_id)
+        user_details = await redis_util.get_hm(RedisConstant.USER_OBJECT + user_id)
         if not user_details :
             user_details = crud.get_user_by_user_id(db,user_id)
 
@@ -132,64 +135,42 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
         logging.exception("[VERIFICATION][Exception in update_account_info] {} ".format(ex))
         
 
-# under supervision
-async def update_service_info(service_id: int, service_update_data: dict, db: Session = Depends(get_db)):
-    try:
-        # service name and IP ports
-        possible_update = ["service_name", "ip_ports"]
-        service_update_map = dict()
-        
-        for k,v in service_update_data.items():
-            if k in possible_update :
-                if type(v) != str :
-                    v = str(v)
-                service_update_map[k] = v
-        await service_crud.update_service_data(db, service_id, service_update_map)
-    except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in update_service_info] {} ".format(ex))
-
-
+# Only use it for verification
 async def get_service_details(db: Session, api_key: str):
     try:
         service_obj = dict()
         # await delete_api_cache_from_redis(api_key)
-        service_org = await redis_util.get_str(RedisConstant.SERVICE_ORG + api_key)
-        if service_org :
-            service_org = await redis_util.get_str(RedisConstant.SERVICE_ORG + api_key)
-            is_service_verified = await redis_util.get_str(RedisConstant.IS_SERVICE_VERIFIED + api_key)
-            is_service_verified = int(is_service_verified)
-            daily_request_count = await redis_util.get_str(RedisConstant.DAILY_REQUEST_LEFT + api_key)
-            ip_ports = await redis_util.get_str(RedisConstant.IP_PORTS_SET + api_key)
+        
+        service_data_obj = await redis_util.get_hm(RedisConstant.SERVICE_API + api_key)
+        
+        if not service_data_obj :
+            service_data_obj = service_crud.get_service_by_api_key(db, api_key)
             
-        else :
-            service_db_obj = service_crud.get_service_by_api_key(db, api_key)
-            if service_db_obj :
-                service_org = service_db_obj["service_org"]
-                is_service_verified = service_db_obj["is_verified"]
-                daily_request_count = service_db_obj["daily_request_count"]
-                ip_ports = service_db_obj["ip_ports"]
-            else :
-                return CustomException(detail="User Not Available")
+            if not service_data_obj :
+                return CustomException(detail="Service Info Not Available", message="Check with you Service/API Provider")
+            
+        service_obj["service_org"] = service_data_obj["service_org"]
+        service_obj["is_verified"] = service_data_obj["is_verified"]
+        service_obj["daily_request_count"] = service_data_obj["daily_request_count"]
+        service_obj["ip_ports"] = service_data_obj["ip_ports"]
 
-        service_obj["service_org"] = service_org
-        service_obj["is_service_verified"] = is_service_verified
-        service_obj["daily_request_count"] = int(daily_request_count)
-        service_obj["ip_ports"] = ip_ports
-
-        redis_util.set_str(RedisConstant.SERVICE_ORG + api_key, service_org, 86400)
-        redis_util.set_str(RedisConstant.IS_SERVICE_VERIFIED + api_key, str(is_service_verified), 86400)
-        redis_util.set_str(RedisConstant.DAILY_REQUEST_LEFT + api_key, str(daily_request_count), 86400)
-        redis_util.set_str(RedisConstant.IP_PORTS_SET + api_key, ip_ports, 86400)
-
+        # redis_util.set_str(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
+        
         return service_obj
     
     except Exception as ex :
         logging.exception("[Common_Util][Exception in get_service_details] {} ".format(ex))
 
 
-def update_daily_req_counts(api_key:str, daily_req_left:int):
-    redis_util.set_str(RedisConstant.DAILY_REQUEST_LEFT + api_key, str(daily_req_left), 86400)
+async def update_service_object_in_redis(api_key:str, service_obj:dict):
+    await redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
 
 
-def update_service_verified_api(api_key:str, verification:int):
-    redis_util.set_str(RedisConstant.IS_SERVICE_VERIFIED + api_key, str(verification), 86400)
+async def reduce_daily_req_counts(api_key:str, service_obj:dict):
+    service_obj["daily_request_count"] = str(int(service_obj["daily_request_count"]) - 1)
+    await update_service_object_in_redis(api_key, service_obj)
+
+
+async def update_service_verified_api(api_key:str, service_obj:dict):
+    service_obj["is_verified"] = "1"
+    await update_service_object_in_redis(api_key, service_obj)

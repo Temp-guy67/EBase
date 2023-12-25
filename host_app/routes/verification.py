@@ -64,13 +64,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: R
 
         if user_id_from_token_map:
             user_data = await redis_util.get_hm(user_id_from_token_map)
-            logging.info(" GOt user_data MAP from token map : {} ".format(user_data))
             if user_data :
                 return user_data
-            else :
-                print(" ELSE CASE Huser_routerENING ")
 
-
+        # Now will encrypt and get from DB 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         
@@ -101,32 +98,26 @@ async def verify_api_key(req: Request, db: Session):
         enc_api_key = req.headers.get("api_key")
 
         api_key = await decrypt_enc_api_key(enc_api_key)
-        
         if not api_key:
-            return CustomException(detail="Add api key in the header")
+            return CustomException(detail="Add api_key in the header")
 
-        ip_ports_set = None
         daily_req_left = None
-        # await common_util.delete_api_cache_from_redis(api_key)
-
         service_obj = await common_util.get_service_details(db, api_key) 
         
         if service_obj :
-            ip_ports = list(service_obj["ip_ports"])
-            print("IP PORTS RECEIVED ", ip_ports)
+            ip_ports = service_obj["ip_ports"]
             
             if client_ip not in ip_ports:
                 return Exceptions.WRONG_IP
             
-            daily_req_left = int(service_obj["daily_request_count"]) - 1
+            daily_req_left = service_obj["daily_request_count"]
             is_service_verified = service_obj["is_verified"]
 
             if daily_req_left :
-                common_util.update_daily_req_counts(api_key, daily_req_left)
-
-                return {"daily_req_left" : daily_req_left , "is_service_verified" : is_service_verified}
+                await common_util.reduce_daily_req_counts(api_key, service_obj)
+                return {"daily_req_left" : int(daily_req_left) - 1 , "is_service_verified" : is_service_verified}
             
-            elif daily_req_left == 0 :
+            elif daily_req_left == "0" :
                 return Exceptions.REQUEST_LIMIT_EXHAUSTED 
             
         return Exceptions.WRONG_API
