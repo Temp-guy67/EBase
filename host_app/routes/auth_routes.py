@@ -6,19 +6,23 @@ import logging
 from host_app.database import crud, models
 from host_app.database.database import get_db
 from host_app.routes import verification
-from host_app.common import util
+from host_app.common import util, service_util
 
 auth_router = APIRouter(
     prefix='/auth',
     tags=['auth']
 )
 
+
 @auth_router.get("/verifyservice")
-async def verify_service(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def verify_service(super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        pass
+        service_id = "BT_L606"
+        await service_util.verify_service(service_id, db)
+
     except Exception as ex :
         logging.exception("[AUTH_ROUTES][Exception in verify_service] {} ".format(ex))
+
 
 
 @auth_router.get("/verifyuser")

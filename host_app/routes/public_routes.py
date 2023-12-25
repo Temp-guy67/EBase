@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
+from host_app.common.response_object import ResponseObject
 from host_app.routes import verification
 from host_app.database import models
 
@@ -91,7 +92,11 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         common_util.update_access_token_in_redis(user_id, access_token)
         await common_util.update_user_details_in_redis(user_id, user_obj)
         
-        return {"access_token": access_token, "token_type": "bearer", "messege" : "Login Successful", "role" : user_obj["role"], "daily_req_left" : verification_result["daily_req_left"]}
+        data = {"access_token": access_token, "token_type": "bearer", "role" : user_obj["role"]}
+        
+        resp = ResponseObject(status=status.HTTP_200_OK, is_success=True, data=data, messege="Login Successful", daily_request_count_left= verification_result["daily_req_left"]) 
+        
+        return resp    
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))
