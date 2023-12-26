@@ -1,14 +1,12 @@
-from typing import Annotated
 from fastapi import Depends, HTTPException, Header, status, Request, APIRouter
-from host_app.caching.redis_constant import RedisConstant
 from host_app.common.exceptions import Exceptions
 from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from sqlalchemy.orm import Session
-from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordBearer
 import jwt, jwt.exceptions
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
@@ -29,24 +27,33 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
+        response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(req, db)
         if type(verification_result) != type(dict()) :
+            response_obj.set_status_and_exception(status.HTTP_403_FORBIDDEN, verification_result)
             return verification_result
         
         if not int(verification_result["is_service_verified"]) :
+            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, Exceptions.SERVICE_NOT_VERIFIED)
             return Exceptions.SERVICE_NOT_VERIFIED
 
         db_user = crud.get_user_by_email(db=db, email=user.email)
 
         if db_user:
-            return HTTPException(status_code=400, detail="Email already registered")
+            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, HTTPException(status_code=400, detail="Email already registered"))
+            return response_obj
         
         db_user = crud.get_user_by_phone(db, phone=user.phone)
         if db_user:
-            return HTTPException(status_code=400, detail="Mobile Number already registered")
+            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, HTTPException(status_code=400, detail="Mobile Number already registered"))
+            return response_obj
+
         res = await crud.create_new_user(db=db, user=user)
-        res.daily_request_left = verification_result["daily_req_left"]
-        return res
+        if res:
+            response_obj.set_status(status.HTTP_200_OK)
+            response_obj.set_data(res)
+        
+        return response_obj
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
@@ -55,14 +62,16 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
+        response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(req, db)
         
         if type(verification_result) != type(dict()) :
-            return verification_result
-        
+            response_obj.set_status_and_exception(status.HTTP_403_FORBIDDEN, verification_result)
+            return response_obj
         
         if not int(verification_result["is_service_verified"]) :
-            return Exceptions.SERVICE_NOT_VERIFIED
+            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, Exceptions.SERVICE_NOT_VERIFIED)
+            return response_obj
 
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
@@ -76,12 +85,15 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         user_obj["user_agent"] = user_agent
 
         if not account_obj:
-            return HTTPException(status_code=400, detail="User Not Available")
+            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, HTTPException(status_code=401, detail="User Not Available"))
+            return response_obj
         
         res = await verification.verify_password(userlogin.password, password_obj.hashed_password, password_obj.salt)
 
         if not res:
-            return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password",headers={"WWW-Authenticate": "Bearer"})
+            exp = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password",headers={"WWW-Authenticate": "Bearer"})
+            response_obj.set_exception(exp)
+            return response_obj
         
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = verification.create_access_token(
@@ -94,9 +106,11 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         
         data = {"access_token": access_token, "token_type": "bearer", "role" : user_obj["role"]}
         
-        resp = ResponseObject(status=status.HTTP_200_OK, is_success=True, data=data, messege="Login Successful", daily_request_count_left= verification_result["daily_req_left"]) 
-        
-        return resp    
+        response_obj.set_status(status.HTTP_200_OK)
+        response_obj.set_data(data)
+        response_obj.set_daily_request_count_left(verification_result["daily_req_left"])
+
+        return response_obj    
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))
