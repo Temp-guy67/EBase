@@ -15,10 +15,20 @@ def update_access_token_in_redis(user_id:str, access_token: str):
     try :
         redis_util.set_str(access_token, user_id, 1800)
         # For logout cases only
-        redis_util.set_str(user_id, access_token, 1800)
+        redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_access_token_in_redis] {} ".format(ex))
+
+
+async def delete_access_token_in_redis(user_id):
+    try:
+        access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
+        redis_util.delete_from_redis(access_token)
+        redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
+
+    except Exception as ex :
+        logging.exception("[common_util][Exception in delete_access_token_in_redis] {} ".format(ex))
 
 
 async def update_user_details_in_redis(user_id:str, user_obj: dict):
@@ -41,7 +51,6 @@ async def get_user_details(user_id, db: Session = Depends(get_db)):
         logging.exception("[common_util][Exception in get_user_details] {} ".format(ex))
 
         
-
 async def update_password(user:dict, password, new_password, db: Session = Depends(get_db)):
     try:
         user_id = user["user_id"]
@@ -55,6 +64,7 @@ async def update_password(user:dict, password, new_password, db: Session = Depen
             res = await crud.update_password_data(db, user_id, data)
             if res :
                 await redis_util.delete_from_redis(user_id)
+                await  delete_access_token_in_redis(user_id)
                 
             return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
         else :
@@ -134,6 +144,7 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in update_account_info] {} ".format(ex))
         
+
 
 # Only use it for verification
 async def get_service_details(db: Session, api_key: str):

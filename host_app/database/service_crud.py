@@ -1,4 +1,3 @@
-
 import logging
 from .schemas import ServiceSignup
 from .models import Service

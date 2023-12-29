@@ -55,7 +55,7 @@ async def get_admin(admin: UserInDB = Depends(verification.get_current_active_us
             return Exceptions.NOT_AUTHORIZED
         return admin
     except Exception as ex:
-        logging.exception("[MAIN][Exception in read_users_me] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in read_users_me] {} ".format(ex))
 
 
 @service_router.post("/updateuser/")
@@ -67,8 +67,6 @@ async def update_user_data(user_data : UserUpdate, admin: UserInDB = Depends(ver
         ord_user_id = user_data.user_id
         if ord_user_id[:2] != admin["service_org"]:
             return CustomException(detail="Can update users from Other Org")
-        
-
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
 
@@ -82,7 +80,6 @@ async def verify_user_under_org(user_data : UserUpdate, admin: UserInDB = Depend
         if type(previleges) == type(HTTPException):
             return previleges
         
-
         user_update_map_info = dict()
         user_update_map_info["is_verified"] = 1
         await common_util.update_account_info(org_user_id, user_update_map_info)
@@ -96,9 +93,7 @@ async def update_admin_password(user_data : UserUpdate, admin: UserInDB = Depend
     try:
         if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
-        
         return  await common_util.update_password(admin, user_data.password, user_data.new_password)
-  
 
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
@@ -127,7 +122,7 @@ async def delete_user(user_data : UserDelete, admin: UserInDB = Depends(verifica
             )
 
     except Exception as ex:
-        logging.exception("[MAIN][Exception in delete_user] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in delete_user] {} ".format(ex))
 
 
 # ------------- 
@@ -143,7 +138,7 @@ async def get_all_user_under_org(admin: UserInDB = Depends(verification.get_curr
         return res
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_all_user_under_org] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in get_all_user_under_org] {} ".format(ex))
 
     
 @service_router.get("/getunverifiedusers/")
@@ -157,7 +152,7 @@ async def get_all_unverified_user_under_org(admin: UserInDB = Depends(verificati
         return res
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_all_user_under_org] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in get_all_user_under_org] {} ".format(ex))
 
 
 @service_router.get("/getallorders/")
@@ -171,7 +166,7 @@ async def get_all_orders_under_org(admin: UserInDB = Depends(verification.get_cu
         return res
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_all_orders_under_org] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in get_all_orders_under_org] {} ".format(ex))
 
 
 
@@ -186,7 +181,7 @@ async def get_orders_by_user_under_org(admin: UserInDB = Depends(verification.ge
         return res
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_orders_by_user_under_org] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in get_orders_by_user_under_org] {} ".format(ex))
 
 
 
@@ -200,7 +195,7 @@ async def check_admin_privileges(admin : UserInDB, user_id : str ):
             return Exceptions.NOT_AUTHORIZED
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in check_admin_privileges] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
 
 
 
@@ -218,4 +213,4 @@ async def get_all_unverified_user_under_org(admin: UserInDB = Depends(verificati
         return res
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_all_user_under_org] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in get_all_user_under_org] {} ".format(ex))

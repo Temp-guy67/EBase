@@ -16,6 +16,9 @@ class ResponseObject:
     def set_exception(self, exception: HTTPException):
         self.exception = exception
 
+    def set_data(self, data):
+        self.data = data
+
     def set_status(self, status:str):
         self.status = status
     

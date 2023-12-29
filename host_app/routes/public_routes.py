@@ -116,32 +116,32 @@ async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(
         logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))
 
 
-
 # =========================== SERVICES ==============================
 
 @public_router.post("/createservice")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
+        responseObject = ResponseObject()
+
         service_email = service_user.registration_mail
         service_org = service_user.service_org
         db_client = service_crud.get_service_by_email(db=db, email=service_email)
 
         if db_client:
-            return HTTPException(status_code=400, detail="Email already registered as Service Owner")
+            responseObject.set_exception(HTTPException(status_code=400, detail="Email already registered as Service Owner"))
+            return responseObject
         
         db_client = service_crud.get_service_by_service_org(db, service_org=service_org)
         if db_client:
-            return HTTPException(status_code=400, detail="Service ORG already registered")
+            responseObject.set_exception(HTTPException(status_code=400, detail="Service ORG already registered"))
+            return responseObject
         
-
         service_res = await service_crud.create_new_service(db=db, service_user=service_user)
-        
-        
         db_user = crud.get_user_by_email(db=db, email=service_email)
 
         if db_user:
-            return HTTPException(status_code=400, detail="Email already registered as User")
-
+            responseObject.set_exception(HTTPException(status_code=400, detail="Email already registered as User"))
+            return responseObject
 
         user_signup_model = dict()
         user_signup_model["email"] = service_email
@@ -151,10 +151,12 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         user_signup_model["role"] = str(models.Account.Role.ADMIN)
 
         user_model = UserSignUp.model_validate(user_signup_model)
-        
         user_res = await crud.create_new_user(db=db, user=user_model)
         
-        return {"Service Details" : service_res, "Admin Account" : user_res}
+        data = {"Service Details" : service_res, "Admin Account" : user_res}
+        responseObject.set_status(status.HTTP_200_OK)
+        responseObject.set_data(data)
+        return responseObject
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))

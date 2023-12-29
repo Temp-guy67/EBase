@@ -1,4 +1,3 @@
-
 # Crux 
 ## E-Commerce Backend-as-a-Service (BaaS)
 

@@ -1,10 +1,9 @@
-import logging
+import logging, random
 from .schemas import UserSignUp, OrderCreate, UserSignUpResponse
 from .models import Account, Orders, Password
 from host_app.common.util import create_hashed_password, generate_salt, create_order_id
 from .sql_constants import CommonConstants
 from host_app.caching.redis_constant import RedisConstant
-import random
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
 from host_app.common import util

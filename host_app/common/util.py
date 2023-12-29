@@ -1,4 +1,4 @@
-import hashlib,string,random, logging, secrets
+import hashlib, string, random, logging, secrets
 from host_app.database.sql_constants import CommonConstants
 
 # signup_map = {**signup_model.model_dump()}   # to get from model object to dictionary
@@ -14,7 +14,6 @@ async def create_hashed_password(password, salt):
         return hashed_password
     except Exception as ex :
         logging.exception("[util][Exception in signup] {} ".format(ex))
-
 
 
 async def generate_salt(saltLength : int):
@@ -57,7 +56,6 @@ async def unzipper(s : str):
     except Exception as ex :
         logging.exception("[util][Exception in unzipper] {} ".format(ex))
     
-
 
 async def generate_secure_random_string():
     length = 5

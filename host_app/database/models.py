@@ -9,6 +9,10 @@ class Account(Base):
     class Verification:
         NOT_VERIFIED=0
         VERIFIED=1
+    
+    class AccountState:
+        ACTIVE=1
+        DELETED=2
 
     class Role:
         USER=1
@@ -26,6 +30,7 @@ class Account(Base):
     created_time = Column(DateTime, default=func.now())
     role = Column(Integer, default=Role.USER)
     last_login_time = Column(DateTime, onupdate=func.now())
+    account_state = Column(Integer, default=AccountState.ACTIVE)
     service_org = Column(String, nullable=False)
 
     # items = relationship("Order", back_populates="owner")
@@ -37,7 +42,8 @@ class Account(Base):
             'phone': self.phone,
             'is_verified': self.is_verified,
             'role': self.role,
-            'service_org' : self.service_org
+            'service_org' : self.service_org,
+            'account_state': self.account_state
         }
 
 
@@ -120,6 +126,9 @@ class Service(Base):
             return self.REQUEST_COUNT[sus]
         
     
+    class ServiceState:
+        ACTIVE=1
+        DELETED=2
     
     class ClientVerification:
         NOT_VERIFIED=0
@@ -137,6 +146,7 @@ class Service(Base):
     ip_ports = Column(String)
     last_update_time = Column(DateTime, onupdate=func.now(), nullable=True)
     is_verified = Column(Integer, default=ClientVerification.NOT_VERIFIED)
+    service_state = Column(Integer, default=ServiceState.ACTIVE)
     api_key = Column(String, nullable=False)
     
 
