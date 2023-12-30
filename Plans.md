@@ -3,10 +3,16 @@
 
 Current Issue :
 IP Port issue solving,  [Done]
-Lets make Logout
-
+Lets make Logout [Done]
+Order ids in redis and set mapping - [In progress]
+update order ids in redis - [In progress]
 
 
 api Key :
-CRUX_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiX2xnUlV3dGFLMWpSbkdqcUFpU3ZlTGRoWXVkNzhhWFhQX2JmV1QxVF9qZyJ9.6gc4a0t9N1f5NqqLeD57JyDg3dgFJPVPmAGAXuOefZ8
+CRUX_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoicjNxaVRZRWNyTTlFblVZb0dNaGRWQ3QtTkJodThMdkMxUkIwUFpkYThLZyJ9.QmyZ7jOCSeaCbisb9gKu0LK3tK0p2E2IWoDkZE9cV9I
 boatclone@boatmail.com
+
+
+Superadmin:
+Mail : superadmin@supermail.com
+Api : CRUX_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoialZRQW9RQXJhYTF1MnJKTmQzcXlXcGJYamk0ZC03OTdVenVndFlCSFRTQSJ9.KsM260E6yfj6IqZvQWzszjpfDfLx4MwuznJmTAP5KWI

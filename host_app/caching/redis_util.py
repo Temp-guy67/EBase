@@ -76,20 +76,14 @@ async def is_exists(key : str):
         logging.exception("[REDIS_UTIL][Exception in is_exists] {} ".format(ex))
 
 
-async def add_to_set(set_name:str, val:dict, ttl_in_sec: int = 3600):
+
+# Set culture
+async def add_to_set(set_name:str, val:list, ttl_in_sec: int = 1800):
     try:
-        redis_client.sadd(set_name,val)
+        redis_client.sadd(set_name,*val)
         redis_client.expire(set_name, ttl_in_sec)
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in add_to_set] {} ".format(ex))
-
-
-async def add_to_set_str_val(set_name:str, val:str, ttl_in_sec: int = 3600):
-    try:
-        redis_client.sadd(set_name,val)
-        redis_client.expire(set_name, ttl_in_sec)
-    except Exception as ex :
-        logging.exception("[REDIS_UTIL][Exception in add_to_set_str_val] {} ".format(ex))
 
 
 async def get_set(set_name:str):
@@ -100,7 +94,7 @@ async def get_set(set_name:str):
         logging.exception("[REDIS_UTIL][Exception in get_set] {} ".format(ex))
 
 
-async def is_member_is_set(set_name:str, item:str):
+async def is_member_in_set(set_name:str, item:str):
     try:
         is_member = redis_client.sismember(set_name, item)
         return is_member

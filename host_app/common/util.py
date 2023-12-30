@@ -27,15 +27,6 @@ async def generate_salt(saltLength : int):
         logging.exception("[util][Exception in signup] {} ".format(ex))
 
 
-async def create_order_id(user_id : str):
-    try :
-        ord_id = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(10)])
-        x = user_id[5:] + "_" + ord_id
-        return x
-    
-    except Exception as ex :
-        logging.exception("[util][Exception in create_order_id] {} ".format(ex))
-
 
 async def zipper(arr : list):
     try :

@@ -17,7 +17,7 @@ auth_router = APIRouter(
 @auth_router.get("/verifyservice")
 async def verify_service(super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        service_id = "BT_L606"
+        service_id = "BT_O766"
         await service_util.verify_service(service_id, db)
 
     except Exception as ex :

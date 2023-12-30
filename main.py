@@ -10,6 +10,9 @@ from host_app.routes.auth_routes import auth_router
 from host_app.routes.public_routes import public_router
 from host_app.routes.services_routes import service_router
 
+# Test imports
+from tests import orders_test
+
 
 app = FastAPI()
 
@@ -43,10 +46,11 @@ async def hello():
 
 @app.get("/test")
 async def hello():
+    await orders_test.redis_set_test()
     return {"message" : "Hello Boss"}
 
 
-@app.post("/test/login")
+@app.get("/test/login")
 async def login_test():
     try:
         return {"access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJcInRlc3QzXCIiLCJleHAiOjE2OTU3MTQzNzB9.LGXf2RVsbtrEiVTvQGRg3T1UzqmnEDEIQi8MF3AC-kI", "token_type" : "bearer"}
