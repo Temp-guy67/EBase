@@ -64,15 +64,15 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         
 
         res = await common_util.update_account_info(user_id, user_data)
+        
+        if res :
+            if type(res) != type(dict()):
+                responseObject.set_exception(res)
+                return responseObject
 
-        if type(res) != type(dict()):
-            responseObject.set_exception(res)
+            responseObject.set_status(status.HTTP_200_OK)
+            responseObject.set_data(res)
             return responseObject
-
-        responseObject.set_status(status.HTTP_200_OK)
-        responseObject.set_data(res)
-        return responseObject
-
 
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in update_user] {} ".format(ex))
@@ -99,23 +99,30 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
 @user_router.post("/delete/")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        responseObject = ResponseObject()
         user_id = user["user_id"]
+        user_org = user["service_org"]
         password = user_data.password
         password_obj = await crud.get_password_data(db, user_id)
         
-        if await verification.verify_password(password, password_obj.hashed_password, password_obj.salt):
-            res = crud.delete_user(db, user_id)
-            if res :
-                await redis_util.delete_from_redis(user_id)
-                return {"user_id": user_id, "messege": "User has been Deleted Sucessfully"} 
-            else:
-                return {"user_id": user_id, "messege": "Failed to delete user ; Contact Admin Team"} 
-        else:
-            return HTTPException(
+        is_password_verified = await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
+        
+        if not is_password_verified:
+            exp = HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Password is wrong",
-                headers={"WWW-Authenticate": "Bearer"}
+                headers={"WWW-Authenticate": "Bearer"},
             )
+            responseObject.set_exception(exp)
+            return responseObject
+            
+        res = await common_util.delete_user(user_id, user_org, db)
+        if type(res) != type(dict()):
+            responseObject.set_exception(res)
+            return responseObject
+        responseObject.set_status(status.HTTP_200_OK)
+        responseObject.set_data(res)
+        return responseObject
 
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in delete_user] {} ".format(ex))

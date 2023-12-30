@@ -50,6 +50,9 @@ async def get_user_details(user_id, db: Session = Depends(get_db)):
     except Exception as ex :
         logging.exception("[common_util][Exception in get_user_details] {} ".format(ex))
 
+async def delete_user_details_from_redis(user_id:str):
+    await redis_util.delete_from_redis(RedisConstant.USER_OBJECT + user_id)
+    
         
 async def update_password(user:dict, password, new_password, db: Session = Depends(get_db)):
     try:
@@ -76,44 +79,13 @@ async def update_password(user:dict, password, new_password, db: Session = Depen
     except Exception as ex :
         logging.exception("[common_util][Exception in update_password] {} ".format(ex))
              
-        
-async def delete_api_cache_from_redis(api_key: str):
-    try:
-        await redis_util.delete_from_redis(RedisConstant.IP_PORTS_SET + api_key )
-        await redis_util.delete_from_redis(RedisConstant.DAILY_REQUEST_LEFT + api_key)
-        await redis_util.delete_from_redis( RedisConstant.SERVICE_ORG + api_key )
-        await redis_util.delete_from_redis(RedisConstant.IS_SERVICE_VERIFIED + api_key)
-    
-        
-        print(" Deleted all the cache")
-
-    except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in delete_api_cache_from_redis] {} ".format(ex))
-
-
-async def add_api_cache_to_redis(api_key: str,service_id: str, daily_req_left: int, is_service_verified: int, ip_ports_list: list):
-    try:
-        redis_util.set_str(api_key + RedisConstant.IS_SERVICE_VERIFIED, str(is_service_verified), 86400) 
-
-        redis_util.set_str(api_key + RedisConstant.SERVICE_ID, service_id , 86400)
-
-        for ip_port in ip_ports_list:
-            await redis_util.add_to_set_str_val(api_key + RedisConstant.IP_PORTS_SET, ip_port, 86400)
-            
-        if daily_req_left > 0 :
-            redis_util.set_str(api_key + RedisConstant.DAILY_REQUEST_LEFT, str(daily_req_left - 1), 86400)
-        print(" Data added in Redis [Service Id]" ,service_id )
-
-    except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in delete_api_cache_from_redis] {} ".format(ex))
-        
-        
 
 # Common update, it will update anything literally except password and return a boolean 
 # But reaching upto here is fuckin impossible without proper authentication.
 
 
 async def update_account_info(user_id: int, user_update_map_info: dict, db: Session = Depends(get_db)):
+    data = {}
     try:
         # username, email and phone
         user_update_map = dict()
@@ -133,17 +105,28 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
                 user_update_map[k] = v
         
         updated_user_data = await crud.update_account_data(db, user_id, user_update_map)
-        
+        data = {"user_id" : user_id, "details" : "User Data updated successfully"}
         if updated_user_data :
             update_user_details_in_redis(user_id, updated_user_data)
-            return 1
-        else :
-            return -1
-        
-        
+
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in update_account_info] {} ".format(ex))
+    return data
         
+
+async def delete_user(user_id:str, user_org:str, db: Session):
+    data = {}
+    try:
+        res = crud.delete_user(db,user_id, user_org)
+        # now delete from redis
+        if not res :
+            return CustomException(detail="Operation Failed")
+        data = {"user_id" : user_id, "details" : "User Data updated successfully"}
+        await delete_user_details_from_redis(user_id)
+        
+    except Exception as ex :
+        logging.exception("[Common_Util][Exception in delete_user] {} ".format(ex))
+    return data
 
 
 # Only use it for verification
@@ -176,6 +159,9 @@ async def get_service_details(db: Session, api_key: str):
 async def update_service_object_in_redis(api_key:str, service_obj:dict):
     await redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
 
+async def delete_api_cache_from_redis(api_key:str):
+    await redis_util.delete_from_redis(RedisConstant.SERVICE_API + api_key)
+    
 
 async def reduce_daily_req_counts(api_key:str, service_obj:dict):
     service_obj["daily_request_count"] = str(int(service_obj["daily_request_count"]) - 1)

@@ -30,7 +30,6 @@ async def verify_service(service_id: int, db: Session ):
         service_update_map = dict()
         service_update_map["is_verified"] = 1
         res = await service_crud.update_service_data(db, service_id, service_update_map)
-        print(" print res for update ", res)
         if res :
             api_key = res.api_key
             await common_util.delete_api_cache_from_redis(api_key)

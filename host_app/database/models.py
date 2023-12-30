@@ -83,7 +83,7 @@ class Orders(Base):
     owner_id = Column(String, ForeignKey("account.user_id"))
     created_time = Column(DateTime, default=func.now())
     last_update_time = Column(DateTime, onupdate=func.now(), nullable=True)
-    service_org = Column(String, unique=True, nullable=False)
+    service_org = Column(String, nullable=False)
 
     # owner = relationship("Account", back_populates="order")
 
