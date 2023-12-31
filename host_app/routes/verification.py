@@ -105,7 +105,7 @@ async def verify_api_key(req: Request, db: Session):
         
         if service_obj :
             ip_ports = service_obj["ip_ports"]
-            
+
             if "*" in ip_ports:
                 logging.info("Sending all ip ok")
             elif client_ip not in ip_ports:
