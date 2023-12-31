@@ -8,9 +8,7 @@ from host_app.routes.order_routes import order_router
 from host_app.routes.auth_routes import auth_router
 from host_app.routes.public_routes import public_router
 from host_app.routes.services_routes import service_router
-
-# Test imports
-from tests import orders_test
+from host_app.logs import log_manager
 
 
 app = FastAPI()
@@ -43,10 +41,10 @@ async def startService():
 async def hello():
     return {"message" : "Entry Screen"}
 
-@app.get("/test")
-async def hello():
-    await orders_test.redis_set_test()
-    return {"message" : "Hello Boss"}
+@app.get("/logs")
+async def read_logs():
+    res = await log_manager.read_logs()
+    return res
 
 
 @app.get("/test/login")

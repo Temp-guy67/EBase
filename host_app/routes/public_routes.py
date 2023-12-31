@@ -26,6 +26,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
     try:
+        logging.info("Data received for Signup : {}".format(user))
         response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(req, db)
         if type(verification_result) != type(dict()) :
@@ -61,6 +62,7 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
     try:
+        logging.info("Data received for Login : {} ".format(user_login))
         response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(req, db)
         

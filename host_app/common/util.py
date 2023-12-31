@@ -31,7 +31,6 @@ async def generate_salt(saltLength : int):
 async def zipper(arr : list):
     try :
         s = "_!_".join(arr)
-        # print("Zipped data ", s)
         return s
         
     except Exception as ex :
@@ -41,7 +40,6 @@ async def zipper(arr : list):
 async def unzipper(s : str):
     try :
         arr = s.split("_!_")
-        # print("UN Zipped data ", s)
         return arr
         
     except Exception as ex :

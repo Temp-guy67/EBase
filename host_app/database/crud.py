@@ -112,7 +112,6 @@ async def get_password_data(db: Session, user_id: str):
 
 async def update_password_data(db: Session, user_id: int, user_update_map: dict):
     try :
-        print(" DATA RECEIVED FOR update_user ",user_update_map)
         db_user = db.query(Password).filter(Password.user_id == user_id).first()
         if db_user:
             for key, value in user_update_map.items():
@@ -127,7 +126,6 @@ async def update_password_data(db: Session, user_id: int, user_update_map: dict)
 
 async def update_account_data(db: Session, user_id: int, user_update_map: dict):
     try :
-        print(" DATA RECEIVED FOR update_user ",user_update_map)
         db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
         if db_user:
             for key, value in user_update_map.items():
@@ -149,11 +147,10 @@ def delete_user(db: Session, user_id: str, service_org: str):
             # db.delete(db_user)
             db.commit()
             obj = db.query(Password).filter(Password.user_id == user_id).first()
-            print(" Deleted from Account | password obj  ", obj)
             if obj:
                 db.delete(obj)
                 db.commit()
-                print(" Deleted from Password Table")
+
                 return True
         return False
     except Exception as ex :

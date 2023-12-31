@@ -17,3 +17,4 @@ def configure_logging():
     logging.info("")
     logging.info("")
     logging.info("Logger Inititated for this session ")
+    logging.info("")

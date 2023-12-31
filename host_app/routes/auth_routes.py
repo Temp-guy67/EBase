@@ -69,7 +69,6 @@ async def get_all_user(user: UserInDB = Depends(verification.get_current_active_
 @auth_router.post("/updateuser/")
 async def update_user_role(info: UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        print(" USER to action  is {} ".format(user))
         if not (int(user["role"]) == models.Account.Role.SUPER_ADMIN or int(user["role"]) == models.Account.Role.ADMIN) :
             return HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -117,7 +116,6 @@ async def update_user_role(info: UserUpdate, user: UserInDB = Depends(verificati
             update_info_map = {"is_verified" : models.Account.Verification.VERIFIED}
             success_msg = "User has been verified successfully"
 
-        print(" OPR for this one is : " , opr  , update_info_map)
         if update_info_map :
             res = await crud.update_account_data(db, user_id, update_info_map)
             if res :

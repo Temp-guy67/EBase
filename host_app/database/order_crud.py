@@ -78,7 +78,6 @@ async def update_order_status(db: Session, user_id : str, order_id: str, orders_
             db.refresh(order_obj)
             
             updated_order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
-            print(" UPDATED updated_order_obj : ",updated_order_obj)
             return updated_order_obj.to_dict()
         return None
     except Exception as ex :
