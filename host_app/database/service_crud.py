@@ -56,7 +56,6 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
         subscription_mode = service_user.subscription_mode
         if subscription_mode :
             daily_request_count = Service.get_request_count(subscription_mode)
-            print("daily_request_count" , daily_request_count)
             db_user = Service(service_org=service_org, service_id=service_id, service_name = service_user.service_name, registration_mail=service_user.registration_mail, ip_ports=ip_ports_str, api_key=api_key, subscription_mode=subscription_mode, daily_request_count=daily_request_count )
         
         else:
@@ -79,9 +78,7 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
 
 async def update_service_data(db: Session, service_id: int, service_update_map: dict):
     try :
-        print(" DATA RECEIVED FOR update_client ",service_update_map)
         db_user = db.query(Service).filter(Service.service_id == service_id).first()
-        print(" db_user wewe ", db_user.to_dict())
         if db_user:
             for key, value in service_update_map.items():
                 setattr(db_user, key, value)

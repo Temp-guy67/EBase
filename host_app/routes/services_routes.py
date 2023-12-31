@@ -73,7 +73,6 @@ async def verify_user_under_org(user_data : UserUpdate, admin: UserInDB = Depend
     try:
         org_user_id = user_data.user_id
         previleges =  await check_admin_privileges(admin, org_user_id) 
-        print(" TYPE of previleges " , type(type(previleges)))
         if type(previleges) == type(HTTPException):
             return previleges
         
