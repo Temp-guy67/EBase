@@ -3,12 +3,9 @@ from host_app.common.exceptions import CustomException
 from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
 from sqlalchemy.orm import Session
-from host_app.database.sql_constants import CommonConstants
-import jwt, jwt.exceptions
 import logging
 from host_app.database import crud
 from host_app.database.database import get_db
-from host_app.caching import redis_util
 from host_app.common import common_util
 from host_app.routes import verification
 

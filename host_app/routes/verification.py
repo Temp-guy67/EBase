@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
 from host_app.common import util
-from fastapi import Header, status, Depends, HTTPException, Request
+from fastapi import status, Depends, HTTPException, Request
 from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
 from typing import Annotated
 import jwt, jwt.exceptions
@@ -12,8 +12,7 @@ from host_app.common.exceptions import Exceptions, CustomException
 from host_app.common import common_util
 from host_app.database.sql_constants import APIConstants
 from host_app.caching import redis_util
-from host_app.caching.redis_constant import RedisConstant
-from host_app.database import crud, schemas,service_crud
+from host_app.database import crud, schemas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 

@@ -2,7 +2,6 @@ from typing import Optional
 from fastapi import Depends
 from host_app.database.schemas import OrderCreate
 from sqlalchemy.orm import Session
-import jwt, jwt.exceptions
 import logging, random, string
 from host_app.database import order_crud
 from host_app.database.database import get_db

@@ -1,10 +1,6 @@
-import logging
-from .schemas import ServiceSignup
-from .models import Service
-from host_app.common.util import create_hashed_password, generate_salt, create_order_id
-from .sql_constants import CommonConstants
-from host_app.caching.redis_constant import RedisConstant
-import random
+import logging,random
+from host_app.database.schemas import ServiceSignup
+from host_app.database.models import Service
 from sqlalchemy.orm import Session
 from host_app.common import util
 from host_app.routes import verification

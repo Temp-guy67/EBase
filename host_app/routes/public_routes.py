@@ -1,10 +1,9 @@
-from fastapi import Depends, HTTPException, Header, status, Request, APIRouter
+from fastapi import Depends, HTTPException, status, Request, APIRouter
 from host_app.common.exceptions import Exceptions
 from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordBearer
-import jwt, jwt.exceptions
 import logging
 from datetime import timedelta
 from host_app.database import crud, service_crud

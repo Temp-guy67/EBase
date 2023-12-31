@@ -1,8 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.sql import func
-from .database import Base
-from host_app.common.util import zipper,unzipper
+from host_app.database.database import Base
 
 
 class Account(Base):
