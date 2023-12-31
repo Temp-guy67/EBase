@@ -1,10 +1,9 @@
 import logging
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from sqlalchemy.orm import Session
 from host_app.database import service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
-from host_app.common.exceptions import Exceptions, CustomException
 
 
 

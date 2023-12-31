@@ -1,7 +1,6 @@
 from fastapi import Depends, HTTPException, status, APIRouter
 from host_app.database.schemas import UserInDB, UserUpdate
 from sqlalchemy.orm import Session
-import jwt, jwt.exceptions
 import logging
 from host_app.database import crud, models
 from host_app.database.database import get_db

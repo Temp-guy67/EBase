@@ -1,13 +1,10 @@
 from fastapi import Depends, HTTPException, status, APIRouter
 from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
 from sqlalchemy.orm import Session
-from host_app.database.sql_constants import CommonConstants
-import jwt, jwt.exceptions
 import logging
 from host_app.database import crud, models
 from host_app.database.database import get_db
 from host_app.caching import redis_util
-from host_app.common import util
 from host_app.routes import verification
 from host_app.common.exceptions import Exceptions,CustomException
 from host_app.common import common_util

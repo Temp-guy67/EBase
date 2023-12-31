@@ -2,7 +2,6 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from services import onStartService
 from host_app.database.database import Base, engine
-import jwt, jwt.exceptions
 import logging
 from host_app.routes.user_routes import user_router
 from host_app.routes.order_routes import order_router
