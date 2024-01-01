@@ -7,7 +7,7 @@ from host_app.database import crud, models
 from host_app.database.database import get_db
 from host_app.caching import redis_util
 from host_app.routes import verification
-from host_app.common.exceptions import Exceptions,CustomException
+from host_app.common.exceptions import Exceptions
 from host_app.common import common_util
 
 
@@ -119,8 +119,7 @@ async def update_admin_password(user_data : UserUpdate, admin: UserInDB = Depend
         logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
         
     
-
-@service_router.post("/delete/")
+@service_router.post("/delete/", summary="To delete any user", description=" To delete any user from the org")
 async def delete_user(user_data : UserDelete, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
         user_id = admin["user_id"]
@@ -162,7 +161,7 @@ async def get_all_user_under_org(admin: UserInDB = Depends(verification.get_curr
 
     
 @service_router.get("/getunverifiedusers/")
-async def get_all_unverified_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_all_un_verified_users_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
         if admin["role"] != models.Account.Role.ADMIN :
             return Exceptions.NOT_AUTHORIZED
