@@ -1,5 +1,7 @@
+from typing import Annotated
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from services import onStartService
 from host_app.database.database import Base, engine
 import logging
@@ -9,7 +11,6 @@ from host_app.routes.auth_routes import auth_router
 from host_app.routes.public_routes import public_router
 from host_app.routes.services_routes import service_router
 from host_app.logs import log_manager
-
 
 app = FastAPI()
 
@@ -21,6 +22,8 @@ app.include_router(service_router)
 
 
 origins = ["http://localhost:3000"]  
+
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,7 +53,9 @@ async def read_logs():
 @app.get("/test/login")
 async def login_test():
     try:
-        return {"access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJcInRlc3QzXCIiLCJleHAiOjE2OTU3MTQzNzB9.LGXf2RVsbtrEiVTvQGRg3T1UzqmnEDEIQi8MF3AC-kI", "token_type" : "bearer"}
+        res =  {"access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJcInRlc3QzXCIiLCJleHAiOjE2OTU3MTQzNzB9.LGXf2RVsbtrEiVTvQGRg3T1UzqmnEDEIQi8MF3AC-kI", "token_type" : "bearer"}
+        return res
+        
     
     except Exception as ex :
         logging.exception("[main][Exception in signup] {} ".format(ex))
@@ -65,3 +70,12 @@ async def get_user():
         "username": "test3",
         "phone": "123456711",
     }
+
+
+
+api_key_finder = APIKeyHeader(name="api_key")
+
+@app.get("/api_test")
+async def get_api_key(api_key: Annotated[str, Depends(api_key_finder)]):
+    print(" api_key_finder found ", api_key)
+    

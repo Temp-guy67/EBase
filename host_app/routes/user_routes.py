@@ -133,3 +133,4 @@ async def delete_user(user: UserInDB = Depends(verification.get_current_active_u
 
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in delete_user] {} ".format(ex))
+        

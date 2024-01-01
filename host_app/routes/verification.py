@@ -1,7 +1,7 @@
 import logging, secrets
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2AuthorizationCodeBearer
 from host_app.common import util
 from fastapi import status, Depends, HTTPException, Request
 from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
@@ -42,7 +42,6 @@ def create_access_token(data: dict, expires_delta: timedelta):
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in create_access_token] {} ".format(ex))
         
-
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
