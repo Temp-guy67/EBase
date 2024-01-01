@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, status, APIRouter
+from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
 from sqlalchemy.orm import Session
 import logging
@@ -48,9 +49,17 @@ What an Admin can do is :
 @service_router.get("/me/")
 async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        if int(admin["role"]) != models.Account.Role.ADMIN :
-            return Exceptions.NOT_AUTHORIZED
-        return admin
+        org_user_id = admin.user_id
+        respObj = ResponseObject()
+        previleges =  await check_admin_privileges(admin, org_user_id) 
+        if type(previleges) == type(HTTPException):
+            respObj.set_exception(previleges)
+            return respObj
+        
+        respObj.set_status(status.HTTP_200_OK)
+        respObj.set_data(admin)
+
+        return respObj
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in read_users_me] {} ".format(ex))
 
@@ -58,12 +67,21 @@ async def get_admin(admin: UserInDB = Depends(verification.get_current_active_us
 @service_router.post("/updateuser/")
 async def update_user_data(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
     try:
-        if admin["role"] != models.Account.Role.ADMIN :
-            return Exceptions.NOT_AUTHORIZED
+        org_user_id = user_data.user_id
+        respObj = ResponseObject()
+        previleges =  await check_admin_privileges(admin, org_user_id) 
+        if type(previleges) == type(HTTPException):
+            respObj.set_exception(previleges)
+            return respObj
+        
+        user_update_map_info = dict()
+        user_update_map_info["is_verified"] = 1
+        res = await common_util.update_account_info(org_user_id, user_update_map_info)
+        respObj.set_status(status.HTTP_200_OK)
+        respObj.set_data(res)
 
-        ord_user_id = user_data.user_id
-        if ord_user_id[:2] != admin["service_org"]:
-            return CustomException(detail="Can update users from Other Org")
+        return respObj
+
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
 
@@ -72,13 +90,19 @@ async def update_user_data(user_data : UserUpdate, admin: UserInDB = Depends(ver
 async def verify_user_under_org(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
     try:
         org_user_id = user_data.user_id
+        respObj = ResponseObject()
         previleges =  await check_admin_privileges(admin, org_user_id) 
         if type(previleges) == type(HTTPException):
-            return previleges
+            respObj.set_exception(previleges)
+            return respObj
         
         user_update_map_info = dict()
         user_update_map_info["is_verified"] = 1
-        await common_util.update_account_info(org_user_id, user_update_map_info)
+        res = await common_util.update_account_info(org_user_id, user_update_map_info)
+        respObj.set_status(status.HTTP_200_OK)
+        respObj.set_data(res)
+
+        return respObj
 
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in verify_user_under_org] {} ".format(ex))
@@ -181,14 +205,17 @@ async def get_orders_by_user_under_org(admin: UserInDB = Depends(verification.ge
 
 
 
-async def check_admin_privileges(admin : UserInDB, user_id : str ):
+async def check_admin_privileges(admin : dict, user_id : str ):
     try:
+        exp = Exceptions.NOT_AUTHORIZED
         if admin["role"] != models.Account.Role.ADMIN :
-            return Exceptions.NOT_AUTHORIZED
+            return exp
 
         ord_user_id = user_id
         if ord_user_id[:2] != admin["service_org"]:
-            return Exceptions.NOT_AUTHORIZED
+            return exp
+        
+        return True
 
     except Exception as ex :
         logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
