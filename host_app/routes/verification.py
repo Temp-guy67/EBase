@@ -1,7 +1,7 @@
 import logging, secrets
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordBearer, OAuth2AuthorizationCodeBearer
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2AuthorizationCodeBearer
 from host_app.common import util
 from fastapi import status, Depends, HTTPException, Request
 from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
@@ -15,6 +15,12 @@ from host_app.caching import redis_util
 from host_app.database import crud, schemas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+api_key_finder = APIKeyHeader(name="api_key")
+
+
+async def get_api_key(api_key: Annotated[str, Depends(api_key_finder)]):
+    print(" api_key_finder found ", api_key)
 
 async def verify_password(user_password: str, hashed_password : str, salt : str):
     try:

@@ -4,8 +4,12 @@
 Current Issue :
 IP Port issue solving,  [Done]
 Lets make Logout [Done]
-Order ids in redis and set mapping - [In progress]
-update order ids in redis - [In progress]
+Order ids in redis and set mapping - [Done]
+update order ids in redis - [Done]
+Proper API outh settings class 
+schemas setting
+No more js files write docs on Notion
+
 
 
 api Key :

@@ -73,9 +73,5 @@ async def get_user():
 
 
 
-api_key_finder = APIKeyHeader(name="api_key")
 
-@app.get("/api_test")
-async def get_api_key(api_key: Annotated[str, Depends(api_key_finder)]):
-    print(" api_key_finder found ", api_key)
     

@@ -4,7 +4,7 @@ from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordBearer
-import logging
+import logging, json
 from datetime import timedelta
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
@@ -157,7 +157,7 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         data = {"Service Details" : service_res, "Admin Account" : user_res}
         responseObject.set_status(status.HTTP_200_OK)
         responseObject.set_data(data)
-        return responseObject
+        return json.dumps(responseObject)
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))

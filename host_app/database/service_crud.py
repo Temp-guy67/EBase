@@ -54,6 +54,7 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
         api_key = await verification.get_api_key()
         
         subscription_mode = service_user.subscription_mode
+        print(" Subcription mode ", subscription_mode)
         if subscription_mode :
             daily_request_count = Service.get_request_count(subscription_mode)
             db_user = Service(service_org=service_org, service_id=service_id, service_name = service_user.service_name, registration_mail=service_user.registration_mail, ip_ports=ip_ports_str, api_key=api_key, subscription_mode=subscription_mode, daily_request_count=daily_request_count )
