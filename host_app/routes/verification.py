@@ -19,9 +19,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 api_key_finder = APIKeyHeader(name="api_key")
 
 
-async def get_api_key(api_key: Annotated[str, Depends(api_key_finder)]):
-    print(" api_key_finder found ", api_key)
-
 async def verify_password(user_password: str, hashed_password : str, salt : str):
     try:
         if hashed_password and salt and user_password :
@@ -49,14 +46,14 @@ def create_access_token(data: dict, expires_delta: timedelta):
         logging.exception("[VERIFICATION][Exception in create_access_token] {} ".format(ex))
         
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], api_key: Annotated[str, Depends(api_key_finder)], req: Request,  db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate Token Credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-
+        print(" api_key is ", api_key)
         verification_result = await verify_api_key(req, db)
         if type(verification_result) != type(dict()) :
             return verification_result
