@@ -49,7 +49,7 @@ What an Admin can do is :
 @service_router.get("/me/")
 async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        org_user_id = admin.user_id
+        org_user_id = admin["user_id"]
         respObj = ResponseObject()
         previleges =  await check_admin_privileges(admin, org_user_id) 
         if type(previleges) == type(HTTPException):
