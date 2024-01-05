@@ -7,8 +7,8 @@ Lets make Logout [Done]
 Order ids in redis and set mapping - [Done]
 update order ids in redis - [Done]
 Proper API outh settings class 
-schemas setting
-No more js files write docs on Notion
+
+Need js
 
 
 

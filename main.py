@@ -1,7 +1,9 @@
 from typing import Annotated
+
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader
+from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
 from services import onStartService
 from host_app.database.database import Base, engine
 import logging
@@ -12,7 +14,8 @@ from host_app.routes.public_routes import public_router
 from host_app.routes.services_routes import service_router
 from host_app.logs import log_manager
 
-app = FastAPI()
+app = FastAPI(debug=True , title="Cruxx", summary="Ecommerce Backend as service", description="sadsdadasdadad")
+
 
 app.include_router(user_router)
 app.include_router(order_router)
@@ -39,6 +42,14 @@ Base.metadata.create_all(bind=engine)
 async def startService():
     await onStartService()
 
+security = HTTPBearer()
+
+
+@app.get("/test_method")
+def read_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
+    return {"username": credentials}
+
+
 
 @app.get("/")
 async def hello():
@@ -55,7 +66,6 @@ async def login_test():
     try:
         res =  {"access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJcInRlc3QzXCIiLCJleHAiOjE2OTU3MTQzNzB9.LGXf2RVsbtrEiVTvQGRg3T1UzqmnEDEIQi8MF3AC-kI", "token_type" : "bearer"}
         return res
-        
     
     except Exception as ex :
         logging.exception("[main][Exception in signup] {} ".format(ex))
@@ -70,8 +80,3 @@ async def get_user():
         "username": "test3",
         "phone": "123456711",
     }
-
-
-
-
-    
