@@ -19,8 +19,7 @@ class UserInDB(User):
     id : int
 
 class UserLogin(BaseModel):
-    username : Union[str, None] = None
-    email: Union[str, None] = None
+    email: str
     password: str 
 
 class UserSignUpResponse(User):

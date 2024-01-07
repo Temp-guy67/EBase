@@ -1,7 +1,7 @@
 import logging, secrets
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordBearer,OAuth2AuthorizationCodeBearer
+from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordBearer,HTTPBearer,APIKeyHeader
 from host_app.common import util
 from fastapi import status, Depends, HTTPException, Request
 from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
@@ -15,12 +15,9 @@ from host_app.caching import redis_util
 from host_app.database import crud, schemas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+security = HTTPBearer()
+api_key_from_header = APIKeyHeader(name="api_key")
 
-api_key_finder = APIKeyHeader(name="api_key")
-
-
-async def get_api_key(api_key: Annotated[str, Depends(api_key_finder)]):
-    print(" api_key_finder found ", api_key)
 
 async def verify_password(user_password: str, hashed_password : str, salt : str):
     try:
@@ -49,15 +46,18 @@ def create_access_token(data: dict, expires_delta: timedelta):
         logging.exception("[VERIFICATION][Exception in create_access_token] {} ".format(ex))
         
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], api_key: Annotated[str, Depends(api_key_finder)], req: Request,  db: Session = Depends(get_db)):
+# async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
+async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):  
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate Token Credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        print(" api_key is ", api_key)
-        verification_result = await verify_api_key(req, db)
+        token = credentials.credentials
+        # print(" Token receoved ", token)
+        verification_result = await verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
             return verification_result
         
@@ -96,11 +96,9 @@ async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depe
     return current_user
 
 
-async def verify_api_key(req: Request, db: Session):
+async def verify_api_key(enc_api_key: str, req: Request, db: Session):
     try:
         client_ip = req.client.host
-        enc_api_key = req.headers.get("api_key")
-
         api_key = await decrypt_enc_api_key(enc_api_key)
         if not api_key:
             return CustomException(detail="Add api_key in the header")

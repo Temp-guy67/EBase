@@ -1,9 +1,7 @@
 from typing import Annotated
-
-
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials, APIKeyHeader
 from services import onStartService
 from host_app.database.database import Base, engine
 import logging
@@ -16,17 +14,13 @@ from host_app.logs import log_manager
 
 app = FastAPI(debug=True , title="Cruxx", summary="Ecommerce Backend as service", description="sadsdadasdadad")
 
-
 app.include_router(user_router)
 app.include_router(order_router)
 app.include_router(auth_router)
 app.include_router(public_router)
 app.include_router(service_router)
 
-
 origins = ["http://localhost:3000"]  
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,13 +37,15 @@ async def startService():
     await onStartService()
 
 security = HTTPBearer()
+api_he = APIKeyHeader(name="api_key")
 
 
 @app.get("/test_method")
-def read_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
-    return {"username": credentials}
+def read_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_he)):
+    print(" CREDENTIAL IS  ", credentials.credentials , " API KEY ", api_key)
+    return {"token": credentials, "api_key" : api_key}
 
-
+@app.get()
 
 @app.get("/")
 async def hello():
@@ -80,3 +76,24 @@ async def get_user():
         "username": "test3",
         "phone": "123456711",
     }
+
+
+
+class FixedContentQueryChecker:
+    def __init__(self, fixed_content: str):
+        
+        self.fixed_content = fixed_content
+
+    def __call__(self, q: str = ""):
+        print(" Fixed content YOYOYOYOYO ", self.fixed_content)
+        if q:
+            return self.fixed_content in q
+        return False
+
+
+checker = FixedContentQueryChecker("/query")
+
+
+@app.get("/query")
+async def read_query_check(fixed_content_included: Annotated[bool, Depends(checker)]):
+    return {"fixed_content_in_query": fixed_content_included}

@@ -207,7 +207,7 @@ async def get_orders_by_user_under_org(admin: UserInDB = Depends(verification.ge
 async def check_admin_privileges(admin : dict, user_id : str ):
     try:
         exp = Exceptions.NOT_AUTHORIZED
-        if admin["role"] != models.Account.Role.ADMIN :
+        if admin["role"] == models.Account.Role.USER :
             return exp
 
         ord_user_id = user_id
