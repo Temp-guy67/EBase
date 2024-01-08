@@ -12,8 +12,9 @@ from host_app.common import order_util
 
 async def create_new_order(db: Session, user_id:str, service_org:str, orders_info: OrderCreate):
     try :
-        order_id = await order_util.create_order_id(user_id)
-        order_obj = Orders(order_id=order_id, product_id=orders_info.product_id, owner_id=orders_info.owner_id,receivers_mobile= orders_info.receivers_mobile, delivery_address=orders_info.delivery_address, service_org=service_org)
+        print(" TYPE OF DB SESSION ", type(db))
+        order_id = await order_util.create_order_id(user_id, service_org)
+        order_obj = Orders(order_id=order_id, product_id=orders_info.product_id, owner_id=user_id, receivers_mobile= orders_info.receivers_mobile, delivery_address=orders_info.delivery_address, service_org=service_org)
         db.add(order_obj)
         db.commit()
         db.refresh(order_obj)

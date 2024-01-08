@@ -45,7 +45,6 @@ def read_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depen
     print(" CREDENTIAL IS  ", credentials.credentials , " API KEY ", api_key)
     return {"token": credentials, "api_key" : api_key}
 
-@app.get()
 
 @app.get("/")
 async def hello():
