@@ -1,9 +1,9 @@
-from fastapi import Depends, HTTPException, status, Request, APIRouter
+from fastapi import Depends, HTTPException, status, Request, APIRouter, Response
 from host_app.common.exceptions import Exceptions
 from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 import logging, json
 from datetime import timedelta
 from host_app.database import crud, service_crud
@@ -21,14 +21,16 @@ public_router = APIRouter(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 # Dependency
+api_key_from_header = APIKeyHeader(name="api_key")
 
 
 @public_router.post("/signup")
-async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db)):
+async def sign_up(user: UserSignUp, req: Request,api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         logging.info("Data received for Signup : {}".format(user))
+        
         response_obj = ResponseObject()
-        verification_result = await verification.verify_api_key(req, db)
+        verification_result = await verification.verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
             response_obj.set_status_and_exception(status.HTTP_403_FORBIDDEN, verification_result)
             return verification_result
@@ -60,11 +62,11 @@ async def sign_up(user: UserSignUp, req: Request, db: Session = Depends(get_db))
 
 
 @public_router.post("/login")
-async def user_login(userlogin : UserLogin, req: Request, db: Session = Depends(get_db)):
+async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         logging.info("Data received for Login : {} ".format(user_login))
         response_obj = ResponseObject()
-        verification_result = await verification.verify_api_key(req, db)
+        verification_result = await verification.verify_api_key(api_key, req, db)
         
         if type(verification_result) != type(dict()) :
             response_obj.set_status_and_exception(status.HTTP_403_FORBIDDEN, verification_result)
