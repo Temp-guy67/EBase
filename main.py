@@ -40,7 +40,6 @@ app.add_middleware(RateLimiterMiddleware, bucket=bucket)
 async def startService():
     await onStartService()
 
-
 @app.get("/")
 async def hello():
     return {"message" : "Application loaded successfully"}

@@ -55,21 +55,21 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
     )
     try:
         token = credentials.credentials
-        # print(" Token receoved ", token)
+        user_id_from_token_map = await redis_util.get_str(token)
+        print( " user_id_from_token_map = ", user_id_from_token_map)
+        if user_id_from_token_map:
+            user_data = await redis_util.get_hm(user_id_from_token_map)
+            if user_data :
+                return user_data
+
+        
+        print(" user_data yoyo ", user_data)
         verification_result = await verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
             return verification_result
         
         if not int(verification_result["is_service_verified"]) :
             return Exceptions.SERVICE_NOT_VERIFIED
-
-        user_id_from_token_map = await redis_util.get_str(token)
-
-        if user_id_from_token_map:
-            user_data = await redis_util.get_hm(user_id_from_token_map)
-            if user_data :
-                return user_data
-
         # Now will encrypt and get from DB 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")

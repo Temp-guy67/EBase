@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, HTTPException, status, APIRouter, Response
+from fastapi.responses import JSONResponse
 from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, OrderCreate, OrderQuery
 from sqlalchemy.orm import Session
@@ -20,9 +21,8 @@ order_router = APIRouter(
 
 @order_router.post("/create")
 async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verification.get_current_active_user)):
-    responseObject = ResponseObject()
+    responseObject = Response()
     try: 
-        
         user_id = user["user_id"]
         user_org = user["service_org"]
         order = await order_util.create_order(user_id, user_org, order_info)
@@ -38,6 +38,7 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
 
         responseObject.set_status(status.HTTP_200_OK)
         responseObject.set_data(order)
+
         
     except Exception as ex:
         logging.exception("[ORDER_ROUTES][Exception in create_order] {} ".format(ex))

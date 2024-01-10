@@ -22,6 +22,7 @@ class UserLogin(BaseModel):
     email: str
     password: str 
 
+
 class UserSignUpResponse(User):
     user_id : str
     is_verified : int
