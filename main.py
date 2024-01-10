@@ -1,18 +1,17 @@
-from typing import Annotated
-from fastapi import Depends, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials, APIKeyHeader
+import logging, prop_file
+from fastapi import FastAPI
 from services import onStartService
+from fastapi.middleware.cors import CORSMiddleware
 from host_app.database.database import Base, engine
-import logging
-from host_app.routes.user_routes import user_router
-from host_app.routes.order_routes import order_router
 from host_app.routes.auth_routes import auth_router
+from host_app.routes.user_routes import user_router
+from host_app.common.token_bucket import TokenBucket
+from host_app.routes.order_routes import order_router
 from host_app.routes.public_routes import public_router
 from host_app.routes.services_routes import service_router
-from host_app.logs import log_manager
+from host_app.common.middle_ware import RateLimiterMiddleware
 
-app = FastAPI(debug=True , title="Cruxx", summary="Ecommerce Backend as service", description="sadsdadasdadad")
+app = FastAPI(title=prop_file.TITLE, summary=prop_file.SUMMARY, description=prop_file.DESCRIPTION, version=prop_file.VERSION, openapi_tags=prop_file.TAGS_METADATA, redoc_url=None)
 
 app.include_router(user_router)
 app.include_router(order_router)
@@ -30,30 +29,20 @@ app.add_middleware(
     allow_headers=["*"],  # All-ow all headers or specify specific headers (e.g., ["Authorization"])
 )
 
+
 Base.metadata.create_all(bind=engine)
+bucket = TokenBucket(capacity=10, refill_rate=5)
+
+# Add the rate limiting middleware to the FastAPI app
+app.add_middleware(RateLimiterMiddleware, bucket=bucket)
         
 @app.on_event("startup")
 async def startService():
     await onStartService()
 
-security = HTTPBearer()
-api_he = APIKeyHeader(name="api_key")
-
-
-@app.get("/test_method")
-def read_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_he)):
-    print(" CREDENTIAL IS  ", credentials.credentials , " API KEY ", api_key)
-    return {"token": credentials, "api_key" : api_key}
-
-
 @app.get("/")
 async def hello():
-    return {"message" : "Entry Screen"}
-
-@app.get("/logs")
-async def read_logs():
-    res = await log_manager.read_logs()
-    return res
+    return {"message" : "Application loaded successfully"}
 
 
 @app.get("/test/login")
@@ -66,33 +55,5 @@ async def login_test():
         logging.exception("[main][Exception in signup] {} ".format(ex))
 
 
-@app.get("/test/getuser")
-async def get_user():
-    return {
-        "email": "test3@testmail.com",
-        "created_time": "2023-09-18T12:30:48",
-        "id": 1,
-        "username": "test3",
-        "phone": "123456711",
-    }
 
 
-
-class FixedContentQueryChecker:
-    def __init__(self, fixed_content: str):
-        
-        self.fixed_content = fixed_content
-
-    def __call__(self, q: str = ""):
-        print(" Fixed content YOYOYOYOYO ", self.fixed_content)
-        if q:
-            return self.fixed_content in q
-        return False
-
-
-checker = FixedContentQueryChecker("/query")
-
-
-@app.get("/query")
-async def read_query_check(fixed_content_included: Annotated[bool, Depends(checker)]):
-    return {"fixed_content_in_query": fixed_content_included}

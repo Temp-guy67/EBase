@@ -19,16 +19,14 @@ public_router = APIRouter(
     tags=['public']
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 # Dependency
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 api_key_from_header = APIKeyHeader(name="api_key")
 
-
 @public_router.post("/signup")
-async def sign_up(user: UserSignUp, req: Request,api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
+async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         logging.info("Data received for Signup : {}".format(user))
-        
         response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :

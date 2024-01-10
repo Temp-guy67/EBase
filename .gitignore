@@ -3,5 +3,7 @@ app.log
 host_app/caching/__pycache__
 host_app/database/__pycache__
 host_app/routes/__pycache__
+host_app/logs/__pycache__
 __pycache__
 Plans.md
+speed_test.py

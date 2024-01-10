@@ -47,8 +47,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
         
 
 # async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
-async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):  
-    
+async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate Token Credentials",

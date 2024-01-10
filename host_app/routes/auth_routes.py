@@ -6,6 +6,7 @@ from host_app.database import crud, models
 from host_app.database.database import get_db
 from host_app.routes import verification
 from host_app.common import util, service_util
+from host_app.logs import log_manager
 
 auth_router = APIRouter(
     prefix='/auth',
@@ -32,6 +33,10 @@ async def verify_user(user: UserInDB = Depends(verification.get_current_active_u
         logging.exception("[AUTH_ROUTES][Exception in verify_user] {} ".format(ex))
 
 
+@auth_router.get("/logs")
+async def read_logs():
+    res = await log_manager.read_logs()
+    return res
 
 
 # Untested ----------------------
