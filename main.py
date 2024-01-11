@@ -52,7 +52,7 @@ async def login_test():
         return res
     
     except Exception as ex :
-        logging.exception("[main][Exception in signup] {} ".format(ex))
+        logging.exception("[main][Exception in login_test] {} ".format(ex))
 
 
 
