@@ -1,15 +1,18 @@
-from fastapi import Depends, HTTPException, status, Request, APIRouter, Response
-from host_app.common.exceptions import Exceptions
-from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
+from fastapi import Depends, HTTPException, status, Request, APIRouter
+from pydantic import model_validator
+from host_app.common.exceptions import Exceptions, CustomException
+from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup, UserSignUpResponse
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 import logging, json
+from fastapi.responses import JSONResponse
 from datetime import timedelta
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.common.response_object import ResponseObject
+from host_app.common.content_obj import ContentObject
 from host_app.routes import verification
 from host_app.database import models
 
@@ -122,39 +125,35 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
 @public_router.post("/createservice")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
     try:
+        logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
-
         service_email = service_user.registration_mail
         service_org = service_user.service_org
-        db_client = service_crud.get_service_by_email(db=db, email=service_email)
 
+        db_client = service_crud.get_service_by_email(db=db, email=service_email)
         if db_client:
-            responseObject.set_exception(HTTPException(status_code=400, detail="Email already registered as Service Owner"))
-            return responseObject
+            return JSONResponse(status_code=401, content=CustomException(detail="EMAIL ALREADY REGISTERED AS SERVICE OWNER").__repr__())
         
         db_client = service_crud.get_service_by_service_org(db, service_org=service_org)
         if db_client:
-            responseObject.set_exception(HTTPException(status_code=400, detail="Service ORG already registered"))
-            return responseObject
+            return JSONResponse(status_code=401, content=CustomException(detail="SERVICE ORG HAS BEEN REGISTERED ON THIS NAME").__repr__())
         
-        service_res = await service_crud.create_new_service(db=db, service_user=service_user)
         db_user = crud.get_user_by_email(db=db, email=service_email)
-
         if db_user:
-            responseObject.set_exception(HTTPException(status_code=400, detail="Email already registered as User"))
-            return responseObject
+            return JSONResponse(status_code=401, content=CustomException(detail="EMAIL ALREADY REGISTERED AS USER").__repr__())
 
-        user_signup_model = dict()
-        user_signup_model["email"] = service_email
-        user_signup_model["password"] = service_user.password
-        user_signup_model["phone"] = service_user.phone
-        user_signup_model["service_org"] = service_org
-        user_signup_model["role"] = str(models.Account.Role.ADMIN)
+        # Service_res is already a dict
+        service_res = await service_crud.create_new_service(db=db, service_user=service_user)
 
-        user_model = UserSignUp.model_validate(user_signup_model)
+        validated_instance = UserSignUpResponse.model_validate(obj=service_res)
+
+        print(" validated_instance => ", validated_instance)
+
+        user_model = UserSignUp.model_validate(service_res)
         user_res = await crud.create_new_user(db=db, user=user_model)
         
         data = {"Service Details" : service_res, "Admin Account" : user_res}
+        
         responseObject.set_status(status.HTTP_200_OK)
         responseObject.set_data(data)
         return json.dumps(responseObject)

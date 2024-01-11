@@ -23,3 +23,11 @@ Api : CRUX_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoialZRQW9RQXJhYTF1
 
 
 userId -> request count map
+
+
+frame we are going to use if 
+Access Token in Header
+
+
+X-Access-token = 
+X-Api-key

@@ -26,7 +26,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True, 
     allow_methods=["*"],  # Allow all HTTP methods or specify specific methods (e.g., ["GET", "POST"])
-    allow_headers=["*"],  # All-ow all headers or specify specific headers (e.g., ["Authorization"])
+    allow_headers=["*"],  # Allow all headers or specify specific headers (e.g., ["Authorization"])
 )
 
 
