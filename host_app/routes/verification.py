@@ -143,7 +143,7 @@ async def decrypt_enc_api_key(enc_api_key: str) -> str:
         logging.exception("[VERIFICATION][Exception in decrypt_enc_api_key] {} ".format(ex))
 
 
-async def get_api_key() -> str:
+async def generate_api_key() -> str:
     try:
         api_key = secrets.token_urlsafe(32)
         return api_key

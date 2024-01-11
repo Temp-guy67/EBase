@@ -4,6 +4,7 @@ from host_app.database.models import Service
 from sqlalchemy.orm import Session
 from host_app.common import util
 from host_app.routes import verification
+from sqlalchemy import or_
 
 
 
@@ -24,13 +25,27 @@ def get_service_by_api_key(db: Session, api_key: str) -> dict:
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_api_key] {} ".format(ex))
 
 
-
-def get_service_by_email(db: Session, email: str):
+def check_service_exist(db: Session, email: str, phone : str):
     try:
-        service_obj = db.query(Service).filter(Service.registration_mail == email).first()
+        service_obj = db.query(Service).filter(or_(Service.registration_mail == email, Service.phone == phone)).first()
         return service_obj.to_dict() if service_obj else None
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_email] {} ".format(ex))
+
+
+def get_service_by_email(db: Session, email: str):
+    try:
+        service_obj = db.query(Service).filter(Service.registration_mail == email or Service.registration_mail == email ).first()
+        return service_obj.to_dict() if service_obj else None
+    except Exception as ex :
+        logging.exception("[SERVICE_CRUD][Exception in get_service_by_email] {} ".format(ex))
+        
+def get_service_by_phone(db: Session, phone: str):
+    try:
+        service_obj = db.query(Service).filter(Service.phone == phone).first()
+        return service_obj.to_dict() if service_obj else None
+    except Exception as ex :
+        logging.exception("[SERVICE_CRUD][Exception in get_service_by_phone] {} ".format(ex))
 
 
 def get_service_by_service_org(db: Session, service_org: str):
@@ -51,10 +66,9 @@ async def create_new_service(db: Session, service_user: ServiceSignup):
 
         service_id = service_org + "_" + chr(64 + alpha_int) + str(random.randint(1,999))
         
-        api_key = await verification.get_api_key()
-        
+        api_key = await verification.generate_api_key()
         subscription_mode = service_user.subscription_mode
-        print(" Subcription mode ", subscription_mode)
+
         if subscription_mode :
             daily_request_count = Service.get_request_count(subscription_mode)
             db_user = Service(service_org=service_org, service_id=service_id, service_name = service_user.service_name, registration_mail=service_user.registration_mail, ip_ports=ip_ports_str, api_key=api_key, subscription_mode=subscription_mode, daily_request_count=daily_request_count )
