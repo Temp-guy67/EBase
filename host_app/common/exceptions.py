@@ -5,11 +5,17 @@ from fastapi import HTTPException, status
 class CustomException(HTTPException):
     def __init__(
         self,
-        status_code: status.HTTP_401_UNAUTHORIZED,
+        status_code: Optional[int] = None ,
         detail: Any = None,
         headers: Optional[dict[str, str]] = None,
     ) -> None:
+        if not status_code :
+            status_code=status.HTTP_401_UNAUTHORIZED
+
         super().__init__(status_code=status_code, detail=detail, headers=headers)
+
+    def __repr__(self) -> str:
+        return {'data' : {}, 'is_success' : 'false', 'error' : f"(status_code={self.status_code!r}, detail={self.detail!r})"}
         
 class Exceptions:
     REQUEST_LIMIT_EXHAUSTED = HTTPException(
