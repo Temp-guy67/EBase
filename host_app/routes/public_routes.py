@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status, Request, APIRouter
-from pydantic import model_validator
 from host_app.common.exceptions import Exceptions, CustomException
-from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup, UserSignUpResponse
+from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
+from host_app.database import models
 from sqlalchemy.orm import Session
 from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
@@ -12,9 +12,7 @@ from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.common.response_object import ResponseObject
-from host_app.common.content_obj import ContentObject
 from host_app.routes import verification
-from host_app.database import models
 
 
 public_router = APIRouter(
@@ -130,7 +128,7 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         service_email = service_user.registration_mail
         service_org = service_user.service_org
 
-        db_client = service_crud.get_service_by_email(db=db, email=service_email)
+        db_client = service_crud.check_service_exist(db=db, email=service_email, phone=service_user.phone)
         if db_client:
             return JSONResponse(status_code=401, content=CustomException(detail="EMAIL ALREADY REGISTERED AS SERVICE OWNER").__repr__())
         
@@ -144,21 +142,21 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
 
         # Service_res is already a dict
         service_res = await service_crud.create_new_service(db=db, service_user=service_user)
+        
+        user_signup_model = dict()
+        user_signup_model["email"] = service_email
+        user_signup_model["password"] = service_user.password
+        user_signup_model["phone"] = service_user.phone
+        user_signup_model["service_org"] = service_org
+        user_signup_model["role"] = str(models.Account.Role.ADMIN)
 
-        validated_instance = UserSignUpResponse.model_validate(obj=service_res)
-
-        print(" validated_instance => ", validated_instance)
-
-        user_model = UserSignUp.model_validate(service_res)
+        user_model = UserSignUp.model_validate(user_signup_model)
         user_res = await crud.create_new_user(db=db, user=user_model)
-        
-        data = {"Service Details" : service_res, "Admin Account" : user_res}
-        
-        responseObject.set_status(status.HTTP_200_OK)
+        data = {"Service Account Details" : service_res, "Admin Account Details" : user_res}
         responseObject.set_data(data)
-        return json.dumps(responseObject)
+        
+        return JSONResponse(status_code=200, content=responseObject.to_dict())
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
-
 
