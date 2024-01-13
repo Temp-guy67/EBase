@@ -32,7 +32,7 @@ class Account(Base):
     service_org = Column(String, nullable=False)
 
     # items = relationship("Order", back_populates="owner")
-    async def to_dict(self):
+    def to_dict(self):
         return {
             'user_id': self.user_id,
             'username': self.username,

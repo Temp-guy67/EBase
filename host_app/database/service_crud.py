@@ -25,9 +25,9 @@ def get_service_by_api_key(db: Session, api_key: str) -> dict:
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_api_key] {} ".format(ex))
 
 
-def check_service_exist(db: Session, email: str, phone : str):
+def if_service_cred_exist(db: Session, email: str, service_org : str):
     try:
-        service_obj = db.query(Service).filter(or_(Service.registration_mail == email, Service.phone == phone)).first()
+        service_obj = db.query(Service).filter(or_(Service.registration_mail == email, Service.service_org == service_org)).first()
         return service_obj.to_dict() if service_obj else None
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_email] {} ".format(ex))
@@ -39,6 +39,7 @@ def get_service_by_email(db: Session, email: str):
         return service_obj.to_dict() if service_obj else None
     except Exception as ex :
         logging.exception("[SERVICE_CRUD][Exception in get_service_by_email] {} ".format(ex))
+        
         
 def get_service_by_phone(db: Session, phone: str):
     try:

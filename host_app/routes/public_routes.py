@@ -128,21 +128,15 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         service_email = service_user.registration_mail
         service_org = service_user.service_org
 
-        db_client = service_crud.check_service_exist(db=db, email=service_email, phone=service_user.phone)
-        if db_client:
-            return JSONResponse(status_code=401, content=CustomException(detail="EMAIL ALREADY REGISTERED AS SERVICE OWNER").__repr__())
-        
-        db_client = service_crud.get_service_by_service_org(db, service_org=service_org)
-        if db_client:
-            return JSONResponse(status_code=401, content=CustomException(detail="SERVICE ORG HAS BEEN REGISTERED ON THIS NAME").__repr__())
-        
-        db_user = crud.get_user_by_email(db=db, email=service_email)
-        if db_user:
-            return JSONResponse(status_code=401, content=CustomException(detail="EMAIL ALREADY REGISTERED AS USER").__repr__())
+        is_service_existed = await check_if_service_existed(db=db, service_email=service_email, service_org=service_org)
+        if(is_service_existed):
+            return JSONResponse(status_code=401, content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(is_service_existed[0], is_service_existed[1])).__repr__())
+
+        if_account_existed = await check_if_account_existed(db=db, email=service_email, phone=service_user.phone)
+        if(if_account_existed):
+            return JSONResponse(status_code=401, content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
         # Service_res is already a dict
-        service_res = await service_crud.create_new_service(db=db, service_user=service_user)
-        
         user_signup_model = dict()
         user_signup_model["email"] = service_email
         user_signup_model["password"] = service_user.password
@@ -151,12 +145,53 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
         user_signup_model["role"] = str(models.Account.Role.ADMIN)
 
         user_model = UserSignUp.model_validate(user_signup_model)
+
+        service_res = await service_crud.create_new_service(db=db, service_user=service_user)
         user_res = await crud.create_new_user(db=db, user=user_model)
-        data = {"Service Account Details" : service_res, "Admin Account Details" : user_res}
+
+        data = {"Service_Account_Details" : service_res, "Admin_Account_Details" : user_res}
         responseObject.set_data(data)
         
+        JSONResponse
         return JSONResponse(status_code=200, content=responseObject.to_dict())
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
+
+
+
+async def check_if_service_existed(db: Session, service_email : str, service_org : str):
+    reason = []
+    try:
+        db_client = service_crud.if_service_cred_exist(db=db, email=service_email, service_org=service_org)
+
+        if db_client:
+            if db_client["service_org"] == service_org :
+                reason.append(service_org)
+                reason.append("SERVICE_ORG")
+            elif db_client["registration_mail"] == service_email:
+                reason.append(service_email)
+                reason.append("SERVICE_EMAIL")
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in check_if_service_existed] {} ".format(ex))
+    return reason
+
+
+async def check_if_account_existed(db: Session, email : str, phone : str):
+    reason = []
+    try:
+        db_client = crud.if_account_cred_exist(db=db, email=email, phone=phone)
+
+        if db_client:
+            if db_client["email"] == email :
+                reason.append(email)
+                reason.append("ACCOUNT_EMAIL")
+            elif db_client["phone"] == phone:
+                reason.append(phone)
+                reason.append("ACCOUNT_PHONE")
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in check_if_account_existed] {} ".format(ex))
+    return reason
 

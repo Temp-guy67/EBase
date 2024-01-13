@@ -6,6 +6,7 @@ from host_app.database.sql_constants import CommonConstants
 from sqlalchemy.orm import Session
 from host_app.common import util
 from typing import Optional
+from sqlalchemy import or_
 
 
 def get_user_by_user_id(db: Session, user_id: str, org: Optional[str] = None):
@@ -54,6 +55,15 @@ def get_user_by_phone(db: Session, phone: str):
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_phone] {} ".format(ex))
 
+
+def if_account_cred_exist(db:Session, email : str, phone : str):
+    try:
+        user_obj = db.query(Account).filter(or_(Account.email == email, Account.phone == phone)).first()
+        return user_obj.to_dict() if user_obj else None
+    except Exception as ex :
+        logging.exception("[CRUD][Exception in if_account_cred_exist] {} ".format(ex))
+
+
 async def create_new_user(db: Session, user: UserSignUp):
     try:
         username = user.username
@@ -74,12 +84,8 @@ async def create_new_user(db: Session, user: UserSignUp):
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-
-        test_response = {"email":user.email, "phone":user.phone, "user_id":user_id,"username":username, "is_verified" : db_user.is_verified , "role" : db_user.role, "service_org" : db_user.service_org}
         await create_password(db, user_id, password)
-
-        response = UserSignUpResponse.model_validate(test_response)
-        return response
+        return db_user.to_dict()
 
     except Exception as ex :
         logging.exception("[CRUD][Exception in create_new_user] {} ".format(ex))
