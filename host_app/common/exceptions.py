@@ -16,53 +16,17 @@ class CustomException(HTTPException):
 
     def __repr__(self) -> str:
         return {'data' : {}, 'is_success' : 'false', 'error' : f"(status_code={self.status_code!r}, detail={self.detail!r})"}
-        
+    
+
 class Exceptions:
-    REQUEST_LIMIT_EXHAUSTED = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Request Limit reached",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    EMAIL_HAS_BEEN_REGISTERED = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Email has been registered",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    PHONE_NUMBER_HAS_BEEN_REGISTERED = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Phone number has been registered",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    CREDENTIAL_ERROR_EXCEPTION = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Wrong API",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    WRONG_API = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Wrong API",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    WRONG_IP = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="This IP is not configured for this API",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    SERVICE_NOT_VERIFIED = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Your service request is not Verified yet, You can't make any action Now",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    NOT_AUTHORIZED = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="You are not a Admin",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    REQUEST_LIMIT_EXHAUSTED="Request Limit reached"
+    ACCOUNT_CREATION_FAILED="Account Creation Failed"
+    EMAIL_HAS_BEEN_REGISTERED="Email has been registered"
+    PHONE_NUMBER_HAS_BEEN_REGISTERED="Phone number has been registered"
+    CREDENTIAL_ERROR_EXCEPTION="Wrong API"
+    WRONG_API="Wrong API"
+    WRONG_IP="This IP is not configured for this API"
+    SERVICE_NOT_VERIFIED="Your service request is not Verified yet, You can't make any action Now"
+    NOT_AUTHORIZED="You are not a Admin"
+    API_KEY_UNAVAILABLE="Add api_key in the header"
 

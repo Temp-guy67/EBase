@@ -2,7 +2,7 @@ import logging, random
 from host_app.database.schemas import UserSignUp, UserSignUpResponse
 from host_app.database.models import Account, Password
 from host_app.common.util import create_hashed_password, generate_salt
-from host_app.database.sql_constants import CommonConstants
+from host_app.common.constants import CommonConstants
 from sqlalchemy.orm import Session
 from host_app.common import util
 from typing import Optional

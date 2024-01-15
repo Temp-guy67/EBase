@@ -4,17 +4,18 @@ from sqlalchemy.orm import Session
 from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordBearer,HTTPBearer,APIKeyHeader
 from host_app.common import util
 from fastapi import status, Depends, HTTPException, Request
-from host_app.database.sql_constants import SECRET_KEY, ALGORITHM
+from host_app.common.constants import SECRET_KEY, ALGORITHM
 from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
 from host_app.common.exceptions import Exceptions, CustomException
 from host_app.common import common_util
-from host_app.database.sql_constants import APIConstants
+from host_app.common.constants import APIConstants
 from host_app.caching import redis_util
 from host_app.database import crud, schemas
+from host_app.common.constants import ServiceParameters
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 security = HTTPBearer()
 api_key_from_header = APIKeyHeader(name="api_key")
 
@@ -100,7 +101,7 @@ async def verify_api_key(enc_api_key: str, req: Request, db: Session):
         client_ip = req.client.host
         api_key = await decrypt_enc_api_key(enc_api_key)
         if not api_key:
-            return CustomException(detail="Add api_key in the header")
+            return CustomException(detail=Exceptions.API_KEY_UNAVAILABLE)
 
         daily_req_left = None
         service_obj = await common_util.get_service_details(db, api_key) 
@@ -111,7 +112,7 @@ async def verify_api_key(enc_api_key: str, req: Request, db: Session):
             if "*" in ip_ports:
                 logging.info("Sending all ip ok")
             elif client_ip not in ip_ports:
-                return Exceptions.WRONG_IP
+                return CustomException(detail=Exceptions.WRONG_IP)
             
             daily_req_left = service_obj["daily_request_count"]
             is_service_verified = service_obj["is_verified"]
@@ -119,24 +120,21 @@ async def verify_api_key(enc_api_key: str, req: Request, db: Session):
             if daily_req_left :
                 await common_util.reduce_daily_req_counts(api_key, service_obj)
                 return {"daily_req_left" : int(daily_req_left) - 1 , "is_service_verified" : is_service_verified}
-            
             elif daily_req_left == "0" :
-                return Exceptions.REQUEST_LIMIT_EXHAUSTED 
+                return CustomException(detail=Exceptions.REQUEST_LIMIT_EXHAUSTED)
             
-        return Exceptions.WRONG_API
-        
+        return CustomException(detail=Exceptions.WRONG_API)
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
-    return Exceptions.CREDENTIAL_ERROR_EXCEPTION
+    return CustomException(detail=Exceptions.CREDENTIAL_ERROR_EXCEPTION)
     
-
 
 async def decrypt_enc_api_key(enc_api_key: str) -> str:
     try:
         enc_api_key = enc_api_key[APIConstants.ENC_API_PREFIX_LEN:]
         payload = jwt.decode(enc_api_key, SECRET_KEY, algorithms=[ALGORITHM])
 
-        api_key: str = payload.get("api_key")
+        api_key: str = payload.get(ServiceParameters.X_API_KEY)
         return api_key
 
     except Exception as ex :
@@ -154,7 +152,7 @@ async def generate_api_key() -> str:
 
 async def get_encrypted_api_key(api_key:str):
     try:
-        encoded_api_key = jwt.encode({'api_key': api_key}, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_api_key = jwt.encode({ServiceParameters.X_API_KEY: api_key}, SECRET_KEY, algorithm=ALGORITHM)
         return APIConstants.ENC_API_PREFIX + encoded_api_key
 
     except Exception as ex :
