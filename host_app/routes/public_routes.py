@@ -3,9 +3,9 @@ from host_app.common.exceptions import Exceptions, CustomException
 from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
 from host_app.database import models
 from sqlalchemy.orm import Session
-from host_app.database.sql_constants import ACCESS_TOKEN_EXPIRE_MINUTES
+from host_app.common.constants import ACCESS_TOKEN_EXPIRE_MINUTES, ServiceParameters
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
-import logging, json
+import logging
 from fastapi.responses import JSONResponse
 from datetime import timedelta
 from host_app.database import crud, service_crud
@@ -22,40 +22,31 @@ public_router = APIRouter(
 
 # Dependency
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
-api_key_from_header = APIKeyHeader(name="api_key")
+api_key_from_header = APIKeyHeader(name=ServiceParameters.X_API_KEY)
 
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         logging.info("Data received for Signup : {}".format(user))
-        response_obj = ResponseObject()
+    
         verification_result = await verification.verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
-            response_obj.set_status_and_exception(status.HTTP_403_FORBIDDEN, verification_result)
-            return verification_result
+            return JSONResponse(status_code=403,  headers=dict(),content=verification_result.__repr__())
         
         if not int(verification_result["is_service_verified"]) :
-            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, Exceptions.SERVICE_NOT_VERIFIED)
-            return Exceptions.SERVICE_NOT_VERIFIED
+            return JSONResponse(status_code=401,  headers=dict(),content=verification_result.__repr__())
 
-        db_user = crud.get_user_by_email(db=db, email=user.email)
-
-        if db_user:
-            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, HTTPException(status_code=400, detail="Email already registered"))
-            return response_obj
-        
-        db_user = crud.get_user_by_phone(db, phone=user.phone)
-        if db_user:
-            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, HTTPException(status_code=400, detail="Mobile Number already registered"))
-            return response_obj
+        if_account_existed = await check_if_account_existed(db=db, email=user.email, phone=user.phone)
+        if(if_account_existed):
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
         res = await crud.create_new_user(db=db, user=user)
-        if res:
-            response_obj.set_status(status.HTTP_200_OK)
-            response_obj.set_data(res)
+        if not res:
+            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.ACCOUNT_CREATION_FAILED).__repr__())
         
-        return response_obj
-
+        response_obj = ResponseObject()  
+        response_obj.set_data(res)
+        return JSONResponse(status_code=200, headers=dict(),content=response_obj.to_dict())
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
 
@@ -64,19 +55,19 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
 async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         logging.info("Data received for Login : {} ".format(user_login))
+        
         response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(api_key, req, db)
-        
         if type(verification_result) != type(dict()) :
-            response_obj.set_status_and_exception(status.HTTP_403_FORBIDDEN, verification_result)
-            return response_obj
+            return JSONResponse(status_code=403, headers=dict(), content=verification_result.__repr__())
         
         if not int(verification_result["is_service_verified"]) :
-            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, Exceptions.SERVICE_NOT_VERIFIED)
-            return response_obj
+            return JSONResponse(status_code=401, headers=dict(), content=verification_result.__repr__())
+
 
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
+        
         db_user = crud.get_user_by_email_login(db, email=userlogin.email)
         
         account_obj = db_user[0][0]
@@ -151,8 +142,7 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
 
         data = {"Service_Account_Details" : service_res, "Admin_Account_Details" : user_res}
         responseObject.set_data(data)
-        
-        JSONResponse
+    
         return JSONResponse(status_code=200, content=responseObject.to_dict())
 
     except Exception as ex :

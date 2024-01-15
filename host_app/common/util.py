@@ -1,5 +1,5 @@
 import hashlib, string, random, logging, secrets
-from host_app.database.sql_constants import CommonConstants
+from host_app.common.constants import CommonConstants
 
 # signup_map = {**signup_model.model_dump()}   # to get from model object to dictionary
 # test2 = UserSignUp.model_validate(test)  # to convert dictionary to Object( base model)

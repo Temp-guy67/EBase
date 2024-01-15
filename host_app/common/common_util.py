@@ -1,5 +1,5 @@
 import logging
-from host_app.database.sql_constants import CommonConstants
+from host_app.common.constants import CommonConstants
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
