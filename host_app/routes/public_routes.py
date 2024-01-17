@@ -56,7 +56,6 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
     try:
         logging.info("Data received for Login : {} ".format(user_login))
         
-        response_obj = ResponseObject()
         verification_result = await verification.verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
             return JSONResponse(status_code=403, headers=dict(), content=verification_result.__repr__())
@@ -78,15 +77,12 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         user_obj["user_agent"] = user_agent
 
         if not account_obj:
-            response_obj.set_status_and_exception(status.HTTP_401_UNAUTHORIZED, HTTPException(status_code=401, detail="User Not Available"))
-            return response_obj
+            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.USER_NOT_FOUND).__repr__())
         
         res = await verification.verify_password(userlogin.password, password_obj.hashed_password, password_obj.salt)
 
         if not res:
-            exp = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password",headers={"WWW-Authenticate": "Bearer"})
-            response_obj.set_exception(exp)
-            return response_obj
+            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.INCORRECT_EMAIL_PASSWORD).__repr__())
         
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = verification.create_access_token(
@@ -99,11 +95,10 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         
         data = {"access_token": access_token, "token_type": "bearer", "role" : user_obj["role"]}
         
-        response_obj.set_status(status.HTTP_200_OK)
+        response_obj = ResponseObject()  
         response_obj.set_data(data)
         response_obj.set_daily_request_count_left(verification_result["daily_req_left"])
-
-        return response_obj    
+        return JSONResponse(status_code=200, headers=dict(),content=response_obj.to_dict())
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))

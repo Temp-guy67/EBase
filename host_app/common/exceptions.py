@@ -20,6 +20,8 @@ class CustomException(HTTPException):
 
 class Exceptions:
     REQUEST_LIMIT_EXHAUSTED="Request Limit reached"
+    USER_NOT_FOUND="User Not Available"
+    INCORRECT_EMAIL_PASSWORD="Incorrect email or password"
     ACCOUNT_CREATION_FAILED="Account Creation Failed"
     EMAIL_HAS_BEEN_REGISTERED="Email has been registered"
     PHONE_NUMBER_HAS_BEEN_REGISTERED="Phone number has been registered"

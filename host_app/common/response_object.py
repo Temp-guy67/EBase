@@ -1,6 +1,5 @@
 
-from fastapi import status, Response
-import json
+from fastapi import status
 # This object will only be used in routes
 
 
