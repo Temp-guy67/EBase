@@ -31,10 +31,10 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
     
         verification_result = await verification.verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
-            return JSONResponse(status_code=403,  headers=dict(),content=verification_result.__repr__())
+            return JSONResponse(status_code=403,  headers=dict(), content=verification_result.__repr__())
         
         if not int(verification_result["is_service_verified"]) :
-            return JSONResponse(status_code=401,  headers=dict(),content=verification_result.__repr__())
+            return JSONResponse(status_code=401,  headers=dict(), content=verification_result.__repr__())
 
         if_account_existed = await check_if_account_existed(db=db, email=user.email, phone=user.phone)
         if(if_account_existed):
