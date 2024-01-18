@@ -10,7 +10,7 @@ from host_app.caching import redis_util
 from host_app.caching.redis_constant import RedisConstant
 from host_app.common import order_util
 from host_app.routes import verification
-from host_app.common.exceptions import CustomException
+from host_app.common.exceptions import CustomException,Exceptions
 
 
 order_router = APIRouter(
@@ -21,28 +21,19 @@ order_router = APIRouter(
 
 @order_router.post("/create")
 async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verification.get_current_active_user)):
-    responseObject = Response()
     try: 
+        logging.info("Data received for create_order : {} [user_id] {}".format(order_info, user["user_id"]))
         user_id = user["user_id"]
         user_org = user["service_org"]
         order = await order_util.create_order(user_id, user_org, order_info)
         
         if not order:
-            exp = HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to Create New Order",
-                headers={"WWW-Authenticate": "Bearer"}
-            )
-            responseObject.set_exception(exp)
-            return responseObject
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail=Exceptions.FAILED_TO_CREATE_NEW_ORDER).__repr__())
 
-        responseObject.set_status(status.HTTP_200_OK)
-        responseObject.set_data(order)
-
-        
+        return JSONResponse(status_code=401,  headers=dict(), content=ResponseObject(data=order).to_dict())
+    
     except Exception as ex:
         logging.exception("[ORDER_ROUTES][Exception in create_order] {} ".format(ex))
-    return responseObject
 
 
 @order_router.get("/")
