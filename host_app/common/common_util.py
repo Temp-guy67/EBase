@@ -11,9 +11,10 @@ from host_app.routes import verification
 from host_app.common.exceptions import Exceptions, CustomException
 
 
-def update_access_token_in_redis(user_id:str, access_token: str):
+def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
     try :
-        redis_util.set_str(access_token, user_id, 1800)
+        data_map = {"user_id" : user_id, "ip" : ip}
+        redis_util.set_hm(access_token, data_map, 1800)
         # For logout cases only
         redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
 
@@ -21,7 +22,7 @@ def update_access_token_in_redis(user_id:str, access_token: str):
         logging.exception("[common_util][Exception in update_access_token_in_redis] {} ".format(ex))
 
 
-async def delete_access_token_in_redis(user_id):
+async def delete_access_token_in_redis(user_id : str):
     try:
         access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
         redis_util.delete_from_redis(access_token)
@@ -88,6 +89,7 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
     data = {}
     try:
         # username, email and phone
+        # any of theis valid then , it will be updated
         user_update_map = dict()
         possible_update = ["email", "phone", "username" , "is_verified"]
         

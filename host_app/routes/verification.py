@@ -49,22 +49,20 @@ def create_access_token(data: dict, expires_delta: timedelta):
 
 # async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
 async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate Token Credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         token = credentials.credentials
-        user_id_from_token_map = await redis_util.get_str(token)
-        print( " user_id_from_token_map = ", user_id_from_token_map)
-        if user_id_from_token_map:
-            user_data = await redis_util.get_hm(user_id_from_token_map)
+        user_id_ip_details = await redis_util.get_hm(token)
+        print( " user_id_from_token_map = ", user_id_ip_details)
+
+        if user_id_ip_details:
+            # If from different ip or device check
+            if user_id_ip_details["ip"] != req.client.host:
+                return Exceptions.TRYING_FROM_DIFFERENT_DEVICE
+            
+            user_data = await common_util.get_user_details(user_id_ip_details["user_id"], db)
             if user_data :
                 return user_data
 
-        
-        print(" user_data yoyo ", user_data)
         verification_result = await verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
             return verification_result
@@ -76,12 +74,12 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         email: str = payload.get("sub")
         
         if email is None:
-            raise credentials_exception
+            return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS
         token_data = schemas.TokenData(email=email)
 
         db_user = crud.get_user_by_email(db=db, email=token_data.email)
         if db_user is None:
-            raise credentials_exception
+            return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS
         
         db_data = await db_user.to_dict()
         await common_util.update_user_details_in_redis(db_user.user_id, db_data)
@@ -89,7 +87,7 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_current_user] {} ".format(ex))
-        raise credentials_exception
+        return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS
 
 
 async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depends(get_current_user)]):

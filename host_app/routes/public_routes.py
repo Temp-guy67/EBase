@@ -90,15 +90,15 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         )
         user_id = user_obj["user_id"]
 
-        common_util.update_access_token_in_redis(user_id, access_token)
+        common_util.update_access_token_in_redis(user_id, access_token, client_ip)
         await common_util.update_user_details_in_redis(user_id, user_obj)
         
-        data = {"access_token": access_token, "token_type": "bearer", "role" : user_obj["role"]}
-        
+        headers = {"access_token": access_token, "token_type": "bearer"}
         response_obj = ResponseObject()  
-        response_obj.set_data(data)
+        response_obj.set_data(user_obj)
         response_obj.set_daily_request_count_left(verification_result["daily_req_left"])
-        return JSONResponse(status_code=200, headers=dict(),content=response_obj.to_dict())
+
+        return JSONResponse(status_code=200, headers=headers,content=response_obj.to_dict())
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in user_login] {} ".format(ex))

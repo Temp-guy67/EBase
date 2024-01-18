@@ -34,15 +34,25 @@ async def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
         logging.exception("[REDIS_UTIL][Exception in set_hm] {} ".format(ex))
 
 
-async def get_hm(key:str):
+async def get_hm_all(key:str):
     try:
         data_in_bytes = redis_client.hgetall(key)
         if data_in_bytes :
             return data_in_bytes
     
     except Exception as ex :
-        logging.exception("[REDIS_UTIL][Exception in get_data_in_redis] {} ".format(ex))
+        logging.exception("[REDIS_UTIL][Exception in get_hm_all] {} ".format(ex))
     
+
+async def get_hm(key:str):
+    try:
+        data_in_bytes = redis_client.hget(key)
+        if data_in_bytes :
+            return data_in_bytes
+    
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in get_hm] {} ".format(ex))
+
 
 def set_str(key: str, val:str, ttl_in_sec:int = 3600):
     try:
