@@ -56,3 +56,6 @@ async def login_test():
 
 
     
+@app.get("/redis")
+async def redis():
+    

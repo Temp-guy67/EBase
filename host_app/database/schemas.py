@@ -32,7 +32,7 @@ class UserSignUpResponse(User):
 
 
 class UserUpdate(BaseModel):
-    user_id : str 
+    user_id : str  # target User
     email : Union[str, None] = None
     phone : Union[str, None] = None
     new_password : Union[str, None] = None

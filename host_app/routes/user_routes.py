@@ -28,16 +28,18 @@ async def read_users_me(user: UserInDB = Depends(verification.get_current_active
 @user_router.post("/update/")
 async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        logging.info("Data received for update_user : {} | action user_id : {}".format(user_data, user["user_id"]))
+
         if not user_data:
             return 
-        responseObject = ResponseObject()
         user_id, password = user.id, user_data.password
 
         password_obj = await crud.get_password_data(db, user_id)
-        res = await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
 
-        if not res :
-            return Exceptions.WRONG_PASSWORD
+        is_password_verified = await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
+
+        if not is_password_verified :
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.WRONG_PASSWORD).__repr__())  
         
         possible_update = ["email", "phone", "username"]
         anomalies = []
@@ -47,78 +49,81 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
                 del user_data[k]
                 anomalies.append(k)
         
+        data = {}
         if anomalies :
-            return f"these fields are not available to update {anomalies} "
+            data["not_updated"] = anomalies
         
-        res = await common_util.update_account_info(user_id, user_data)
-        
-        if res :
-            if type(res) != type(dict()):
-                return res
-
-            responseObject.set_status(status.HTTP_200_OK)
-            responseObject.set_data(res)
-            return responseObject
+        if user_data :
+            res = await common_util.update_account_info(user_id, user_data, db)
+            if type(res) == type(dict()):
+                data["updated"] = res 
+            else :
+                custom_msg = f"Failed to update : {res} , anomalies : {anomalies}"
+                return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res + " | " + custom_msg).__repr__()) 
+                
+        return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=data).to_dict())
 
     except Exception as ex:
-        logging.exception("[USER_ROUTES][Exception in update_user] {} ".format(ex))
+        logging.exception("[USER_ROUTES][Exception in update_user] {} | user_id {}".format(ex, user["user_id"]))
 
 
 @user_router.post("/updatepassword/")
 async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        responseObject = ResponseObject()
-        res = await common_util.update_password(user, user_data.password, user_data.new_password)
+        user_id = user["user_id"]
+        logging.info("Data received for update_user_password : {} | action user_id : {}".format(user_data, user_id))
+        old_password, new_password = user_data.password, user_data.new_password
+
+        if(not old_password or not new_password):
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Provide Old and new password").__repr__()) 
+        
+        password_obj = await crud.get_password_data(db, user_id)
+
+        is_password_verified = await verification.verify_password(old_password, password_obj.hashed_password, password_obj.salt)
+
+        if not is_password_verified:
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.WRONG_PASSWORD).__repr__())  
+
+        res = await common_util.update_password(user, user_data.new_password, db)
 
         if type(res) != type(dict()):
-            responseObject.set_exception(res)
-            return responseObject
-        responseObject.set_status(status.HTTP_200_OK)
-        responseObject.set_data(res)
-        return responseObject
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
+        
+        return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
     
     except Exception as ex:
-        logging.exception("[USER_ROUTES][Exception in update_user_password] {} ".format(ex))
+        logging.exception("[USER_ROUTES][Exception in update_user_password] {} | user_id {}".format(ex, user["user_id"]))
         
 
 @user_router.post("/delete/")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        responseObject = ResponseObject()
-        user_id = user["user_id"]
-        user_org = user["service_org"]
-        password = user_data.password
+        logging.info("Data received for delete_user : {} | action user_id : {}".format(user_data, user["user_id"]))
+
+        user_id, user_org, password = user["user_id"], user["service_org"], user_data.password
         password_obj = await crud.get_password_data(db, user_id)
-        
         is_password_verified = await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
         
         if not is_password_verified:
-            exp = HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password is wrong",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-            responseObject.set_exception(exp)
-            return responseObject
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.WRONG_PASSWORD).__repr__()) 
             
         res = await common_util.delete_user(user_id, user_org, db)
         if type(res) != type(dict()):
-            responseObject.set_exception(res)
-            return responseObject
-        responseObject.set_status(status.HTTP_200_OK)
-        responseObject.set_data(res)
-        return responseObject
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
+        
+        return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
 
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in delete_user] {} ".format(ex))
 
 
-@user_router.post("/logout/")
-async def delete_user(user: UserInDB = Depends(verification.get_current_active_user)):
+@user_router.get("/logout/")
+async def logout(user: UserInDB = Depends(verification.get_current_active_user)):
     try:
         user_id = user["user_id"]
+        logging.info("Request received for logout | action user_id : {}".format(user_id))
         await common_util.delete_access_token_in_redis(user_id)
 
     except Exception as ex:
-        logging.exception("[USER_ROUTES][Exception in delete_user] {} ".format(ex))
+        logging.exception("[USER_ROUTES][Exception in logout] {} ".format(ex))
         

@@ -45,7 +45,6 @@ async def get_user_details(user_id, db: Session = Depends(get_db)):
         user_details = await redis_util.get_hm(RedisConstant.USER_OBJECT + user_id)
         if not user_details :
             user_details = crud.get_user_by_user_id(db,user_id)
-
         return user_details
 
     except Exception as ex :
@@ -55,28 +54,21 @@ async def delete_user_details_from_redis(user_id:str):
     await redis_util.delete_from_redis(RedisConstant.USER_OBJECT + user_id)
     
         
-async def update_password(user:dict, password, new_password, db: Session = Depends(get_db)):
+async def update_password(user:dict, new_password, db: Session):
     try:
         user_id = user["user_id"]
-        password_obj = await crud.get_password_data(db, user_id)
 
-        if await verification.verify_password(password, password_obj.hashed_password, password_obj.salt):
+        new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
+        new_hashed_password = await util.create_hashed_password(new_password, new_salt)
+        data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
+        res = await crud.update_password_data(db, user_id, data)
 
-            new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
-            new_hashed_password = await util.create_hashed_password(new_password, new_salt)
-            data = {"salt": new_salt, "hashed_password" : new_hashed_password} 
-            res = await crud.update_password_data(db, user_id, data)
-            if res :
-                await redis_util.delete_from_redis(user_id)
-                await  delete_access_token_in_redis(user_id)
-                
-            return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
-        else :
-            return HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password is wrong",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        if res :
+            await delete_user_details_from_redis(user_id)
+            await  delete_access_token_in_redis(user_id)
+            
+        return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
+
     except Exception as ex :
         logging.exception("[common_util][Exception in update_password] {} ".format(ex))
              
@@ -85,7 +77,7 @@ async def update_password(user:dict, password, new_password, db: Session = Depen
 # But reaching upto here is fuckin impossible without proper authentication.
 
 
-async def update_account_info(user_id: int, user_update_map_info: dict, db: Session = Depends(get_db)):
+async def update_account_info(user_id: int, user_update_map_info: dict, db: Session):
     data = {}
     try:
         # username, email and phone
@@ -117,18 +109,17 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
         
 
 async def delete_user(user_id:str, user_org:str, db: Session):
-    data = {}
     try:
         res = crud.delete_user(db,user_id, user_org)
         # now delete from redis
         if not res :
-            return CustomException(detail="Operation Failed")
+            return Exceptions.OPERATION_FAILED
         data = {"user_id" : user_id, "details" : "User Data updated successfully"}
         await delete_user_details_from_redis(user_id)
+        return data
         
     except Exception as ex :
         logging.exception("[Common_Util][Exception in delete_user] {} ".format(ex))
-    return data
 
 
 # Only use it for verification

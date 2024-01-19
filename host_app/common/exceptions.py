@@ -34,6 +34,7 @@ class Exceptions:
     API_KEY_UNAVAILABLE="Add api_key in the header"
     TRYING_FROM_DIFFERENT_DEVICE="You are trying from different Device, Try login again"
     FAILED_TO_VALIDATE_CREDENTIALS="Failed to validate Token Credentials"
+    OPERATION_FAILED="Operaion Failed"
 
     # Order Exceptions
     FAILED_TO_CREATE_NEW_ORDER="Failed to Create Order"

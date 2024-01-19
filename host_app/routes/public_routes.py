@@ -54,7 +54,7 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
-        logging.info("Data received for Login : {} ".format(user_login))
+        logging.info("Data received for Login : {}".format(userlogin.model_dump()))
         
         verification_result = await verification.verify_api_key(api_key, req, db)
         if type(verification_result) != type(dict()) :
@@ -72,7 +72,7 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         account_obj = db_user[0][0]
         password_obj = db_user[0][1]
         
-        user_obj = await account_obj.to_dict()
+        user_obj = account_obj.to_dict()
         user_obj["client_ip"] = client_ip
         user_obj["user_agent"] = user_agent
 

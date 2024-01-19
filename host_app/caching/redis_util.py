@@ -24,7 +24,7 @@ async def connect_redis():
 # In redis cloud they convert the byte to string and provides, but in out redis , they dont
 
 
-async def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
+def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
     try:
         logging.info("[REDIS_UTIL][Data received to set in redis][Key]{}[Val]{}".format(key,val))
         if key and val :
@@ -32,20 +32,11 @@ async def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
             redis_client.expire(key, ttl_in_sec)
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in set_hm] {} ".format(ex))
-
-
-async def get_hm_all(key:str):
-    try:
-        data_in_bytes = redis_client.hgetall(key)
-        if data_in_bytes :
-            return data_in_bytes
-    
-    except Exception as ex :
-        logging.exception("[REDIS_UTIL][Exception in get_hm_all] {} ".format(ex))
     
 
 async def get_hm(key:str):
     try:
+        redis_client.hget()
         data_in_bytes = redis_client.hget(key)
         if data_in_bytes :
             return data_in_bytes
@@ -119,3 +110,31 @@ async def remove_from_set(set_name:str, item:str):
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in remove_from_set] {} ".format(ex))
 
+
+
+# hget 
+        
+def set_hset(key:str, field : str, val:str):
+    try:
+        redis_client.hset(key, field, val)
+
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in set_hget] {} ".format(ex))
+    
+
+async def get_hget(key:str, field : str):
+    try:
+        res = redis_client.hget(key, field)
+        return res
+
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in get_hget] {} ".format(ex))
+
+
+async def get_hgetall(key:str):
+    try:
+        all_data = redis_client.hgetall(key)
+        return all_data
+    
+    except Exception as ex :
+        logging.exception("[REDIS_UTIL][Exception in get_hgetall] {} ".format(ex))

@@ -51,7 +51,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
 async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         token = credentials.credentials
-        user_id_ip_details = await redis_util.get_hm(token)
+        user_id_ip_details = await redis_util.get_hm_all(token)
         print( " user_id_from_token_map = ", user_id_ip_details)
 
         if user_id_ip_details:

@@ -150,7 +150,7 @@ def delete_user(db: Session, user_id: str, service_org: str):
         db_user = db.query(Account).filter(Account.user_id == user_id, Account.service_org == service_org, Account.account_state == Account.AccountState.ACTIVE).first()
         if db_user:
             setattr(db_user, Account.account_state, Account.AccountState.DELETED)
-            # db.delete(db_user)
+            # db.delete(db_user) - Not deleting
             db.commit()
             obj = db.query(Password).filter(Password.user_id == user_id).first()
             if obj:
