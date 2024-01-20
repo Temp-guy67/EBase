@@ -107,10 +107,10 @@ async def verify_api_key(enc_api_key: str, req: Request, db: Session):
         if service_obj :
             ip_ports = service_obj["ip_ports"]
 
-            if "*" in ip_ports:
-                logging.info("Sending all ip ok")
-            elif client_ip not in ip_ports:
-                return CustomException(detail=Exceptions.WRONG_IP)
+            # if "*" in ip_ports:
+            #     logging.info("Sending all ip ok")
+            # elif client_ip not in ip_ports:
+            #     return CustomException(detail=Exceptions.WRONG_IP)
             
             daily_req_left = service_obj["daily_request_count"]
             is_service_verified = service_obj["is_verified"]
