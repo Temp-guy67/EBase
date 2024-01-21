@@ -1,23 +1,23 @@
 import logging, secrets
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordBearer,HTTPBearer,APIKeyHeader
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer,APIKeyHeader
 from host_app.common import util
-from fastapi import status, Depends, HTTPException, Request
+from fastapi import Depends, Request
 from host_app.common.constants import SECRET_KEY, ALGORITHM
 from typing import Annotated
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
 from host_app.common.exceptions import Exceptions, CustomException
 from host_app.common import common_util
-from host_app.common.constants import APIConstants
+from host_app.common.constants import APIConstants, ServiceParameters
 from host_app.caching import redis_util
 from host_app.database import crud, schemas
 from host_app.common.constants import ServiceParameters
 
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 security = HTTPBearer()
-api_key_from_header = APIKeyHeader(name="api_key")
+api_key_from_header = APIKeyHeader(name=ServiceParameters.X_API_KEY)
 
 
 async def verify_password(user_password: str, hashed_password : str, salt : str):
@@ -50,8 +50,9 @@ def create_access_token(data: dict, expires_delta: timedelta):
 # async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
 async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
+        print(" GET CUREERNT CUSER")
         token = credentials.credentials
-        user_id_ip_details = await redis_util.get_hm_all(token)
+        user_id_ip_details = await redis_util.get_hm(token)
         print( " user_id_from_token_map = ", user_id_ip_details)
 
         if user_id_ip_details:

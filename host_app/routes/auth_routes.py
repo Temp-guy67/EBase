@@ -1,4 +1,7 @@
 from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi.responses import JSONResponse
+from host_app.common.exceptions import CustomException, Exceptions
+from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserUpdate
 from sqlalchemy.orm import Session
 import logging
@@ -14,27 +17,41 @@ auth_router = APIRouter(
 )
 
 
-@auth_router.get("/verifyservice")
-async def verify_service(super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+@auth_router.get("/verifyservice/{service_id}")
+async def verify_service(service_id : str, super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        service_id = "BT_O766"
-        await service_util.verify_service(service_id, db)
-
+        is_sup_admin = await check_sup_admin_privileges(super_admin)
+        print(" is_sup_admin => " , type(is_sup_admin) )
+        if not isinstance(is_sup_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=is_sup_admin).__repr__())  
+            
+        res = await service_util.verify_service(service_id, db)
+        if res :
+            return JSONResponse(status_code=200, content=ResponseObject(data=res).to_dict())
     except Exception as ex :
         logging.exception("[AUTH_ROUTES][Exception in verify_service] {} ".format(ex))
 
 
 
-@auth_router.get("/verifyuser")
-async def verify_user(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+@auth_router.get("/verify/{user_id}")
+async def verify_user(user_id : str, super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        pass
+        is_sup_admin = await check_sup_admin_privileges(super_admin)
+        if not isinstance(is_sup_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=is_sup_admin).__repr__())  
+            
+        res = await service_util.verify_user(user_id, db)
+        if res :
+            return JSONResponse(status_code=200, content=ResponseObject(data=res).to_dict()) 
     except Exception as ex :
         logging.exception("[AUTH_ROUTES][Exception in verify_user] {} ".format(ex))
 
 
 @auth_router.get("/logs")
-async def read_logs():
+async def read_logs(super_admin: UserInDB = Depends(verification.get_current_active_user)):
+    is_sup_admin = await check_sup_admin_privileges(super_admin)
+    if not isinstance(is_sup_admin, bool):
+        return JSONResponse(status_code=401, content=CustomException(detail=is_sup_admin).__repr__())  
     res = await log_manager.read_logs()
     return res
 
@@ -129,3 +146,15 @@ async def update_user_role(info: UserUpdate, user: UserInDB = Depends(verificati
 
     except Exception as ex :
         logging.exception("[MAIN][Exception in verify_user] {} ".format(ex))
+        
+        
+
+async def check_sup_admin_privileges(super_admin : dict):
+    try:
+        if super_admin["role"] != models.Account.Role.SUPER_ADMIN :
+            return Exceptions.NOT_AUTHORIZED
+        
+        return True
+
+    except Exception as ex :
+        logging.exception("[SERVICE_ROUTES][Exception in check_sup_admin_privileges] {} ".format(ex))

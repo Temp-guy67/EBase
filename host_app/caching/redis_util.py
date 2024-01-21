@@ -42,7 +42,6 @@ async def is_exists(key : str):
 
 
 
-
 def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
     try:
         logging.info("[REDIS_UTIL][Data received to set in redis][Key]{}[Val]{}".format(key,val))
