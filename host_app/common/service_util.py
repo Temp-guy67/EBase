@@ -30,9 +30,20 @@ async def verify_service(service_id: int, db: Session ):
         service_update_map["is_verified"] = 1
         res = await service_crud.update_service_data(db, service_id, service_update_map)
         if res :
-            api_key = res.api_key
-            await common_util.delete_api_cache_from_redis(api_key)
+            await common_util.delete_api_cache_from_redis(res.api_key)
+            return {"message" : "Service Updated"}
             
             
     except Exception as ex :
-        logging.exception("[VERIFICATION][Exception in update_service_info] {} ".format(ex))
+        logging.exception("[SERVICE_UTIL][Exception in update_service_info] {} ".format(ex))
+        
+
+async def verify_user(user_id: int, db: Session ):
+    try:
+        account_update_map = dict()
+        account_update_map["is_verified"] = 1
+        res = await common_util.update_account_info(user_id, account_update_map, db) 
+        return res   
+            
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in verify_user] {} ".format(ex))

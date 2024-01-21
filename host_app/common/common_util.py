@@ -34,7 +34,7 @@ async def delete_access_token_in_redis(user_id : str):
 
 async def update_user_details_in_redis(user_id:str, user_obj: dict):
     try :
-        await redis_util.set_hm(RedisConstant.USER_OBJECT + user_id, user_obj, 1800)
+        redis_util.set_hm(RedisConstant.USER_OBJECT + user_id, user_obj, 1800)
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_user_details_in_redis] {} ".format(ex))
@@ -134,7 +134,7 @@ async def get_service_details(db: Session, api_key: str):
             service_data_obj = service_crud.get_service_by_api_key(db, api_key)
             
             if not service_data_obj :
-                return CustomException(detail="Service Info Not Available", message="Check with you Service/API Provider")
+                return CustomException(detail="Service Info Not Available")
             
         service_obj["service_org"] = service_data_obj["service_org"]
         service_obj["is_verified"] = service_data_obj["is_verified"]
@@ -150,7 +150,7 @@ async def get_service_details(db: Session, api_key: str):
 
 
 async def update_service_object_in_redis(api_key:str, service_obj:dict):
-    await redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
+    redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
 
 async def delete_api_cache_from_redis(api_key:str):
     await redis_util.delete_from_redis(RedisConstant.SERVICE_API + api_key)
