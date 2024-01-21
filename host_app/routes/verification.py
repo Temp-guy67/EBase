@@ -50,10 +50,9 @@ def create_access_token(data: dict, expires_delta: timedelta):
 # async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], req: Request, db: Session = Depends(get_db)):
 async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
-        print(" GET CUREERNT CUSER")
         token = credentials.credentials
         user_id_ip_details = await redis_util.get_hm(token)
-        print( " user_id_from_token_map = ", user_id_ip_details)
+        print(" received request for URI : {} | redid_data : {} ".format(req.url.path, user_id_ip_details) )
 
         if user_id_ip_details:
             # If from different ip or device check

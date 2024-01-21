@@ -37,8 +37,9 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
 
 
 @order_router.get("/")
-async def order(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def get_order(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        logging.info("Data received for get_order [user_id] {}".format( user["user_id"]))
         respObj = ResponseObject()
         user_id = user["user_id"]
         user_org = user["service_org"]
