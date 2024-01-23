@@ -19,7 +19,7 @@ async def create_new_order(db: Session, user_id:str, service_org:str, orders_inf
         db.refresh(order_obj)
         return order_obj.to_dict()
     except Exception as ex :
-        logging.exception("[order_crud][Exception in create_new_order]",ex)
+        logging.exception("[ORDER_CRUD][Exception in create_new_order]",ex)
     
 
 
@@ -30,9 +30,9 @@ def get_all_orders_by_user(db: Session, user_id: str, org: Optional[str] = None)
         else :
             single_order_obj = db.query(Orders).filter(Orders.owner_id == user_id, Orders.service_org == org).all()
 
-        return single_order_obj
+        return single_order_obj.to_dict()
     except Exception as ex:
-        logging.exception("[order_crud][Exception in get_all_orders_by_user] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_all_orders_by_user] {} ".format(ex))
 
 
 def get_all_order_id_by_user(db:Session, user_id: str, org: Optional[str] = None ):
@@ -42,26 +42,28 @@ def get_all_order_id_by_user(db:Session, user_id: str, org: Optional[str] = None
             order_ids = db.query(Orders.id).filter(Orders.owner_id == user_id).all()
         else:
             order_ids = db.query(Orders.id).filter(Orders.owner_id == user_id, Orders.service_org == org).all()
-            
         return order_ids
 
     except Exception as ex:
-        logging.exception("[order_crud][Exception in get_all_orders_by_user] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_all_orders_by_user] {} ".format(ex))
+
 
 def get_order_by_order_id(db: Session, user_id : str, order_id: str, org: Optional[str] = None):
     try:
         order_obj =  db.query(Orders).filter(Orders.order_id == order_id, Orders.owner_id== user_id).first()
+
+        return order_obj.to_dict()
         
     except Exception as ex :
-        logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_order_by_order_id] {} ".format(ex))
 
 
 def get_orders_status(db: Session, user_id : str, Orders_id: int, org: Optional[str] = None):
     try:
         order = get_order_by_order_id(db, Orders_id)
-        return order
+        return order.to_dict()
     except Exception as ex :
-        logging.exception("[crud][Exception in get_order_by_order_id] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_order_by_order_id] {} ".format(ex))
     
 
 
@@ -81,21 +83,21 @@ async def update_order_status(db: Session, user_id : str, order_id: str, orders_
             return updated_order_obj.to_dict()
         return None
     except Exception as ex :
-        logging.exception("[CRUD][Exception in update_Orders_status] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in update_Orders_status] {} ".format(ex))
 
 
 def delete_order(db: Session, order_id: str, user_id : str, org: Optional[str] = None):
     try:
         order_obj = db.query(Orders).filter(Orders.order_id == order_id).first()
         if order_obj.owner_id != user_id :
-            logging.info("[CRUD][Not authorizede to delete this order][Order_Id] {} [User_id] {}".format(order_id, user_id))
+            logging.info("[ORDER_CRUD][Not authorizede to delete this order][Order_Id] {} [User_id] {}".format(order_id, user_id))
             return False
         if order_obj:
             db.delete(order_obj)
             db.commit()
             return True
     except Exception as ex :
-        logging.exception("[CRUD][Exception in delete_order] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in delete_order] {} ".format(ex))
     return False
 
 
@@ -107,7 +109,7 @@ def get_all_orderss(db: Session, skip: int = 0, limit: int = 100, org: Optional[
         return db.query(Account).filter(Orders.service_org == org).all()
         
     except Exception as ex :
-        logging.exception("[CRUD][Exception in get_all_Orderss] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_all_Orderss] {} ".format(ex))
 
 
 async def get_single_order(db: Session, user_id: str, order_id: str, org: Optional[str] = None):
@@ -128,5 +130,5 @@ async def get_single_order(db: Session, user_id: str, order_id: str, org: Option
                 return single_order
 
     except Exception as ex :
-        logging.exception("[MAIN][Exception in get_single_order] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_single_order] {} ".format(ex))
     return single_order

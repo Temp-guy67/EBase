@@ -1,9 +1,12 @@
 import logging
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from host_app.common.exceptions import CustomException
 from host_app.database import service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
+from host_app.caching import redis_util
+from host_app.caching.redis_constant import RedisConstant
 
 
 
@@ -47,3 +50,25 @@ async def verify_user(user_id: int, db: Session ):
             
     except Exception as ex :
         logging.exception("[SERVICE_UTIL][Exception in verify_user] {} ".format(ex))
+
+
+# Only use it for verification
+async def get_service_object(db: Session, email: str):
+    try:
+        service_obj = dict()
+        # await delete_api_cache_from_redis(api_key)
+        
+        service_data_obj = await redis_util.get_hm(RedisConstant.SERVICE_API + email)
+        
+        if not service_data_obj :
+            service_data_obj = service_crud.get_service_by_api_key(db, email)
+            
+            if not service_data_obj :
+                return CustomException(detail="Service Info Not Available")
+
+        # redis_util.set_str(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
+        
+        return service_obj
+    
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in get_service_object] {} ".format(ex))

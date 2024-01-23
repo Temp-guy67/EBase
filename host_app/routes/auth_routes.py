@@ -38,7 +38,7 @@ async def verify_user(user_id : str, super_admin: UserInDB = Depends(verificatio
     try:
         is_sup_admin = await check_sup_admin_privileges(super_admin)
         if not isinstance(is_sup_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=is_sup_admin).__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_sup_admin}").__repr__())  
             
         res = await service_util.verify_user(user_id, db)
         if res :
@@ -51,7 +51,7 @@ async def verify_user(user_id : str, super_admin: UserInDB = Depends(verificatio
 async def read_logs(super_admin: UserInDB = Depends(verification.get_current_active_user)):
     is_sup_admin = await check_sup_admin_privileges(super_admin)
     if not isinstance(is_sup_admin, bool):
-        return JSONResponse(status_code=401, content=CustomException(detail=is_sup_admin).__repr__())  
+        return JSONResponse(status_code=401, content=CustomException(detail=f"is_SuperAdmin : {is_sup_admin}").__repr__())  
     res = await log_manager.read_logs()
     return res
 

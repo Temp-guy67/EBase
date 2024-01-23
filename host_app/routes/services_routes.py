@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, HTTPException, status, APIRouter
 from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
@@ -7,15 +8,15 @@ from host_app.database import crud, models
 from host_app.database.database import get_db
 from host_app.caching import redis_util
 from host_app.routes import verification
-from host_app.common.exceptions import Exceptions
-from host_app.common import common_util
+from host_app.common.exceptions import CustomException, Exceptions
+from host_app.common import common_util, service_util
+from fastapi.responses import JSONResponse
 
 
 service_router = APIRouter(
     prefix='/service',
     tags=['service']
 )
-
 
 '''
 What an Admin can do is : 
@@ -49,31 +50,27 @@ What an Admin can do is :
 @service_router.get("/me/")
 async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        org_user_id = admin["user_id"]
-        respObj = ResponseObject()
-        previleges =  await check_admin_privileges(admin, org_user_id) 
-        if type(previleges) == type(HTTPException):
-            respObj.set_exception(previleges)
-            return respObj
-        
-        respObj.set_status(status.HTTP_200_OK)
-        respObj.set_data(admin)
+        is_admin =  await check_admin_privileges(admin, admin["user_id"]) 
 
-        return respObj
+        if not isinstance(is_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+        
+        return JSONResponse(status_code=200, content=ResponseObject(data=admin).to_dict())
     except Exception as ex:
-        logging.exception("[SERVICE_ROUTES][Exception in read_users_me] {} ".format(ex))
+        logging.exception("[SERVICE_ROUTES][Exception in get_admin] {} ".format(ex))
 
 
-@service_router.post("/updateuser/")
-async def update_user_data(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
+# Not done
+# possible_update = ["email", "phone", "username", "is_verified"]  
+@service_router.post("/updateuser/{org_user_id}")
+async def update_user_data(user_data: UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        org_user_id = user_data.user_id
-        respObj = ResponseObject()
-        previleges =  await check_admin_privileges(admin, org_user_id) 
-        if type(previleges) == type(HTTPException):
-            respObj.set_exception(previleges)
-            return respObj
-        
+        admin_id = user_data.user_id
+        is_admin =  await check_admin_privileges(admin, admin_id) 
+
+        if not isinstance(is_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+
         user_update_map_info = dict()
         user_update_map_info["is_verified"] = 1
         res = await common_util.update_account_info(org_user_id, user_update_map_info)
@@ -85,29 +82,26 @@ async def update_user_data(user_data : UserUpdate, admin: UserInDB = Depends(ver
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
 
-
-@service_router.get("/verifyuser/")
-async def verify_user_under_org(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
+# -- 
+@service_router.get("/verify/{user_id}")
+async def verify_user_under_org(user_id: str, admin: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
     try:
-        org_user_id = user_data.user_id
-        respObj = ResponseObject()
-        previleges =  await check_admin_privileges(admin, org_user_id) 
-        if type(previleges) == type(HTTPException):
-            respObj.set_exception(previleges)
-            return respObj
+        is_admin = await check_admin_privileges(admin)
+        if not isinstance(is_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
         
-        user_update_map_info = dict()
-        user_update_map_info["is_verified"] = 1
-        res = await common_util.update_account_info(org_user_id, user_update_map_info)
-        respObj.set_status(status.HTTP_200_OK)
-        respObj.set_data(res)
+        if user_id[:2] != admin["service_org"]:
+            return JSONResponse(status_code=401, content=CustomException(detail=f" User - {user_id} Not from your Org").__repr__()) 
 
-        return respObj
+        res = await service_util.verify_user(user_id, db)
+        if res :
+            return JSONResponse(status_code=200, content=ResponseObject(data=res).to_dict()) 
 
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in verify_user_under_org] {} ".format(ex))
 
 
+# not done - His own password of account 
 @service_router.post("/updatepassword/")
 async def update_admin_password(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
@@ -117,7 +111,16 @@ async def update_admin_password(user_data : UserUpdate, admin: UserInDB = Depend
 
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
-        
+
+
+# Service admin can Update - ip_ports - his own
+@service_router.post("/updateipports/")
+async def update_ip_ports(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user)):
+    try:
+        pass
+    except Exception as ex:
+        logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
+
     
 @service_router.post("/delete/", summary="To delete any user", description=" To delete any user from the org")
 async def delete_user(user_data : UserDelete, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
@@ -145,7 +148,6 @@ async def delete_user(user_data : UserDelete, admin: UserInDB = Depends(verifica
 
 
 # ------------- 
-
 @service_router.get("/getalluser/")
 async def get_all_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
@@ -204,14 +206,10 @@ async def get_orders_by_user_under_org(admin: UserInDB = Depends(verification.ge
 
 
 
-async def check_admin_privileges(admin : dict, user_id : str ):
+async def check_admin_privileges(admin: dict, org_user: Optional[dict] = None):
     try:
         exp = Exceptions.NOT_AUTHORIZED
-        if admin["role"] == models.Account.Role.USER :
-            return exp
-
-        ord_user_id = user_id
-        if ord_user_id[:2] != admin["service_org"]:
+        if admin["role"] != models.Account.Role.ADMIN or admin["user_id"][:2] != admin["service_org"]:
             return exp
         
         return True

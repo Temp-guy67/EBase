@@ -2,9 +2,8 @@
 2. 
 
 
-api Key :
-CRUX_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoicjNxaVRZRWNyTTlFblVZb0dNaGRWQ3QtTkJodThMdkMxUkIwUFpkYThLZyJ9.QmyZ7jOCSeaCbisb9gKu0LK3tK0p2E2IWoDkZE9cV9I
-boatclone@boatmail.com
+X-API-Key
+X-Access-Token
 
 
 Superadmin:
@@ -14,9 +13,8 @@ Api : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiJTaTJadmFVWHZ
 
 userId -> request count map
 
+1. add redis set feature in create and get orders requests
 
 
 
 
-X-API-Key
-X-Access-Token

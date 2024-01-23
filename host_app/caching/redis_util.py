@@ -83,7 +83,7 @@ async def get_str(key: str):
 
 
 # Set culture
-async def add_to_set(set_name:str, val:list, ttl_in_sec: int = 1800):
+def add_to_set(set_name:str, val:list, ttl_in_sec: int = 1800):
     try:
         redis_client.sadd(set_name,*val)
         redis_client.expire(set_name, ttl_in_sec)
