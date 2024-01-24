@@ -54,7 +54,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
             data["not_updated"] = anomalies
         
         if user_data :
-            res = await common_util.update_account_info(user_id, user_data, db)
+            res = await common_util.update_account_info(user_id, user_id, user_data, db)
             if type(res) == type(dict()):
                 data["updated"] = res 
             else :
@@ -75,7 +75,7 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
         old_password, new_password = user_data.password, user_data.new_password
 
         if(not old_password or not new_password):
-            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Provide Old and new password").__repr__()) 
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Provide both Old and new password").__repr__()) 
         
         password_obj = await crud.get_password_data(db, user_id)
 
