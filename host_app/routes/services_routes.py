@@ -44,13 +44,16 @@ What an Admin can do is :
 14. Create order only for his own
 
 [cant create order from any other user POV]
+
+while updating anything, will add org_user_id + admin org that will ensure damn
+
 '''
 
 
 @service_router.get("/me/")
 async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        is_admin =  await check_admin_privileges(admin, admin["user_id"]) 
+        is_admin = await check_admin_privileges(admin, admin["user_id"]) 
 
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
@@ -61,18 +64,17 @@ async def get_admin(admin: UserInDB = Depends(verification.get_current_active_us
 
 
 # Not done
-# possible_update = ["email", "phone", "username", "is_verified"]  
-@service_router.post("/updateuser/{org_user_id}")
-async def update_user_data(user_data: UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+# possible_update users ["email", "phone", "username", "is_verified"]  
+@service_router.post("/update/{org_user_id}")
+async def update_user_data(org_user_id:str, user_data: UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
         admin_id = user_data.user_id
-        is_admin =  await check_admin_privileges(admin, admin_id) 
+        is_admin =  await check_admin_privileges(admin) 
 
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
 
         user_update_map_info = dict()
-        user_update_map_info["is_verified"] = 1
         res = await common_util.update_account_info(org_user_id, user_update_map_info)
         respObj.set_status(status.HTTP_200_OK)
         respObj.set_data(res)
@@ -81,6 +83,27 @@ async def update_user_data(user_data: UserUpdate, admin: UserInDB = Depends(veri
 
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
+
+# own data update
+@service_router.post("/update/")
+async def update_user_data(admin_data: UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    try:
+        admin_id = admin_data.user_id
+        is_admin =  await check_admin_privileges(admin, admin_id) 
+
+        if not isinstance(is_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+
+        user_update_map_info = dict()
+        res = await common_util.update_account_info(admin_id, user_update_map_info)
+        respObj.set_status(status.HTTP_200_OK)
+        respObj.set_data(res)
+
+        return respObj
+
+    except Exception as ex:
+        logging.exception("[SERVICE_ROUTES][Exception in update_user] {} ".format(ex))
+
 
 # -- 
 @service_router.get("/verify/{user_id}")
@@ -117,7 +140,8 @@ async def update_admin_password(user_data : UserUpdate, admin: UserInDB = Depend
 @service_router.post("/updateipports/")
 async def update_ip_ports(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        pass
+        # will work
+        return {"message" : "under construction"}
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
 
@@ -205,6 +229,10 @@ async def get_orders_by_user_under_org(admin: UserInDB = Depends(verification.ge
         logging.exception("[SERVICE_ROUTES][Exception in get_orders_by_user_under_org] {} ".format(ex))
 
 
+# get any order
+# get any user 
+# update any order
+
 
 async def check_admin_privileges(admin: dict, org_user: Optional[dict] = None):
     try:
@@ -218,19 +246,3 @@ async def check_admin_privileges(admin: dict, org_user: Optional[dict] = None):
         logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
 
 
-
-# ----------- write from here
-
-
-@service_router.get("/getunverifiedusers/")
-async def get_all_unverified_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
-    try:
-        if admin["role"] != models.Account.Role.ADMIN :
-            return Exceptions.NOT_AUTHORIZED
-        
-        org = admin["service_org"] 
-        res = await crud.get_all_unverified_users(db, org)
-        return res
-
-    except Exception as ex :
-        logging.exception("[SERVICE_ROUTES][Exception in get_all_user_under_org] {} ".format(ex))

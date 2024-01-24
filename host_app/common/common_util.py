@@ -1,13 +1,12 @@
 import logging
 from host_app.common.constants import CommonConstants
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
 from host_app.caching.redis_constant import RedisConstant
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import util
-from host_app.routes import verification
 from host_app.common.exceptions import Exceptions, CustomException
 
 
@@ -77,13 +76,13 @@ async def update_password(user:dict, new_password, db: Session):
 # But reaching upto here is fuckin impossible without proper authentication.
 
 
-async def update_account_info(user_id: int, user_update_map_info: dict, db: Session):
+async def update_account_info(user_id: str, updater:str, user_update_map_info: dict, db: Session):
     data = {}
     try:
         # username, email and phone
         # any of theis valid then , it will be updated
         user_update_map = dict()
-        possible_update = ["email", "phone", "username" , "is_verified"]
+        possible_update = ["email", "phone", "username", "is_verified"]
         
         for k,v in user_update_map_info.items():
             if k == possible_update[0]:
@@ -99,7 +98,7 @@ async def update_account_info(user_id: int, user_update_map_info: dict, db: Sess
                 user_update_map[k] = v
         
         updated_user_data = await crud.update_account_data(db, user_id, user_update_map)
-        data = {"user_id" : user_id, "details" : "User Data updated successfully"}
+        data = {"user_id" : user_id, "details" : "User Data updated successfully", "updated_by" : updater}
         if updated_user_data :
             update_user_details_in_redis(user_id, updated_user_data)
 
@@ -164,3 +163,6 @@ async def reduce_daily_req_counts(api_key:str, service_obj:dict):
 async def update_service_verified_api(api_key:str, service_obj:dict):
     service_obj["is_verified"] = "1"
     await update_service_object_in_redis(api_key, service_obj)
+
+
+    

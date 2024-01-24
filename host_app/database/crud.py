@@ -130,7 +130,7 @@ async def update_password_data(db: Session, user_id: int, user_update_map: dict)
         logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
 
 
-async def update_account_data(db: Session, user_id: int, user_update_map: dict):
+async def update_account_data(db: Session, user_id: int, user_update_map: dict, service_org: Optional[str] = None):
     try :
         db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
         if db_user:
@@ -145,7 +145,7 @@ async def update_account_data(db: Session, user_id: int, user_update_map: dict):
 
 
 
-def delete_user(db: Session, user_id: str, service_org: str):
+def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
     try:
         db_user = db.query(Account).filter(Account.user_id == user_id, Account.service_org == service_org, Account.account_state == Account.AccountState.ACTIVE).first()
         if db_user:
@@ -163,13 +163,12 @@ def delete_user(db: Session, user_id: str, service_org: str):
         logging.exception("[CRUD][Exception in delete_user] {} ".format(ex))
 
 
-async def get_all_users(db: Session, org: Optional[str] = None, skip: int = 0, limit: int = 100):
+async def get_all_users(db: Session, is_sup: Optional[bool] = None, service_org: Optional[str] = None, skip: int = 0, limit: int = 100):
     try:
-        # Jani na keno ei join krsi 
-        # res =  db.query(Account, Orders).join(Orders).filter(Account.id == Orders.owner_id).all()
-        # for e in res :
-        if org :
-            res = db.query(Account).filter(Account.service_org == org, Account.account_state == Account.AccountState.ACTIVE).all()
+        if is_sup:
+            res = res = db.query(Account).all()
+        elif service_org :
+            res = db.query(Account).filter(Account.service_org == service_org, Account.account_state == Account.AccountState.ACTIVE).all()
         else :
             res = db.query(Account).filter(Account.account_state == Account.AccountState.ACTIVE).all()
 
@@ -183,12 +182,11 @@ async def get_all_users(db: Session, org: Optional[str] = None, skip: int = 0, l
         logging.exception("[CRUD][Exception in get_all_users] {} ".format(ex))
 
 
-async def get_all_unverified_users(db: Session, org: Optional[str] = None, skip: int = 0, limit: int = 100):
+async def get_all_unverified_users(db: Session, is_sup: Optional[bool] = None, org: Optional[str] = None, skip: int = 0, limit: int = 100):
     try:
-        # Jani na keno ei join krsi 
-        # res =  db.query(Account, Orders).join(Orders).filter(Account.id == Orders.owner_id).all()
-        # for e in res :
-        if org :
+        if is_sup:
+            res = db.query(Account).filter(Account.is_verified == Account.Verification.NOT_VERIFIED).all()
+        elif org :
             res = db.query(Account).filter(Account.is_verified == Account.Verification.NOT_VERIFIED, Account.service_org == org, Account.account_state == Account.AccountState.ACTIVE).all()
         else :
             res = db.query(Account).filter(Account.is_verified == Account.Verification.NOT_VERIFIED, Account.account_state == Account.AccountState.ACTIVE).all()

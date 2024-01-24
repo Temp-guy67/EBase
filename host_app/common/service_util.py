@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from host_app.common.exceptions import CustomException
@@ -7,6 +8,7 @@ from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.caching import redis_util
 from host_app.caching.redis_constant import RedisConstant
+from host_app.database import crud
 
 
 
@@ -72,3 +74,19 @@ async def get_service_object(db: Session, email: str):
     
     except Exception as ex :
         logging.exception("[SERVICE_UTIL][Exception in get_service_object] {} ".format(ex))
+
+
+
+# admin and super admin magic 
+
+async def get_all_users(db:Session, service_org: Optional[str] = None):
+    try:
+        res = await crud.get_all_users(db, service_org)
+        return res
+
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in get_all_users] {} ".format(ex))
+
+
+
+get_unverified_users
