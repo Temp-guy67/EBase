@@ -43,11 +43,11 @@ async def verify_service(service_id: int, db: Session ):
         logging.exception("[SERVICE_UTIL][Exception in update_service_info] {} ".format(ex))
         
 
-async def verify_user(user_id: int, db: Session ):
+async def verify_user(user_id: int, updater: str, db: Session ):
     try:
         account_update_map = dict()
         account_update_map["is_verified"] = 1
-        res = await common_util.update_account_info(user_id, account_update_map, db) 
+        res = await common_util.update_account_info(user_id, updater, account_update_map, db) 
         return res   
             
     except Exception as ex :
@@ -89,4 +89,4 @@ async def get_all_users(db:Session, service_org: Optional[str] = None):
 
 
 
-get_unverified_users
+# get_unverified_users

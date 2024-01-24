@@ -55,6 +55,7 @@ async def delete_user_details_from_redis(user_id:str):
         
 async def update_password(user:dict, new_password, db: Session):
     try:
+        logging.info(f"[update_account_info][Data received][user] {user}")
         user_id = user["user_id"]
 
         new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
@@ -79,8 +80,7 @@ async def update_password(user:dict, new_password, db: Session):
 async def update_account_info(user_id: str, updater:str, user_update_map_info: dict, db: Session):
     data = {}
     try:
-        # username, email and phone
-        # any of theis valid then , it will be updated
+        logging.info(f"[update_account_info][Data received][targetUser] {user_id} [updater] {updater} [Update details] {user_update_map_info}")
         user_update_map = dict()
         possible_update = ["email", "phone", "username", "is_verified"]
         
