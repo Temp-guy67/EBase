@@ -53,6 +53,15 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
 
 @public_router.post("/login")
 async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
+    """
+    Create an item with all the information:
+
+    - **name**: each item must have a name
+    - **description**: a long description
+    - **price**: `required`
+    - **tax**: if the item doesn't have tax, you can omit this
+    - **tags**: a set of unique tag strings for this item
+    """
     try:
         logging.info("Data received for Login : {}".format(userlogin.model_dump()))
         

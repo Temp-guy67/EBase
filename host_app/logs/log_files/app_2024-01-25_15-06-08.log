@@ -1,0 +1,10 @@
+2024-01-25 15:06:08,487 - root - INFO - 
+2024-01-25 15:06:08,487 - root - INFO - 
+2024-01-25 15:06:08,487 - root - INFO - Logger Inititated for this session 
+2024-01-25 15:06:08,487 - root - INFO - 
+2024-01-25 15:06:08,488 - root - INFO - Redis Inititated for this session Successfully Redis<ConnectionPool<Connection<host=redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com,port=15144,db=0>>> 
+2024-01-25 15:07:20,888 - root - INFO - Data received for Login : {'email': 'superadmin@supermail.com', 'password': 'test123'}
+2024-01-25 15:07:20,890 - root - INFO -  DATA RECEIFD SERVICE_API_Si2ZvaUXvbVzUIt7O0H6WfK5dMNfVgvgjWU3xbpdAaM 
+2024-01-25 15:07:22,476 - root - INFO - [REDIS_UTIL][Data received to set in redis][Key]SERVICE_API_Si2ZvaUXvbVzUIt7O0H6WfK5dMNfVgvgjWU3xbpdAaM[Val]{'service_org': 'SD', 'is_verified': 1, 'daily_request_count': '9', 'ip_ports': '127.0.0.1'}
+2024-01-25 15:07:23,068 - root - INFO - [REDIS_UTIL][Data received to set in redis][Key]eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdXBlcmFkbWluQHN1cGVybWFpbC5jb20iLCJleHAiOjE3MDYxNzcyNDN9.jv1OMMFoMc7olUFyebRssjAyB4a7gPtFuTloHICqNhM[Val]{'user_id': 'SD_2_P9840', 'ip': '127.0.0.1'}
+2024-01-25 15:07:24,129 - root - INFO - [REDIS_UTIL][Data received to set in redis][Key]USER_OBJECT_SD_2_P9840[Val]{'user_id': 'SD_2_P9840', 'username': 'User_SD_2uR77p', 'email': 'superadmin@supermail.com', 'phone': '12345678', 'is_verified': 1, 'role': 3, 'service_org': 'SD', 'account_state': 1, 'client_ip': '127.0.0.1', 'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}

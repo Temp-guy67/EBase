@@ -49,7 +49,6 @@ while updating anything, will add org_user_id + admin org that will ensure damn
 
 '''
 
-
 @service_router.get("/me/")
 async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
@@ -172,7 +171,7 @@ async def update_ip_ports(user_data : UserUpdate, admin: UserInDB = Depends(veri
         logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
 
     
-@service_router.post("/delete/{user_id}", summary="To delete any user", description=" To delete any user from the org")
+@service_router.post("/delete/{user_id}", summary="To delete any user")
 async def delete_user(user_id : str, user_data : UserDelete, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
         
@@ -200,12 +199,14 @@ async def delete_user(user_id : str, user_data : UserDelete, admin_data: UserInD
 
 
 # ------------- 
-@service_router.get("/getalluser/")
-async def get_all_user_under_org(admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+@service_router.get("/getallusers/")
+async def get_all_user_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        if admin["role"] != models.Account.Role.ADMIN :
-            return Exceptions.NOT_AUTHORIZED
+        is_admin = await check_admin_privileges(admin_data)
+        if not isinstance(is_admin, bool):
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
         
+        logging.info("Data received for delete_user : {} | action user_id : {}".format(user_data, user_data["user_id"]))
         org = admin["service_org"] 
         res = await crud.get_all_users(db, org)
         return res
