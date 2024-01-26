@@ -66,8 +66,19 @@ class Orders(Base):
         IN_TRANSIT=3
         DELIVERED=4
         FAILED=5
-        CANCELLED=6
+        CANCELED=6
+        
+    ORDER_STATUS = dict()
+    ORDER_STATUS[1] = OrderStatus.IN_CART
+    ORDER_STATUS[2] = OrderStatus.ORDERED
+    ORDER_STATUS[3] = OrderStatus.IN_TRANSIT
+    ORDER_STATUS[4] = OrderStatus.DELIVERED
+    ORDER_STATUS[5] = OrderStatus.FAILED
+    ORDER_STATUS[6] = OrderStatus.CANCELED
 
+    def get_order_status(self, status:int):
+        if self.ORDER_STATUS.get(status):
+            return self.ORDER_STATUS[status]
 
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)

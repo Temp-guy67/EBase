@@ -1,5 +1,0 @@
-2024-01-25 15:03:14,121 - root - INFO - 
-2024-01-25 15:03:14,121 - root - INFO - 
-2024-01-25 15:03:14,121 - root - INFO - Logger Inititated for this session 
-2024-01-25 15:03:14,121 - root - INFO - 
-2024-01-25 15:03:14,121 - root - INFO - Redis Inititated for this session Successfully Redis<ConnectionPool<Connection<host=redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com,port=15144,db=0>>> 

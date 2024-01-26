@@ -104,14 +104,23 @@ def delete_order(db: Session, order_id: str, user_id : str, org: Optional[str] =
 
 def get_all_orderss(db: Session, skip: int = 0, limit: int = 100, org: Optional[str] = None):
     try:
+        all_orders = {}
         if not org :
-            return db.query(Orders).offset(skip).limit(limit).all()
-        return db.query(Account).filter(Orders.service_org == org).all()
+            res =  db.query(Orders).offset(skip).limit(limit).all()
+        else :
+            res =  db.query(Account).filter(Orders.service_org == org).all()
+        
+        for e in res :
+            dicu = e.to_dict()
+            all_orders[dicu["order_id"]] = dicu
+        return all_orders
         
     except Exception as ex :
         logging.exception("[ORDER_CRUD][Exception in get_all_Orderss] {} ".format(ex))
 
 
+
+# Unused
 async def get_single_order(db: Session, user_id: str, order_id: str, org: Optional[str] = None):
     try:
         if(await redis_util.is_exists(RedisConstant.ORDER_OBJ + order_id)):

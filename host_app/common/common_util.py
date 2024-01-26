@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from host_app.common.constants import CommonConstants
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -77,7 +78,7 @@ async def update_password(user:dict, new_password, db: Session):
 # But reaching upto here is fuckin impossible without proper authentication.
 
 
-async def update_account_info(user_id: str, updater:str, user_update_map_info: dict, db: Session):
+async def update_account_info(user_id: str, updater:str, user_update_map_info: dict, db: Session, service_org: Optional[str] = None, is_sup : Optional[bool] = None):
     data = {}
     try:
         logging.info(f"[update_account_info][Data received][targetUser] {user_id} [updater] {updater} [Update details] {user_update_map_info}")
@@ -97,7 +98,7 @@ async def update_account_info(user_id: str, updater:str, user_update_map_info: d
             if k in possible_update :
                 user_update_map[k] = v
         
-        updated_user_data = await crud.update_account_data(db, user_id, user_update_map)
+        updated_user_data = await crud.update_account_data(db, user_id, updater, user_update_map, service_org, is_sup)
         data = {"user_id" : user_id, "details" : "User Data updated successfully", "updated_by" : updater}
         if updated_user_data :
             update_user_details_in_redis(user_id, updated_user_data)

@@ -56,7 +56,7 @@ async def get_single_order_info(order_id: str, user: UserInDB = Depends(verifica
         logging.info("Data received for get_single_order_info [user_id] {}".format( user["user_id"]))
         user_id, user_org = user["user_id"], user["service_org"]
 
-        order_obj = await order_util.get_single_order(db, user_id, order_id, user_org)
+        order_obj = await order_util.get_single_order(db, order_id, user_id, user_org)
         if not order_obj:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED).__repr__())
         
@@ -105,7 +105,7 @@ async def cancel_order(order_id: str, user: UserInDB = Depends(verification.get_
         user_id, user_org = user["user_id"], user["service_org"]
 
         order_data = dict()
-        order_data["order_status"] = models.Orders.OrderStatus.CANCELLED
+        order_data["order_status"] = models.Orders.OrderStatus.CANCELED
         order_obj = await order_util.update_order_object(db, user_id, order_id, order_data, user_org)
         if not order_obj:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED).__repr__())
