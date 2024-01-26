@@ -9,12 +9,18 @@ from typing import Optional
 from sqlalchemy import or_
 
 
-def get_user_by_user_id(db: Session, user_id: str, org: Optional[str] = None):
+def get_user_by_user_id(db: Session, user_id: str, is_sup : Optional[bool] = None, org: Optional[str] = None):
     try:
-        if org :
-            return db.query(Account).filter(Account.user_id == user_id, Account.service_org == org, Account.account_state == Account.AccountState.ACTIVE).first()
-
-        return db.query(Account).filter(Account.user_id == user_id).first()
+        res = None
+        if is_sup :
+            res = db.query(Account).filter(Account.user_id == user_id).first()
+            
+        elif org :
+            res = db.query(Account).filter(Account.user_id == user_id, Account.service_org == org, Account.account_state == Account.AccountState.ACTIVE).first()
+        else :
+            res = db.query(Account).filter(Account.user_id == user_id).first()
+            
+        return res.to_dict()
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_user_id] {} ".format(ex))
 
@@ -130,9 +136,15 @@ async def update_password_data(db: Session, user_id: int, user_update_map: dict)
         logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
 
 
-async def update_account_data(db: Session, user_id: int, user_update_map: dict, service_org: Optional[str] = None):
+async def update_account_data(db: Session, user_id: str, updater:str, user_update_map: dict, service_org: Optional[str] = None, is_sup : Optional[bool] = None):
     try :
-        db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
+        logging.info(f"Data received in Update Account Info : user_id {user_id} | updater : {updater} | user_update_map : {user_update_map} | service_org : {service_org}")
+        if is_sup :
+            db_user = db.query(Account).filter(Account.user_id == user_id).first()
+        elif service_org :
+            db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE, Account.service_org == service_org).first()
+        else :
+            db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
         if db_user:
             for key, value in user_update_map.items():
                 setattr(db_user, key, value)
@@ -141,13 +153,17 @@ async def update_account_data(db: Session, user_id: int, user_update_map: dict, 
             return db_user.to_dict()
         return None
     except Exception as ex :
-        logging.exception("[CRUD][Exception in update_user] {} ".format(ex))
+        logging.exception("[CRUD][Exception in update_account_data] {} ".format(ex))
 
 
 
 def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
     try:
-        db_user = db.query(Account).filter(Account.user_id == user_id, Account.service_org == service_org, Account.account_state == Account.AccountState.ACTIVE).first()
+        if service_org :
+            db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE, Account.service_org == service_org).first()
+        else : 
+            db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
+
         if db_user:
             setattr(db_user, Account.account_state, Account.AccountState.DELETED)
             # db.delete(db_user) - Not deleting

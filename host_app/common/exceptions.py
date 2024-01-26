@@ -38,3 +38,4 @@ class Exceptions:
 
     # Order Exceptions
     FAILED_TO_CREATE_NEW_ORDER="Failed to Create Order"
+    UNAVAILABLE_ORDER_STATUS="Unavailable Order Status"

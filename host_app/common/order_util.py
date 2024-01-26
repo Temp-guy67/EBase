@@ -53,7 +53,7 @@ async def get_all_order_id_by_user(db: Session, backTask : BackgroundTasks, user
     
     
     
-async def get_all_orders(db: Session, user_id: str, org: Optional[str] = None, ):
+async def get_all_orders(db: Session, user_id: str, org: Optional[str] = None):
     try :
         all_order_ids = await get_all_order_id_by_user(db, user_id, org)
         all_orders_obj = []
@@ -67,7 +67,7 @@ async def get_all_orders(db: Session, user_id: str, org: Optional[str] = None, )
         logging.exception("[ORDER_UTIL][Exception in get_all_orders] {} ".format(ex))
 
 
-async def get_single_order(db: Session, backTask : BackgroundTasks, user_id: str, order_id:str, org: Optional[str] = None):
+async def get_single_order(db: Session, backTask : BackgroundTasks, order_id:str, user_id: Optional[str] = None, org: Optional[str] = None):
     try:
         order_obj = await redis_util.get_hm(RedisConstant.ORDER_OBJ + order_id)
         

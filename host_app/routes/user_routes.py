@@ -54,7 +54,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
             data["not_updated"] = anomalies
         
         if user_data :
-            res = await common_util.update_account_info(user_id, user_id, user_data, db)
+            res = await common_util.update_account_info(db, user_id, user_id, user_id, user_data, user["service_org"])
             if type(res) == type(dict()):
                 data["updated"] = res 
             else :
