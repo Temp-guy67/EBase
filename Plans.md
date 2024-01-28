@@ -21,5 +21,5 @@ userId -> request count map
 
 
 To Do list :
-1. Simple phone and email validation check while creat service, signup and receivers phone
-2. Delivery address form
+1. service routes er last er duto method
+2. get request count methods relocation check

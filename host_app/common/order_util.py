@@ -82,7 +82,7 @@ async def update_order_object(db:Session, user_id:str, order_id:str, order_data:
     try:
         order_update_map = dict()
         
-        possible_column_updates = ["order_status", "payment_status"]
+        possible_column_updates = ["order_status", "order_quantity", "delivery_address", "receivers_mobile", "payment_status"]
         
         for k,v in order_data.items():
             if k in possible_column_updates:
@@ -106,3 +106,4 @@ async def create_order_id(user_id : str, service_org:str):
     
     except Exception as ex :
         logging.exception("[ORDER_UTIL][Exception in create_order_id] {} ".format(ex))
+        

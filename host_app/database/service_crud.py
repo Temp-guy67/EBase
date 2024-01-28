@@ -125,3 +125,10 @@ async def ServiceSignupResponse(data: Service, enc_api_key):
     }
     
     
+async def get_request_count():
+    REQUEST_COUNT = dict()
+    REQUEST_COUNT[Subsription.TEST] = 10
+    REQUEST_COUNT[Subsription.FREE] = 50
+    REQUEST_COUNT[Subsription.NOOB] = 200
+    REQUEST_COUNT[Subsription.PRO] = 500
+    REQUEST_COUNT[Subsription.ULTRA_PRO] = 1000

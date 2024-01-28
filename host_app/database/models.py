@@ -68,18 +68,6 @@ class Orders(Base):
         FAILED=5
         CANCELED=6
         
-    ORDER_STATUS = dict()
-    ORDER_STATUS[1] = OrderStatus.IN_CART
-    ORDER_STATUS[2] = OrderStatus.ORDERED
-    ORDER_STATUS[3] = OrderStatus.IN_TRANSIT
-    ORDER_STATUS[4] = OrderStatus.DELIVERED
-    ORDER_STATUS[5] = OrderStatus.FAILED
-    ORDER_STATUS[6] = OrderStatus.CANCELED
-
-    def get_order_status(self, status:int):
-        if self.ORDER_STATUS.get(status):
-            return self.ORDER_STATUS[status]
-
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     order_id = Column(String, unique=True)
@@ -123,18 +111,6 @@ class Service(Base):
         PRO="PRO"
         ULTRA_PRO="ULTRA_PRO"
         
-    REQUEST_COUNT = dict()
-    REQUEST_COUNT[Subsription.TEST] = 10
-    REQUEST_COUNT[Subsription.FREE] = 50
-    REQUEST_COUNT[Subsription.NOOB] = 200
-    REQUEST_COUNT[Subsription.PRO] = 500
-    REQUEST_COUNT[Subsription.ULTRA_PRO] = 1000
-
-    def get_request_count(self, sus:str):
-        if self.REQUEST_COUNT.get(sus):
-            return self.REQUEST_COUNT[sus]
-        
-    
     class ServiceState:
         ACTIVE=1
         DELETED=2

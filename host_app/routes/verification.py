@@ -83,21 +83,15 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         token_data = schemas.TokenData(email=email)
 
         db_user = crud.get_user_by_email(db=db, email=token_data.email)
-        if db_user is None:
-            return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS
         
-        db_data = db_user.to_dict()
-        if not db_data :
+        if not db_user :
             return Exceptions.USER_NOT_FOUND
             
-            
-        common_util.update_user_details_in_redis(db_user.user_id, db_data)
+        common_util.update_user_details_in_redis(db_user["user_id"], db_user)
         
-        if int(db_data["is_verified"]) != 1 :
+        if int(db_user["is_verified"]) != 1 :
             return Exceptions.USER_NOT_VERIFIED
-        
-        
-        return db_data
+        return db_user
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_current_user] {} ".format(ex))

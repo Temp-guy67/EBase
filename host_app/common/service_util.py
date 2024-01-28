@@ -119,7 +119,7 @@ async def get_single_order(db: Session, order_id: str, user_id: Optional[str] = 
 
 async def get_all_orders_by_user(db: Session, user_id: Optional[str] = None, service_org: Optional[str] = None):
     try:
-        res = order_util.get_all_orders(db, user_id, service_org)
+        res = await order_util.get_all_orders(db, user_id, service_org)
         return res
 
     except Exception as ex :

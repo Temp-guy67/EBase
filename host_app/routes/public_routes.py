@@ -30,7 +30,7 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         
         logging.info("Data received for Signup : {}".format(user))
     
-        verification_result = await verification.verify_api_key(db, api_key, req, user.email)
+        verification_result = await verification.verify_api_key(db, api_key, req)
         if type(verification_result) != type(dict()) :
             return JSONResponse(status_code=403,  headers=dict(), content=verification_result.__repr__())
         
@@ -78,7 +78,7 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         user_agent = req.headers.get("user-agent")
         
         db_user = crud.get_user_by_email_login(db, email=userlogin.email)
-        if not db_user or db_user["account_state"] != 1:
+        if not db_user :
             return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Account Does not exist").__repr__())
         
         account_obj = db_user[0][0]
@@ -87,6 +87,9 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         user_obj = account_obj.to_dict()
         user_obj["client_ip"] = client_ip
         user_obj["user_agent"] = user_agent
+        
+        if user_obj["account_state"] != 1 :
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Account Does not exist").__repr__())
 
         if not account_obj:
             return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.USER_NOT_FOUND).__repr__())

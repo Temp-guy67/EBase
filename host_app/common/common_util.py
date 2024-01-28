@@ -4,6 +4,7 @@ from host_app.common.constants import CommonConstants
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
+from host_app.database.schemas import UserUpdate
 from host_app.caching.redis_constant import RedisConstant
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
@@ -83,6 +84,7 @@ async def update_account_info(db: Session, user_id: str, updater:str, user_updat
     try:
         logging.info(f"[update_account_info][Data received][targetUser] {user_id} [updater] {updater} [Update details] {user_update_map_info}")
         user_update_map = dict()
+        
         possible_update = ["email", "phone", "username", "is_verified"]
         
         for k,v in user_update_map_info.items():
@@ -99,7 +101,7 @@ async def update_account_info(db: Session, user_id: str, updater:str, user_updat
                 user_update_map[k] = v
         
         updated_user_data = await crud.update_account_data(db, user_id, updater, user_update_map, service_org, is_sup)
-        data = {"user_id" : user_id, "details" : "User Data updated successfully", "updated_by" : updater}
+        data = {"user_id" : user_id, "details" : "User Data updated successfully", "updated_by" : updater, "updated_data" : updated_user_data}
         if updated_user_data :
             update_user_details_in_redis(user_id, updated_user_data)
 
@@ -142,7 +144,7 @@ async def get_service_details(db: Session, api_key: str):
         service_obj["ip_ports"] = service_data_obj["ip_ports"]
         service_obj["registration_mail"] = service_data_obj["registration_mail"]
 
-        # redis_util.set_str(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
+        redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
         
         return service_obj
     
@@ -168,3 +170,16 @@ async def update_service_verified_api(api_key:str, service_obj:dict):
 
 
     
+async def update_map_set(user_data: UserUpdate):
+    try:
+        possible_update = ["email", "phone", "username"]
+        user_data = (user_data.model_dump())
+        user_update_map = dict()
+        
+        for k,v in user_data.items():
+            if k in possible_update and v :
+                user_update_map[k] = v
+                
+        return user_update_map
+    except Exception as ex :
+        logging.exception("[Common_Util][Exception in update_map_set] {} ".format(ex))

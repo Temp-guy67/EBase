@@ -61,7 +61,6 @@ class OrderCreate(BaseModel):
 
 
 class OrderQuery(BaseModel):
-    order_id : str 
     order_status : Union[int, None] = None 
     order_quantity : Union[int, None] = None
     delivery_address : Union[str, None] = None

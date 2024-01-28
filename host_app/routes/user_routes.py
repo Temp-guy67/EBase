@@ -47,14 +47,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         if not is_password_verified :
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.WRONG_PASSWORD).__repr__())  
         
-        possible_update = ["email", "phone", "username"]
-        user_data = (user_data.model_dump())
-        user_update_map = dict()
-        
-        for k,v in user_data.items():
-            if k in possible_update and v :
-                user_update_map[k] = v
-        
+        user_update_map = await common_util.update_map_set(user_data)
         
         if not user_update_map :
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="Nothing to Update").__repr__()) 
@@ -89,7 +82,7 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
         if not is_password_verified:
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.WRONG_PASSWORD).__repr__())  
 
-        res = await common_util.update_password(user, user_data.new_password, db)
+        res = await common_util.update_password(user, new_password, db)
 
         if type(res) != type(dict()):
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
@@ -136,6 +129,8 @@ async def logout(user: UserInDB = Depends(verification.get_current_active_user))
         user_id = user["user_id"]
         logging.info("Request received for logout | action user_id : {}".format(user_id))
         await common_util.delete_access_token_in_redis(user_id)
+        
+        return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data={"details" : "Logout Successful"}).to_dict())
 
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in logout] {} ".format(ex))

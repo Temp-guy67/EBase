@@ -32,7 +32,7 @@ app.add_middleware(
 
 
 Base.metadata.create_all(bind=engine)
-bucket = TokenBucket(capacity=10, refill_rate=5)
+bucket = TokenBucket(capacity=20, refill_rate=15)
 
 # Add the rate limiting middleware to the FastAPI app
 app.add_middleware(RateLimiterMiddleware, bucket=bucket)
