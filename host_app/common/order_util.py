@@ -1,5 +1,6 @@
 from typing import Optional
-from host_app.database.schemas import OrderCreate
+from host_app.common.exceptions import Exceptions
+from host_app.database.schemas import OrderCreate, OrderQuery
 from sqlalchemy.orm import Session
 import logging, random, string
 from host_app.database import order_crud
@@ -107,3 +108,22 @@ async def create_order_id(user_id : str, service_org:str):
     except Exception as ex :
         logging.exception("[ORDER_UTIL][Exception in create_order_id] {} ".format(ex))
         
+async def set_order_update_map(order_query: OrderQuery ):
+    try:
+        order_data = dict()
+        possible_update = ["order_status", "order_quantity", "delivery_address", "receivers_mobile", "payment_status"]
+
+        for k,v in order_query :
+            if v and k in possible_update:
+                if k == possible_update[0] :
+                    if not 1<=v<=6 :
+                        return Exceptions.UNAVAILABLE_ORDER_STATUS
+                    
+                elif k == possible_update[4] :
+                    if not 1<=v<=3 :
+                        return Exceptions.UNAVAILABLE_ORDER_STATUS
+                order_data[k] = v 
+        print(" order_data sda ", order_data)
+        return order_data
+    except Exception as ex :
+        logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))

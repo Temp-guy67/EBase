@@ -21,5 +21,4 @@ userId -> request count map
 
 
 To Do list :
-1. service routes er last er duto method
-2. get request count methods relocation check
+1. Only test the super admin
