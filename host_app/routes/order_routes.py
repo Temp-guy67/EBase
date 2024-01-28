@@ -18,17 +18,20 @@ order_router = APIRouter(
 
 
 @order_router.post("/create")
-async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verification.get_current_active_user)):
+async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try: 
+        if not isinstance(user, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
+        
         logging.info("Data received for create_order : {} [user_id] {}".format(order_info, user["user_id"]))
         user_id, user_org = user["user_id"], user["service_org"]
 
-        order = await order_util.create_order(user_id, user_org, order_info)
+        order = await order_util.create_order(db, user_id, user_org, order_info)
         
         if not order:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.FAILED_TO_CREATE_NEW_ORDER).__repr__())
 
-        return JSONResponse(status_code=401, content=ResponseObject(data=order).to_dict())
+        return JSONResponse(status_code=200, content=ResponseObject(data=order).to_dict())
     
     except Exception as ex:
         logging.exception("[ORDER_ROUTES][Exception in create_order] {} ".format(ex))
@@ -37,6 +40,9 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
 @order_router.get("/")
 async def get_orders(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(user, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
+        
         logging.info("Data received for get_orders [user_id] {}".format( user["user_id"]))
         user_id, user_org = user["user_id"], user["service_org"]
 
@@ -44,7 +50,7 @@ async def get_orders(user: UserInDB = Depends(verification.get_current_active_us
         if not all_orders_obj:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED).__repr__())
         
-        return JSONResponse(status_code=401, content=ResponseObject(data=all_orders_obj).to_dict())
+        return JSONResponse(status_code=200, content=ResponseObject(data=all_orders_obj).to_dict())
 
     except Exception as ex:
         logging.exception("[ORDER_ROUTES][Exception in get_orders] {} ".format(ex))
@@ -53,6 +59,9 @@ async def get_orders(user: UserInDB = Depends(verification.get_current_active_us
 @order_router.get("/{order_id}")
 async def get_single_order_info(order_id: str, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(user, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
+        
         logging.info("Data received for get_single_order_info [user_id] {}".format( user["user_id"]))
         user_id, user_org = user["user_id"], user["service_org"]
 
@@ -60,47 +69,18 @@ async def get_single_order_info(order_id: str, user: UserInDB = Depends(verifica
         if not order_obj:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED).__repr__())
         
-        return JSONResponse(status_code=401, content=ResponseObject(data=order_obj).to_dict())
+        return JSONResponse(status_code=200, content=ResponseObject(data=order_obj).to_dict())
 
     except Exception as ex :
         logging.exception("[ORDER_ROUTES][Exception in get_single_order_info] {} ".format(ex))
 
 
-# update and cancel and all 
-# this will be only for admin and super admin case
-        
-# @order_router.post("/update")
-# async def update_order_status(order_query: OrderQuery, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
-#     try:
-
-#         logging.info("Data received for get_single_order_info [user_id] {}".format( user["user_id"]))
-#         user_id, user_org = user["user_id"], user["service_org"]
-
-#         respObj = ResponseObject()
-#         user_id = user["user_id"]
-#         order_data = order_query.model_dump()
-#         service_org = user["service_org"]
-        
-#         res = await order_util.update_order_object(db, user_id, order_data, service_org)
-        
-#         if not res:
-#             exp = CustomException(detail="Failed to Update Order")
-#             respObj.set_exception(exp)
-#             return respObj
-        
-#         respObj.set_status(status.HTTP_200_OK)
-#         respObj.set_data(res)
-#         return respObj
-    
-#     except Exception as ex:
-#         logging.exception("[ORDER_ROUTES][Exception in update_order_status] {} ".format(ex))
-    
-
-
-# under construction
 @order_router.get("/cancel/{order_id}")
 async def cancel_order(order_id: str, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(user, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
+        
         logging.info("Data received for cancel_order [user_id] {}".format( user["user_id"]))
         user_id, user_org = user["user_id"], user["service_org"]
 
@@ -110,7 +90,7 @@ async def cancel_order(order_id: str, user: UserInDB = Depends(verification.get_
         if not order_obj:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED).__repr__())
         
-        return JSONResponse(status_code=401, content=ResponseObject(data={"message" : "Order canceled successfully"}).to_dict())
+        return JSONResponse(status_code=200, content=ResponseObject(data={"message" : "Order canceled successfully"}).to_dict())
                 
     except Exception as ex:
         logging.exception("[ORDER_ROUTES][Exception in cancel_order] {} ".format(ex))

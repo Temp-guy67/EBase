@@ -27,7 +27,8 @@ def get_user_by_user_id(db: Session, user_id: str, is_sup : Optional[bool] = Non
 
 def get_user_by_email(db: Session, email: str):
     try:
-        return db.query(Account).filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE).first()
+        db_user = db.query(Account).filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE).first()
+        return db_user.to_dict() if db_user else None
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_email] {} ".format(ex))
 
@@ -38,7 +39,7 @@ def get_user_by_email_login(db: Session, email: str):
         joined_data = (
             db.query(Account, Password)
             .join(Password, Account.user_id == Password.user_id)
-            .filter(Account.email == email)
+            .filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE)
             .all()
         )
         return joined_data
@@ -145,6 +146,7 @@ async def update_account_data(db: Session, user_id: str, updater:str, user_updat
             db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE, Account.service_org == service_org).first()
         else :
             db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
+            
         if db_user:
             for key, value in user_update_map.items():
                 setattr(db_user, key, value)
@@ -157,7 +159,7 @@ async def update_account_data(db: Session, user_id: str, updater:str, user_updat
 
 
 
-def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
+async def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
     try:
         if service_org :
             db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE, Account.service_org == service_org).first()
@@ -165,14 +167,15 @@ def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
             db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
 
         if db_user:
-            setattr(db_user, Account.account_state, Account.AccountState.DELETED)
+            setattr(db_user, "account_state" , Account.AccountState.DELETED )
             # db.delete(db_user) - Not deleting
             db.commit()
+            db.refresh(db_user)
             obj = db.query(Password).filter(Password.user_id == user_id).first()
             if obj:
                 db.delete(obj)
                 db.commit()
-
+    
                 return True
         return False
     except Exception as ex :
@@ -190,7 +193,7 @@ async def get_all_users(db: Session, is_sup: Optional[bool] = None, service_org:
 
         res_arr = {}
         for e in res :
-            dicu = await e.to_dict()
+            dicu = e.to_dict()
             res_arr[dicu["user_id"]] = dicu
 
         return res_arr
@@ -209,7 +212,7 @@ async def get_all_unverified_users(db: Session, is_sup: Optional[bool] = None, o
 
         res_arr = {}
         for e in res :
-            dicu = await e.to_dict()
+            dicu = e.to_dict()
             res_arr[dicu["user_id"]] = dicu
 
         return res_arr

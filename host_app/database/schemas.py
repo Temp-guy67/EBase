@@ -32,8 +32,8 @@ class UserSignUpResponse(User):
 
 
 class UserUpdate(BaseModel):
-    user_id : str  # target User
     email : Union[str, None] = None
+    username : Union[str, None] = None
     phone : Union[str, None] = None
     new_password : Union[str, None] = None
     new_role : Union[int, None] = None
@@ -42,9 +42,6 @@ class UserUpdate(BaseModel):
 
 
 class UserDelete(BaseModel):
-    user_id : str 
-    email : Union[str, None] = None
-    phone : Union[str, None] = None
     password : str 
 
 class Token(BaseModel):
@@ -64,7 +61,6 @@ class OrderCreate(BaseModel):
 
 
 class OrderQuery(BaseModel):
-    order_id : str 
     order_status : Union[int, None] = None 
     order_quantity : Union[int, None] = None
     delivery_address : Union[str, None] = None
@@ -82,7 +78,7 @@ class ServiceSignup(BaseModel):
     password : str
     subscription_mode : Union[str, None] = None
     registration_mail : str 
-    ip_ports : list
+    ip_ports :  Union[list, None] = None    
 
             
 

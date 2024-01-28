@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer,APIKeyHead
 from host_app.common import util
 from fastapi import Depends, Request
 from host_app.common.constants import SECRET_KEY, ALGORITHM
-from typing import Annotated
+from typing import Annotated, Optional
 import jwt, jwt.exceptions
 from host_app.database.database import get_db
 from host_app.common.exceptions import Exceptions, CustomException
@@ -52,7 +52,7 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
     try:
         token = credentials.credentials
         user_id_ip_details = await redis_util.get_hm(token)
-        print(" received request for URI : {} | redid_data : {} ".format(req.url.path, user_id_ip_details) )
+        logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details) )
 
         if user_id_ip_details:
             # If from different ip or device check
@@ -60,10 +60,15 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
                 return Exceptions.TRYING_FROM_DIFFERENT_DEVICE
             
             user_data = await common_util.get_user_details(user_id_ip_details["user_id"], db)
-            if user_data :
+            if not user_data :
+                return Exceptions.USER_NOT_FOUND
+            elif user_data["active_state"] != 1 :
+                return Exceptions.USER_HAS_BEEN_DELETED
+            else:
                 return user_data
+                
 
-        verification_result = await verify_api_key(api_key, req, db)
+        verification_result = await verify_api_key(db, api_key, req)
         if type(verification_result) != type(dict()) :
             return verification_result
         
@@ -78,12 +83,15 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         token_data = schemas.TokenData(email=email)
 
         db_user = crud.get_user_by_email(db=db, email=token_data.email)
-        if db_user is None:
-            return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS
         
-        db_data = await db_user.to_dict()
-        await common_util.update_user_details_in_redis(db_user.user_id, db_data)
-        return db_data
+        if not db_user :
+            return Exceptions.USER_NOT_FOUND
+            
+        common_util.update_user_details_in_redis(db_user["user_id"], db_user)
+        
+        if int(db_user["is_verified"]) != 1 :
+            return Exceptions.USER_NOT_VERIFIED
+        return db_user
         
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_current_user] {} ".format(ex))
@@ -94,7 +102,7 @@ async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depe
     return current_user
 
 
-async def verify_api_key(enc_api_key: str, req: Request, db: Session):
+async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Optional[str] = None):
     try:
         client_ip = req.client.host
         api_key = await decrypt_enc_api_key(enc_api_key)
@@ -104,7 +112,13 @@ async def verify_api_key(enc_api_key: str, req: Request, db: Session):
         daily_req_left = None
         service_obj = await common_util.get_service_details(db, api_key) 
         
+        # Only test method will be allowed 
+        # basic one will have limited
+        
         if service_obj :
+            if email and service_obj["registration_mail"] != email :
+                return CustomException(detail=Exceptions.WRONG_API)
+            
             ip_ports = service_obj["ip_ports"]
 
             # if "*" in ip_ports:

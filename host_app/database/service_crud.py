@@ -1,4 +1,6 @@
 import logging,random
+
+from fastapi import Request
 from host_app.database.schemas import ServiceSignup
 from host_app.database.models import Service
 from sqlalchemy.orm import Session
@@ -58,9 +60,12 @@ def get_service_by_service_org(db: Session, service_org: str):
 
 
 
-async def create_new_service(db: Session, service_user: ServiceSignup):
+async def create_new_service(db: Session, req :Request, service_user: ServiceSignup):
     try:
         ip_ports = service_user.ip_ports
+        if not ip_ports :
+            ip_ports = list[req.client.host]
+
         ip_ports_str = await util.zipper(ip_ports)
         service_org = service_user.service_org
         alpha_int = random.randint(1,26)
@@ -120,3 +125,4 @@ async def ServiceSignupResponse(data: Service, enc_api_key):
     }
     
     
+

@@ -46,7 +46,7 @@ async def verify_user(db: Session , user_id: int, updater: str, service_org : Op
     try:
         account_update_map = dict()
         account_update_map["is_verified"] = 1
-        res = await crud.update_account_info(db, user_id, updater, account_update_map, service_org, is_sup) 
+        res = await common_util.update_account_info(db, user_id, updater, account_update_map, service_org, is_sup) 
         return res   
             
     except Exception as ex :
@@ -110,7 +110,7 @@ async def get_user(db:Session, user_id : str, service_org: Optional[str] = None)
 
 async def get_single_order(db: Session, order_id: str, user_id: Optional[str] = None, service_org: Optional[str] = None):
     try:
-        res = order_util.get_single_order(db, user_id, service_org)
+        res = order_util.get_single_order(db, order_id, user_id, service_org)
         return res
 
     except Exception as ex :
@@ -119,7 +119,7 @@ async def get_single_order(db: Session, order_id: str, user_id: Optional[str] = 
 
 async def get_all_orders_by_user(db: Session, user_id: Optional[str] = None, service_org: Optional[str] = None):
     try:
-        res = order_util.get_single_order(db, user_id, service_org)
+        res = await order_util.get_all_orders(db, user_id, service_org)
         return res
 
     except Exception as ex :
