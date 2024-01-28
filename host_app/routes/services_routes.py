@@ -279,8 +279,6 @@ async def get_user_under_org(user_id:str, admin_data: UserInDB = Depends(verific
         logging.exception("[SERVICE_ROUTES][Exception in get_user_under_org] {} ".format(ex))
 
 
-# order cases
-
 @service_router.get("/getorder/{order_id}")
 async def get_order_under_org(order_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
@@ -354,7 +352,7 @@ async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery
         admin_id = admin_data["user_id"]
         logging.info("Data received for update_orders_by_user_under_org | admin user_id : {} | order_id : {}".format(admin_id, order_id))
         
-        order_data = await set_order_update_map(order_query)
+        order_data = await order_util.set_order_update_map(order_query)
         if not isinstance(order_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=order_data).__repr__())
         
@@ -405,24 +403,3 @@ async def check_admin_privileges(admin: dict, org_user: Optional[dict] = None):
     except Exception as ex :
         logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
 
-
-# Need to test this on basic of wrong status
-async def set_order_update_map(order_query: OrderQuery ):
-    try:
-        order_data = dict()
-        possible_update = ["order_status", "order_quantity", "delivery_address", "receivers_mobile", "payment_status"]
-
-        for k,v in order_query :
-            if v and k in possible_update:
-                if k == possible_update[0] :
-                    if not 1<=v<=6 :
-                        return Exceptions.UNAVAILABLE_ORDER_STATUS
-                    
-                elif k == possible_update[4] :
-                    if not 1<=v<=3 :
-                        return Exceptions.UNAVAILABLE_ORDER_STATUS
-                order_data[k] = v 
-        print(" order_data sda ", order_data)
-        return order_data
-    except Exception as ex :
-        logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))

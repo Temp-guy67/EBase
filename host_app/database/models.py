@@ -104,6 +104,7 @@ class Orders(Base):
 
 
 class Service(Base):
+    REQUEST_COUNT = dict()
     class Subsription:
         TEST="TEST"
         FREE="FREE"
@@ -118,6 +119,13 @@ class Service(Base):
     class ClientVerification:
         NOT_VERIFIED=0
         VERIFIED=1
+        
+    
+    REQUEST_COUNT[Subsription.TEST] = 10
+    REQUEST_COUNT[Subsription.FREE] = 50
+    REQUEST_COUNT[Subsription.NOOB] = 200
+    REQUEST_COUNT[Subsription.PRO] = 500
+    REQUEST_COUNT[Subsription.ULTRA_PRO] = 1000
 
     __tablename__ = "services"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -151,3 +159,7 @@ class Service(Base):
             'api_key' : self.api_key,
             'is_verified' : self.is_verified
         }
+        
+
+async def get_request_count(subs : str):
+    return Service.REQUEST_COUNT[subs]
