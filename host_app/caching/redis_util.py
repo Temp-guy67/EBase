@@ -23,9 +23,11 @@ async def connect_redis():
 
 # In redis cloud they convert the byte to string and provides, but in out redis , they dont
 
+def flush_all():
+    redis_client.flushall()
 
 
-async def delete_from_redis(key:str):
+def delete_from_redis(key:str):
     try :
         redis_client.delete(key)
     except Exception as ex :
@@ -74,7 +76,7 @@ def set_str(key: str, val:str, ttl_in_sec:int = 3600):
 
 async def get_str(key: str):
     try:
-        logging.info(f" DATA RECEIFD {key} ")
+        logging.info(f" [RedisUtil] [Data Received] {key} ")
         byte_data = redis_client.get(key)
         return byte_data
     except Exception as ex :

@@ -38,7 +38,7 @@ def get_user_by_email_login(db: Session, email: str):
         joined_data = (
             db.query(Account, Password)
             .join(Password, Account.user_id == Password.user_id)
-            .filter(Account.email == email)
+            .filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE)
             .all()
         )
         return joined_data
@@ -157,15 +157,15 @@ async def update_account_data(db: Session, user_id: str, updater:str, user_updat
 
 
 
-def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
+async def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
     try:
         if service_org :
             db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE, Account.service_org == service_org).first()
         else : 
             db_user = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
-
+        print( " TEST ",Account.AccountState.DELETED , " TYPE ", type(Account.AccountState.DELETED))
         if db_user:
-            setattr(db_user, Account.account_state, Account.AccountState.DELETED)
+            setattr(db_user, "account_state" , Account.AccountState.DELETED )
             # db.delete(db_user) - Not deleting
             db.commit()
             obj = db.query(Password).filter(Password.user_id == user_id).first()

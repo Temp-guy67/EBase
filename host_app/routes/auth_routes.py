@@ -17,11 +17,11 @@ auth_router = APIRouter(
 )
 
 
-@auth_router.get("/verifyservice/{service_id}")
+@auth_router.get("/verify/service/{service_id}")
 async def verify_service(service_id : str, super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
         is_sup_admin = await check_sup_admin_privileges(super_admin)
-        print(" is_sup_admin => " , type(is_sup_admin) )
+        
         if not isinstance(is_sup_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=is_sup_admin).__repr__())  
             
@@ -33,14 +33,15 @@ async def verify_service(service_id : str, super_admin: UserInDB = Depends(verif
 
 
 
-@auth_router.get("/verify/{user_id}")
+@auth_router.get("/verify/user/{user_id}")
 async def verify_user(user_id : str, super_admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        print( " super admin ",super_admin)
         is_sup_admin = await check_sup_admin_privileges(super_admin)
         if not isinstance(is_sup_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_sup_admin}").__repr__())  
             
-        res = await service_util.verify_user(user_id, db)
+        res = await service_util.verify_user(db, user_id, super_admin["user_id"], None, True)
         if res :
             return JSONResponse(status_code=200, content=ResponseObject(data=res).to_dict()) 
     except Exception as ex :

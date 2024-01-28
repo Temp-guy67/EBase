@@ -15,7 +15,6 @@ def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
     try :
         data_map = {"user_id" : user_id, "ip" : ip}
         redis_util.set_hm(access_token, data_map, 1800)
-        # For logout cases only
         redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
 
     except Exception as ex :
@@ -25,14 +24,15 @@ def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
 async def delete_access_token_in_redis(user_id : str):
     try:
         access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
-        redis_util.delete_from_redis(access_token)
-        redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
+        if access_token :
+            redis_util.delete_from_redis(access_token)
+            redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
 
     except Exception as ex :
         logging.exception("[common_util][Exception in delete_access_token_in_redis] {} ".format(ex))
 
 
-async def update_user_details_in_redis(user_id:str, user_obj: dict):
+def update_user_details_in_redis(user_id:str, user_obj: dict):
     try :
         redis_util.set_hm(RedisConstant.USER_OBJECT + user_id, user_obj, 1800)
 
@@ -51,12 +51,12 @@ async def get_user_details(user_id, db: Session = Depends(get_db)):
         logging.exception("[common_util][Exception in get_user_details] {} ".format(ex))
 
 async def delete_user_details_from_redis(user_id:str):
-    await redis_util.delete_from_redis(RedisConstant.USER_OBJECT + user_id)
+    redis_util.delete_from_redis(RedisConstant.USER_OBJECT + user_id)
     
         
 async def update_password(user:dict, new_password, db: Session):
     try:
-        logging.info(f"[update_account_info][Data received][user] {user}")
+        logging.info(f"[update_password][Data received][user] {user}")
         user_id = user["user_id"]
 
         new_salt = await util.generate_salt(CommonConstants.SALT_LENGTH)
@@ -78,7 +78,7 @@ async def update_password(user:dict, new_password, db: Session):
 # But reaching upto here is fuckin impossible without proper authentication.
 
 
-async def update_account_info(user_id: str, updater:str, user_update_map_info: dict, db: Session, service_org: Optional[str] = None, is_sup : Optional[bool] = None):
+async def update_account_info(db: Session, user_id: str, updater:str, user_update_map_info: dict, service_org: Optional[str] = None, is_sup : Optional[bool] = None):
     data = {}
     try:
         logging.info(f"[update_account_info][Data received][targetUser] {user_id} [updater] {updater} [Update details] {user_update_map_info}")
@@ -87,12 +87,12 @@ async def update_account_info(user_id: str, updater:str, user_update_map_info: d
         
         for k,v in user_update_map_info.items():
             if k == possible_update[0]:
-                res = crud.get_user_by_email()
+                res = crud.get_user_by_email(db, v)
                 if res :
                     return Exceptions.EMAIL_HAS_BEEN_REGISTERED
                 
             if k == possible_update[1]:
-                res = crud.get_user_by_phone()
+                res = crud.get_user_by_phone(db, v)
                 if res :
                     return Exceptions.PHONE_NUMBER_HAS_BEEN_REGISTERED
             if k in possible_update :
@@ -110,7 +110,7 @@ async def update_account_info(user_id: str, updater:str, user_update_map_info: d
 
 async def delete_user(user_id:str, user_org:str, db: Session):
     try:
-        res = crud.delete_user(db,user_id, user_org)
+        res = await crud.delete_user(db, user_id, user_org)
         # now delete from redis
         if not res :
             return Exceptions.OPERATION_FAILED
@@ -129,7 +129,7 @@ async def get_service_details(db: Session, api_key: str):
         # await delete_api_cache_from_redis(api_key)
         
         service_data_obj = await redis_util.get_hm(RedisConstant.SERVICE_API + api_key)
-        
+
         if not service_data_obj :
             service_data_obj = service_crud.get_service_by_api_key(db, api_key)
             
@@ -140,6 +140,7 @@ async def get_service_details(db: Session, api_key: str):
         service_obj["is_verified"] = service_data_obj["is_verified"]
         service_obj["daily_request_count"] = service_data_obj["daily_request_count"]
         service_obj["ip_ports"] = service_data_obj["ip_ports"]
+        service_obj["registration_mail"] = service_data_obj["registration_mail"]
 
         # redis_util.set_str(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
         
@@ -153,7 +154,7 @@ async def update_service_object_in_redis(api_key:str, service_obj:dict):
     redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
 
 async def delete_api_cache_from_redis(api_key:str):
-    await redis_util.delete_from_redis(RedisConstant.SERVICE_API + api_key)
+    redis_util.delete_from_redis(RedisConstant.SERVICE_API + api_key)
     
 
 async def reduce_daily_req_counts(api_key:str, service_obj:dict):

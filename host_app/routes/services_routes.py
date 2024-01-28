@@ -49,16 +49,19 @@ while updating anything, will add org_user_id + admin org that will ensure damn
 '''
 
 @service_router.get("/me/")
-async def get_admin(admin: UserInDB = Depends(verification.get_current_active_user)):
+async def get_admin(admin_data: UserInDB = Depends(verification.get_current_active_user)):
     try:
-        user_id = admin["user_id"]
-        logging.info("Data received for get_admin : {} | action user_id : {}".format(admin, user_id))
-        is_admin = await check_admin_privileges(admin, admin["user_id"]) 
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
+        user_id = admin_data["user_id"]
+        logging.info("Data received for get_admin : {} | action user_id : {}".format(admin_data, user_id))
+        is_admin = await check_admin_privileges(admin_data) 
 
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
         
-        return JSONResponse(status_code=200, content=ResponseObject(data=admin).to_dict())
+        return JSONResponse(status_code=200, content=ResponseObject(data=admin_data).to_dict())
     except Exception as ex:
         logging.exception("[SERVICE_ROUTES][Exception in get_admin] {} ".format(ex))
 
@@ -68,6 +71,9 @@ async def get_admin(admin: UserInDB = Depends(verification.get_current_active_us
 @service_router.post("/update/{org_user_id}")
 async def update_user_data(org_user_id:str, admin_data: UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         user_id = admin["user_id"]
         logging.info("Data received for get_admin : {} | action user_id : {}".format(admin, user_id))
         
@@ -91,6 +97,9 @@ async def update_user_data(org_user_id:str, admin_data: UserUpdate, admin: UserI
 @service_router.post("/update/")
 async def update_admin_account_data(admin_data: UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         admin_id = admin_data.user_id
         is_admin =  await check_admin_privileges(admin) 
 
@@ -108,9 +117,12 @@ async def update_admin_account_data(admin_data: UserUpdate, admin: UserInDB = De
         logging.exception("[SERVICE_ROUTES][Exception in update_admin_account_data] {} ".format(ex))
 
 
-@service_router.get("/verify/{org_user_id}")
+@service_router.get("/verify/user/{org_user_id}")
 async def verify_user_under_org(org_user_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -127,6 +139,9 @@ async def verify_user_under_org(org_user_id: str, admin_data: UserInDB = Depends
 @service_router.post("/update/password/")
 async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
@@ -159,8 +174,11 @@ async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB =
 
 # Service admin can Update - ip_ports - his own
 @service_router.post("/update/ipports/")
-async def update_ip_ports(user_data : UserUpdate, admin: UserInDB = Depends(verification.get_current_active_user)):
+async def update_ip_ports(user_data : UserUpdate, admin_data: UserInDB = Depends(verification.get_current_active_user)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         # will work
         return {"message" : "under construction"}
     except Exception as ex:
@@ -170,6 +188,8 @@ async def update_ip_ports(user_data : UserUpdate, admin: UserInDB = Depends(veri
 @service_router.post("/delete/{user_id}", summary="To delete any user")
 async def delete_user(user_id : str, user_data : UserDelete, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
@@ -198,6 +218,9 @@ async def delete_user(user_id : str, user_data : UserDelete, admin_data: UserInD
 @service_router.get("/getuser/all")
 async def get_all_user_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -215,6 +238,9 @@ async def get_all_user_under_org(admin_data: UserInDB = Depends(verification.get
 @service_router.get("/getusers/all/unverified")
 async def get_all_unverified_users_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -232,6 +258,9 @@ async def get_all_unverified_users_under_org(admin_data: UserInDB = Depends(veri
 @service_router.get("/getuser/{user_id}")
 async def get_user_under_org(user_id:str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -251,6 +280,9 @@ async def get_user_under_org(user_id:str, admin_data: UserInDB = Depends(verific
 @service_router.get("/getorder/{order_id}")
 async def get_order_under_org(order_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -267,6 +299,9 @@ async def get_order_under_org(order_id: str, admin_data: UserInDB = Depends(veri
 @service_router.get("/getorder/all")
 async def get_all_orders_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -285,6 +320,9 @@ async def get_all_orders_under_org(admin_data: UserInDB = Depends(verification.g
 @service_router.get("/getorder/{user_id}")
 async def get_orders_by_user_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -303,6 +341,9 @@ async def get_orders_by_user_under_org(admin_data: UserInDB = Depends(verificati
 @service_router.post("/order/update/{order_id}")
 async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -326,6 +367,9 @@ async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery
 @service_router.get("/order/cancel/{order_id}")
 async def cancel_orders_by_user_under_org(order_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
+        if not isinstance(admin_data, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
+        
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
@@ -350,7 +394,7 @@ async def cancel_orders_by_user_under_org(order_id: str, admin_data: UserInDB = 
 async def check_admin_privileges(admin: dict, org_user: Optional[dict] = None):
     try:
         exp = Exceptions.NOT_AUTHORIZED
-        if admin["role"] != models.Account.Role.ADMIN or admin["user_id"][:2] != admin["service_org"]:
+        if admin["role"] == models.Account.Role.USER or admin["user_id"][:2] != admin["service_org"]:
             return exp
         
         return True

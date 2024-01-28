@@ -55,6 +55,13 @@ async def login_test():
     except Exception as ex :
         logging.exception("[main][Exception in login_test] {} ".format(ex))
 
+@app.get("/flsuh")
+async def flush():
+    try:
+        redis_util.flush_all()
+        print(" All data has been flushed")
+    except Exception as ex :
+        logging.exception("[main][Exception in flush] {} ".format(ex))
 
 
 

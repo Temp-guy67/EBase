@@ -35,24 +35,25 @@ def get_all_orders_by_user(db: Session, user_id: str, org: Optional[str] = None)
         logging.exception("[ORDER_CRUD][Exception in get_all_orders_by_user] {} ".format(ex))
 
 
-def get_all_order_id_by_user(db:Session, user_id: str, org: Optional[str] = None ):
+async def get_all_order_id_by_user(db:Session, user_id: str, org: Optional[str] = None ):
     try:
-        order_ids = []
         if not org : 
-            order_ids = db.query(Orders.id).filter(Orders.owner_id == user_id).all()
+            order_id_obj = db.query(Orders.order_id).filter(Orders.owner_id == user_id).all()
         else:
-            order_ids = db.query(Orders.id).filter(Orders.owner_id == user_id, Orders.service_org == org).all()
+            order_id_obj = db.query(Orders.order_id).filter(Orders.owner_id == user_id, Orders.service_org == org).all()
+            
+        order_ids = await set_order_id_properly(order_id_obj)
         return order_ids
 
     except Exception as ex:
-        logging.exception("[ORDER_CRUD][Exception in get_all_orders_by_user] {} ".format(ex))
+        logging.exception("[ORDER_CRUD][Exception in get_all_order_id_by_user] {} ".format(ex))
 
 
-def get_order_by_order_id(db: Session, user_id : str, order_id: str, org: Optional[str] = None):
+async def get_order_by_order_id(db: Session, user_id : str, order_id: str, org: Optional[str] = None):
     try:
         order_obj =  db.query(Orders).filter(Orders.order_id == order_id, Orders.owner_id== user_id).first()
-
-        return order_obj.to_dict()
+        if order_obj :
+            return order_obj.to_dict()
         
     except Exception as ex :
         logging.exception("[ORDER_CRUD][Exception in get_order_by_order_id] {} ".format(ex))
@@ -134,10 +135,23 @@ async def get_single_order(db: Session, user_id: str, order_id: str, org: Option
                 data = single_order.to_dict()
                 creted_time = data["created_time"]
                 data["created_time"] = str(creted_time)
-                await redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, data, 1800)
+                redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, data, 1800)
     
                 return single_order
 
     except Exception as ex :
         logging.exception("[ORDER_CRUD][Exception in get_single_order] {} ".format(ex))
     return single_order
+
+
+# Helper Method
+
+async def set_order_id_properly(order_id_db : list):
+    try:
+        order_ids = [e[0] for e in order_id_db]
+        # for e in order_id_db:
+        #     print("single order ID => ", e[0])
+        #     order_ids.append(e[0])
+        return order_ids
+    except Exception as ex :
+        logging.exception("[ORDER_CRUD][Exception in get_single_order] {} ".format(ex))
