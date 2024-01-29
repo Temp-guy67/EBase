@@ -141,6 +141,7 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
         logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
         service_email = service_user.registration_mail
+        service_org = service_user.service_org
         check = await email_validation_check(service_email)
         if not check :
             return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())

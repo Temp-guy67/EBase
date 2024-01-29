@@ -72,6 +72,7 @@ class ResponseModel(BaseModel):
 
 
 class ServiceSignup(BaseModel):
+    service_org : str
     service_name : str
     phone : str
     password : str
