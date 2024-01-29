@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from host_app.common.exceptions import CustomException
 from host_app.database import service_crud
 from host_app.database.database import get_db
-from host_app.common import common_util
+from host_app.common import common_util, order_util
 from host_app.caching import redis_util
 from host_app.caching.redis_constant import RedisConstant
 from host_app.database import crud
@@ -38,16 +38,15 @@ async def verify_service(service_id: int, db: Session ):
             await common_util.delete_api_cache_from_redis(res.api_key)
             return {"message" : "Service Updated"}
             
-            
     except Exception as ex :
         logging.exception("[SERVICE_UTIL][Exception in update_service_info] {} ".format(ex))
         
 
-async def verify_user(user_id: int, updater: str, db: Session ):
+async def verify_user(db: Session , user_id: int, updater: str, service_org : Optional[str] = None, is_sup : Optional[bool] = None ):
     try:
         account_update_map = dict()
         account_update_map["is_verified"] = 1
-        res = await common_util.update_account_info(user_id, updater, account_update_map, db) 
+        res = await common_util.update_account_info(db, user_id, updater, account_update_map, service_org, is_sup) 
         return res   
             
     except Exception as ex :
@@ -79,9 +78,9 @@ async def get_service_object(db: Session, email: str):
 
 # admin and super admin magic 
 
-async def get_all_users(db:Session, service_org: Optional[str] = None):
+async def get_all_users(db:Session, is_sup : Optional[bool] = None, service_org: Optional[str] = None):
     try:
-        res = await crud.get_all_users(db, service_org)
+        res = await crud.get_all_users(db, is_sup, service_org)
         return res
 
     except Exception as ex :
@@ -89,4 +88,39 @@ async def get_all_users(db:Session, service_org: Optional[str] = None):
 
 
 
-# get_unverified_users
+async def get_all_unverified_users(db:Session, is_sup : Optional[bool] = None, service_org: Optional[str] = None):
+    try:
+        res = await crud.get_all_unverified_users(db, is_sup, service_org)
+        return res
+
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in get_all_users] {} ".format(ex))
+    
+
+async def get_user(db:Session, user_id : str, service_org: Optional[str] = None):
+    try:
+        res =  crud.get_user_by_user_id(db, user_id, service_org)
+        return res
+
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in get_all_users] {} ".format(ex))
+
+
+
+
+async def get_single_order(db: Session, order_id: str, user_id: Optional[str] = None, service_org: Optional[str] = None):
+    try:
+        res = order_util.get_single_order(db, order_id, user_id, service_org)
+        return res
+
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in get_single_order] {} ".format(ex))
+        
+
+async def get_all_orders_by_user(db: Session, user_id: Optional[str] = None, service_org: Optional[str] = None):
+    try:
+        res = await order_util.get_all_orders(db, user_id, service_org)
+        return res
+
+    except Exception as ex :
+        logging.exception("[SERVICE_UTIL][Exception in get_single_order] {} ".format(ex))

@@ -26,28 +26,11 @@ api_key_from_header = APIKeyHeader(name=ServiceParameters.X_API_KEY)
 
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
-    """
-    SignUp in the system:
-    *Header:*
-    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
-
-    *Body:*
-    - **email**: `required`
-    - **phone**: `required`
-    - **service_org**: `required`
-    - **password**: `required`
-    - **username**: Optional
-
-    *Response:*
-    - Response Header: 
-        **X-Access-Token** - this will be required for all the further approaches, must add that in Header (Just put your AccessToken that in authorize box on top right) and user data
-    - Response Body :
-        **User Object**
-    """
     try:
+        
         logging.info("Data received for Signup : {}".format(user))
     
-        verification_result = await verification.verify_api_key(api_key, req, db)
+        verification_result = await verification.verify_api_key(db, api_key, req)
         if type(verification_result) != type(dict()) :
             return JSONResponse(status_code=403,  headers=dict(), content=verification_result.__repr__())
         
@@ -87,18 +70,20 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
     try:
         logging.info("Data received for Login : {}".format(userlogin.model_dump()))
         
-        verification_result = await verification.verify_api_key(api_key, req, db)
-        if type(verification_result) != type(dict()) :
+        verification_result = await verification.verify_api_key(db, api_key, req, userlogin.email)
+        if not isinstance(verification_result, dict) :
             return JSONResponse(status_code=403, headers=dict(), content=verification_result.__repr__())
         
         if not int(verification_result["is_service_verified"]) :
-            return JSONResponse(status_code=401, headers=dict(), content=verification_result.__repr__())
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail=Exceptions.SERVICE_NOT_VERIFIED).__repr__())
 
 
         client_ip = req.client.host
         user_agent = req.headers.get("user-agent")
         
         db_user = crud.get_user_by_email_login(db, email=userlogin.email)
+        if not db_user :
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Account Does not exist").__repr__())
         
         account_obj = db_user[0][0]
         password_obj = db_user[0][1]
@@ -106,6 +91,9 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         user_obj = account_obj.to_dict()
         user_obj["client_ip"] = client_ip
         user_obj["user_agent"] = user_agent
+        
+        if user_obj["account_state"] != 1 :
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Account Does not exist").__repr__())
 
         if not account_obj:
             return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.USER_NOT_FOUND).__repr__())
@@ -122,7 +110,8 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         user_id = user_obj["user_id"]
 
         common_util.update_access_token_in_redis(user_id, access_token, client_ip)
-        await common_util.update_user_details_in_redis(user_id, user_obj)
+        common_util.update_user_details_in_redis(user_id, user_obj)
+        await common_util.delete_access_token_in_redis(user_id)
         
         headers = {"access_token": access_token, "token_type": "bearer"}
         response_obj = ResponseObject()  
@@ -137,17 +126,8 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
 
 # =========================== SERVICES ==============================
 
-@public_router.post("/createservice", summary="To Create New Org/Service ")
-async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
-    """
-    To Create new Service/Org in system:
-    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
-
-    - **email**: `required`
-    - **password**: `required`
-
-    - *Return* : This will return **X-Api-key**, that will be required for all the further approaches, must add that in Header (Just put your AccessToken that in authorize box on top right) and user data
-    """
+@public_router.post("/createservice")
+async def service_sign_up(service_user: ServiceSignup,  req :Request, db: Session = Depends(get_db)):
     try:
         logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
@@ -172,7 +152,7 @@ async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get
 
         user_model = UserSignUp.model_validate(user_signup_model)
 
-        service_res = await service_crud.create_new_service(db=db, service_user=service_user)
+        service_res = await service_crud.create_new_service(db, req, service_user=service_user)
         user_res = await crud.create_new_user(db=db, user=user_model)
 
         data = {"Service_Account_Details" : service_res, "Admin_Account_Details" : user_res}

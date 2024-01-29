@@ -6,13 +6,13 @@ async def connect_redis():
     
     # for AWS redis
     
-    # redis_client = redis.Redis(
-    # host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
-    # port=15144,
-    # password='test_pass1', decode_responses=True)
+    redis_client = redis.Redis(
+    host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
+    port=15144,
+    password='test_pass1', decode_responses=True)
     
     # for local redis
-    redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
+    # redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
     
     logging.info("Redis Inititated for this session Successfully {} ".format(redis_client))
 
@@ -23,9 +23,11 @@ async def connect_redis():
 
 # In redis cloud they convert the byte to string and provides, but in out redis , they dont
 
+def flush_all():
+    redis_client.flushall()
 
 
-async def delete_from_redis(key:str):
+def delete_from_redis(key:str):
     try :
         redis_client.delete(key)
     except Exception as ex :
@@ -74,7 +76,7 @@ def set_str(key: str, val:str, ttl_in_sec:int = 3600):
 
 async def get_str(key: str):
     try:
-        logging.info(f" DATA RECEIFD {key} ")
+        logging.info(f" [RedisUtil] [Data Received] {key} ")
         byte_data = redis_client.get(key)
         return byte_data
     except Exception as ex :

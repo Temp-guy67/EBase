@@ -66,9 +66,8 @@ class Orders(Base):
         IN_TRANSIT=3
         DELIVERED=4
         FAILED=5
-        CANCELLED=6
-
-
+        CANCELED=6
+        
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     order_id = Column(String, unique=True)
@@ -105,6 +104,7 @@ class Orders(Base):
 
 
 class Service(Base):
+    REQUEST_COUNT = dict()
     class Subsription:
         TEST="TEST"
         FREE="FREE"
@@ -112,18 +112,6 @@ class Service(Base):
         PRO="PRO"
         ULTRA_PRO="ULTRA_PRO"
         
-    REQUEST_COUNT = dict()
-    REQUEST_COUNT[Subsription.TEST] = 10
-    REQUEST_COUNT[Subsription.FREE] = 50
-    REQUEST_COUNT[Subsription.NOOB] = 200
-    REQUEST_COUNT[Subsription.PRO] = 500
-    REQUEST_COUNT[Subsription.ULTRA_PRO] = 1000
-
-    def get_request_count(self, sus:str):
-        if self.REQUEST_COUNT.get(sus):
-            return self.REQUEST_COUNT[sus]
-        
-    
     class ServiceState:
         ACTIVE=1
         DELETED=2
@@ -131,6 +119,13 @@ class Service(Base):
     class ClientVerification:
         NOT_VERIFIED=0
         VERIFIED=1
+        
+    
+    REQUEST_COUNT[Subsription.TEST] = 10
+    REQUEST_COUNT[Subsription.FREE] = 50
+    REQUEST_COUNT[Subsription.NOOB] = 200
+    REQUEST_COUNT[Subsription.PRO] = 500
+    REQUEST_COUNT[Subsription.ULTRA_PRO] = 1000
 
     __tablename__ = "services"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -164,3 +159,7 @@ class Service(Base):
             'api_key' : self.api_key,
             'is_verified' : self.is_verified
         }
+        
+
+async def get_request_count(subs : str):
+    return Service.REQUEST_COUNT[subs]
