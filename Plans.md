@@ -20,6 +20,7 @@ userId -> request count map
 2. Stopping service feature
     i) there will be separate account state for service org
 
+3. org will be created by us 
 
 
 To Do list :

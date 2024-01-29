@@ -51,4 +51,11 @@ async def generate_secure_random_string():
     letters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(letters) for _ in range(length))
    
+# async def create_org():
+#     try:
+        
+#         while True :
+#             org = 
 
+#     except Exception as ex :
+#         logging.exception("[PUBLIC_ROUTES][Exception in create_org] {} ".format(ex))

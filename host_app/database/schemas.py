@@ -73,7 +73,6 @@ class ResponseModel(BaseModel):
 
 class ServiceSignup(BaseModel):
     service_name : str
-    service_org : str 
     phone : str
     password : str
     subscription_mode : Union[str, None] = None

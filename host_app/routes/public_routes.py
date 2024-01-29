@@ -35,8 +35,18 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         
         if not int(verification_result["is_service_verified"]) :
             return JSONResponse(status_code=401,  headers=dict(), content=verification_result.__repr__())
+        
+        email=user.email
+        phone = user.phone
+        check = await email_validation_check(email)
+        if not check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+        
+        check = await phone_validation_check(phone)
+        if not check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID PHONE NUMBER PATTERN").__repr__())
 
-        if_account_existed = await check_if_account_existed(db=db, email=user.email, phone=user.phone)
+        if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone)
         if(if_account_existed):
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
@@ -126,11 +136,14 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
 # =========================== SERVICES ==============================
 
 @public_router.post("/createservice")
-async def service_sign_up(service_user: ServiceSignup,  req :Request, db: Session = Depends(get_db)):
+async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session = Depends(get_db)):
     try:
         logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
         service_email = service_user.registration_mail
+        check = await email_validation_check(service_email)
+        if not check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         service_org = service_user.service_org
 
         is_service_existed = await check_if_service_existed(db=db, service_email=service_email, service_org=service_org)
@@ -198,4 +211,28 @@ async def check_if_account_existed(db: Session, email : str, phone : str):
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in check_if_account_existed] {} ".format(ex))
     return reason
+
+
+# Helper method 
+async def email_validation_check(email:str) -> bool:
+    try:
+        accepted_domain = ["gmail.com", "hotmail.com", "outlook.com"]
+        x = email.split("@")
+        if len(x) == 1 or x[1] not in accepted_domain:
+            return False
+        return True
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in email_validation_check] {} ".format(ex))
+    return False
+
+async def phone_validation_check(phone:str) -> bool:
+    try:
+        if len(phone) == 10 and phone.isdigit():
+            return True
+        return False
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in phone_validation_check] {} ".format(ex))
+    return False
 
