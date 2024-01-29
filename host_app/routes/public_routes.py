@@ -26,6 +26,24 @@ api_key_from_header = APIKeyHeader(name=ServiceParameters.X_API_KEY)
 
 @public_router.post("/signup")
 async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
+    """
+    SignUp in the system:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+
+    *Body:*
+    - **email**: `required`
+    - **phone**: `required`
+    - **service_org**: `required`
+    - **password**: `required`
+    - **username**: Optional
+
+    *Response:*
+    - Response Header: 
+        **X-Access-Token** - this will be required for all the further approaches, must add that in Header (Just put your AccessToken that in authorize box on top right) and user data
+    - Response Body :
+        **User Object**
+    """
     try:
         logging.info("Data received for Signup : {}".format(user))
     
@@ -51,16 +69,20 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
 
 
-@public_router.post("/login")
+@public_router.post("/login", summary="To login in the system")
 async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     """
-    Create an item with all the information:
+    Login in the system:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
 
-    - **name**: each item must have a name
-    - **description**: a long description
-    - **price**: `required`
-    - **tax**: if the item doesn't have tax, you can omit this
-    - **tags**: a set of unique tag strings for this item
+    *Body:*
+    - **email**: `required`
+    - **password**: `required`
+
+    *Response:*
+    - Response Body :
+        **User Object**
     """
     try:
         logging.info("Data received for Login : {}".format(userlogin.model_dump()))
@@ -115,8 +137,17 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
 
 # =========================== SERVICES ==============================
 
-@public_router.post("/createservice")
+@public_router.post("/createservice", summary="To Create New Org/Service ")
 async def service_sign_up(service_user: ServiceSignup, db: Session = Depends(get_db)):
+    """
+    To Create new Service/Org in system:
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+
+    - **email**: `required`
+    - **password**: `required`
+
+    - *Return* : This will return **X-Api-key**, that will be required for all the further approaches, must add that in Header (Just put your AccessToken that in authorize box on top right) and user data
+    """
     try:
         logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
