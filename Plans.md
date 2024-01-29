@@ -16,7 +16,9 @@ MAIL : taposh@gmail.com
 
 userId -> request count map
 
-1. add redis set feature in create and get orders requests
+
+2. Stopping service feature
+    i) there will be separate account state for service org
 
 
 

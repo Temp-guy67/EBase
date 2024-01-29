@@ -30,4 +30,24 @@ TAGS_METADATA=[
             "url": "https://fastapi.tiangolo.com/",
         },
     },
+    {
+        "name": "order",
+        "description": "Operations with users. The **login** logic is also here.",
+    },
+    {
+        "name": "auth",
+        "description": "For Superadmins",
+        "externalDocs": {
+            "description": "SuperAdmin docs",
+            "url": "https://fastapi.tiangolo.com/",
+        },
+    },
+    {
+        "name": "service",
+        "description": "For Service/Org User, in words ADMIN",
+        "externalDocs": {
+            "description": "Admin docs",
+            "url": "https://fastapi.tiangolo.com/",
+        },
+    },
 ]

@@ -29,7 +29,6 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
     try:
         
         logging.info("Data received for Signup : {}".format(user))
-    
         verification_result = await verification.verify_api_key(db, api_key, req)
         if type(verification_result) != type(dict()) :
             return JSONResponse(status_code=403,  headers=dict(), content=verification_result.__repr__())
