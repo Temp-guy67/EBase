@@ -25,6 +25,11 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
         
         logging.info("Data received for create_order : {} [user_id] {}".format(order_info, user["user_id"]))
         user_id, user_org = user["user_id"], user["service_org"]
+        prd_check = await product_id_validateion(order_info.product_id)
+
+        if not prd_check:
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID PRODUCT ID PATTERN").__repr__())
+
 
         order = await order_util.create_order(db, user_id, user_org, order_info)
         
@@ -95,3 +100,11 @@ async def cancel_order(order_id: str, user: UserInDB = Depends(verification.get_
     except Exception as ex:
         logging.exception("[ORDER_ROUTES][Exception in cancel_order] {} ".format(ex))
 
+
+# helper method
+async def product_id_validateion(product_id : str):
+    if product_id :
+        x = product_id.split("_")
+        if len(x) == 2 and x[0] == "prd":
+            return True
+    return False

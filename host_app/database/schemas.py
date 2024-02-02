@@ -5,7 +5,6 @@ from typing import Union
 class User(BaseModel):
     email: str
     phone : str
-    service_org : str
 
 class UserSignUp(User):
     password : str
@@ -21,7 +20,6 @@ class UserInDB(User):
 class UserLogin(BaseModel):
     email: str
     password: str 
-
 
 class UserSignUpResponse(User):
     user_id : str

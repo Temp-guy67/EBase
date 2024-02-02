@@ -169,7 +169,6 @@ async def update_service_verified_api(api_key:str, service_obj:dict):
     await update_service_object_in_redis(api_key, service_obj)
 
 
-    
 async def update_map_set(user_data: UserUpdate):
     try:
         possible_update = ["email", "phone", "username"]
@@ -183,3 +182,15 @@ async def update_map_set(user_data: UserUpdate):
         return user_update_map
     except Exception as ex :
         logging.exception("[Common_Util][Exception in update_map_set] {} ".format(ex))
+
+
+async def set_otp_request(user_id : str):
+    try :
+        otp_created = await util.create_otp()
+        redis_util.set_str(RedisConstant.USER_OTP, str(otp_created), 600)
+        logging.info("OTP has been set for {user_id} and valid for 10 mints only")
+        return otp_created
+
+    except Exception as ex :
+        logging.exception("[Common_Util][Exception in set_otp_request] {} ".format(ex))
+    return False

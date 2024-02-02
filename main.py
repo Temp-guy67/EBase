@@ -44,7 +44,7 @@ async def startService():
 
 @app.get("/")
 async def hello():
-    return {"message" : "Application loaded successfully"}
+    return {"message" : "Application loaded successfully, Kindly use the right endpoint"}
 
 
 @app.get("/test/login")
@@ -56,3 +56,14 @@ async def login_test():
     except Exception as ex :
         logging.exception("[main][Exception in login_test] {} ".format(ex))
 
+
+@app.get("/redis_check")
+async def redis_check():
+    redis_util.set_str("arghya","working")
+    res = await redis_util.get_str("arghya")
+    return {"response" : res}
+
+# @app.get("/mail")
+# async def redis_check():
+#     user = {"name" : "Arghya", "otp" : "1234", "email" : "tukurtukur777@gmail.com"}
+#     send_email_to_client(1,user)

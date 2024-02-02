@@ -59,3 +59,6 @@ async def generate_secure_random_string():
 
 #     except Exception as ex :
 #         logging.exception("[PUBLIC_ROUTES][Exception in create_org] {} ".format(ex))
+
+async def create_otp():
+    return random.randint(10000,99999)

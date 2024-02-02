@@ -71,10 +71,9 @@ def if_account_cred_exist(db:Session, email : str, phone : str):
         logging.exception("[CRUD][Exception in if_account_cred_exist] {} ".format(ex))
 
 
-async def create_new_user(db: Session, user: UserSignUp):
+async def create_new_user(db: Session, user: UserSignUp, service_org : str):
     try:
         username = user.username
-        service_org = user.service_org
         password = user.password
         role = user.role
         if not role :

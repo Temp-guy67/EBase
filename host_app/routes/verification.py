@@ -116,8 +116,9 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
         # basic one will have limited
         
         if service_obj :
-            if email and service_obj["registration_mail"] != email :
-                return CustomException(detail=Exceptions.WRONG_API)
+            service_org = service_obj["service_org"]
+            # if email and service_obj["registration_mail"] != email :
+            #     return CustomException(detail=Exceptions.WRONG_API)
             
             ip_ports = service_obj["ip_ports"]
 
@@ -131,7 +132,9 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
 
             if daily_req_left :
                 await common_util.reduce_daily_req_counts(api_key, service_obj)
-                return {"daily_req_left" : int(daily_req_left) - 1 , "is_service_verified" : is_service_verified}
+
+                return {"daily_req_left" : int(daily_req_left) - 1 , "is_service_verified" : is_service_verified, "service_org" : service_org}
+            
             elif daily_req_left == "0" :
                 return CustomException(detail=Exceptions.REQUEST_LIMIT_EXHAUSTED)
             

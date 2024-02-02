@@ -12,6 +12,7 @@ from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.common.response_object import ResponseObject
+from host_app.mail_manager.config import send_email_to_client
 from host_app.routes import verification
 
 
@@ -38,25 +39,32 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         
         email=user.email
         phone = user.phone
-        check = await email_validation_check(email)
-        if not check :
-            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+
+        # check = await email_validation_check(email)
+        # if not check :
+        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         
-        check = await phone_validation_check(phone)
-        if not check :
-            return JSONResponse(status_code=401, content=CustomException(detail="INVALID PHONE NUMBER PATTERN").__repr__())
+        # check = await phone_validation_check(phone)
+        # if not check :
+        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID PHONE NUMBER PATTERN").__repr__())
 
         if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone)
         if(if_account_existed):
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
-        res = await crud.create_new_user(db=db, user=user)
+        res = await crud.create_new_user(db=db, user=user, service_org=verification_result["service_org"])
         if not res:
             return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.ACCOUNT_CREATION_FAILED).__repr__())
         
         response_obj = ResponseObject()  
         response_obj.set_data(res)
-        return JSONResponse(status_code=200, headers=dict(),content=response_obj.to_dict())
+
+        otp = await common_util.set_otp_request(res["user_id"])
+        if otp :
+            res["otp"] = otp
+            send_email_to_client(1, res)
+
+        return JSONResponse(status_code=200,content=response_obj.to_dict())
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
 
@@ -175,7 +183,6 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
-
 
 
 async def check_if_service_existed(db: Session, service_email : str, service_org : str):
