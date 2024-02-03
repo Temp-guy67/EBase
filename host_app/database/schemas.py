@@ -7,7 +7,6 @@ class User(BaseModel):
     phone : str
 
 class UserSignUp(User):
-    password : str
     username : Union[str, None] = None
     role : Union[str, None] = None
 
@@ -73,7 +72,6 @@ class ServiceSignup(BaseModel):
     service_org : str
     service_name : str
     phone : str
-    password : str
     subscription_mode : Union[str, None] = None
     registration_mail : str 
     ip_ports :  Union[list, None] = None    

@@ -25,8 +25,25 @@ public_router = APIRouter(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 api_key_from_header = APIKeyHeader(name=ServiceParameters.X_API_KEY)
 
-@public_router.post("/signup")
+@public_router.post("/signup", summary="To Sign up in the system")
 async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
+    """
+    Sign in the system:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+
+    *Body:*
+    - **email**: `required`
+    - **phone**: `required`
+    - **username**: Optional - Will be auto generated
+    - **role**: Optional
+
+    *Response:*
+    - Response Body :
+        **Password will be mailed, Use it for first login**
+        **Newly created User Object**
+        
+    """
     try:
         
         logging.info("Data received for Signup : {}".format(user))
@@ -59,11 +76,6 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         response_obj = ResponseObject()  
         response_obj.set_data(res)
 
-        otp = await common_util.set_otp_request(res["user_id"])
-        if otp :
-            res["otp"] = otp
-            send_email_to_client(1, res)
-
         return JSONResponse(status_code=200,content=response_obj.to_dict())
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in sign_up] {} ".format(ex))
@@ -83,6 +95,8 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
     *Response:*
     - Response Body :
         **User Object**
+        **Access Token** Will be valid upto 30 mints. Must add in Header (Just put in authorize box on top right) for further use
+        
     """
     try:
         logging.info("Data received for Login : {}".format(userlogin.model_dump()))
@@ -143,17 +157,41 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
 
 # =========================== SERVICES ==============================
 
-@public_router.post("/createservice")
+@public_router.post("/createservice", summary="To Create New Service")
 async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session = Depends(get_db)):
+    """
+    To Create New Service in the system:
+    *Header:*
+    - Nothing in Header (As of now)
+
+    *Body:*
+    - **service_org**: `required`
+    - **service_name**: `required`
+    - **phone**: `required`
+    - **registration_mail**: `required`
+    - **subscription_mode**: Optional - By Default TEST(20 api call daily limit)
+    - **ip_ports**: Optional - List of IPs from where the service API will be valid for admins and Users under this org. By default your current api will be counted. `Though for the presentation, Its non operational now.`
+
+    *Response:*
+    - Response Body :
+        **Password will be mailed, Use it for first login**
+        **Newly created User Object**
+    """
     try:
         logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
         service_email = service_user.registration_mail
         service_org = service_user.service_org
+        
+        org_check = await org_validation_check(service_org)
+        if not org_check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID ORG PATTERN, org must be of two letters only in Capital").__repr__())
+        
+        
         check = await email_validation_check(service_email)
         if not check :
             return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
-        service_org = service_user.service_org
+        
 
         is_service_existed = await check_if_service_existed(db=db, service_email=service_email, service_org=service_org)
         if(is_service_existed):
@@ -166,7 +204,6 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
         # Service_res is already a dict
         user_signup_model = dict()
         user_signup_model["email"] = service_email
-        user_signup_model["password"] = service_user.password
         user_signup_model["phone"] = service_user.phone
         user_signup_model["service_org"] = service_org
         user_signup_model["role"] = str(models.Account.Role.ADMIN)
@@ -174,7 +211,7 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
         user_model = UserSignUp.model_validate(user_signup_model)
 
         service_res = await service_crud.create_new_service(db, req, service_user=service_user)
-        user_res = await crud.create_new_user(db=db, user=user_model)
+        user_res = await crud.create_new_user(db=db, user=user_model, service_org=service_org)
 
         data = {"Service_Account_Details" : service_res, "Admin_Account_Details" : user_res}
         responseObject.set_data(data)
@@ -244,3 +281,12 @@ async def phone_validation_check(phone:str) -> bool:
         logging.exception("[PUBLIC_ROUTES][Exception in phone_validation_check] {} ".format(ex))
     return False
 
+async def org_validation_check(org: str) -> bool:
+    try:
+        if len(org) == 2 and org.isupper():
+            return True
+        return False
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in phone_validation_check] {} ".format(ex))
+    return False

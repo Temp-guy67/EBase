@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, APIRouter
 from host_app.common.exceptions import CustomException, Exceptions
 from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
@@ -9,7 +9,6 @@ from host_app.database import crud
 from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.routes import verification
-from host_app.caching import redis_util
 
 
 user_router = APIRouter(
@@ -27,25 +26,6 @@ async def read_users_me(user: UserInDB = Depends(verification.get_current_active
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=user).to_dict())
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in read_users_me] {} ".format(ex))
-
-
-@user_router.get("/verifyaccount/{otp}")
-async def validate_account(otp: str, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
-    try:
-        if not isinstance(user, dict):
-            return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
-        
-        otp_redis = await redis_util.get_str()
-        if otp_redis != otp:
-            return JSONResponse(status_code=401, content=CustomException(detail="OTP not Valid, ").__repr__())
-
-        account_update_map = dict()
-        account_update_map["is_verified"] = 1
-        res = await common_util.update_account_info(db, user["user_id"], user["user_id"], account_update_map, user["service_org"]) 
-
-        return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data="Account has been validated").to_dict())
-    except Exception as ex:
-        logging.exception("[USER_ROUTES][Exception in validate_account] {} ".format(ex))
 
 
 @user_router.post("/update/")

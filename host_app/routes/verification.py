@@ -116,10 +116,7 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
         # basic one will have limited
         
         if service_obj :
-            service_org = service_obj["service_org"]
-            # if email and service_obj["registration_mail"] != email :
-            #     return CustomException(detail=Exceptions.WRONG_API)
-            
+            service_org = service_obj["service_org"]            
             ip_ports = service_obj["ip_ports"]
 
             # if "*" in ip_ports:
@@ -138,7 +135,7 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
             elif daily_req_left == "0" :
                 return CustomException(detail=Exceptions.REQUEST_LIMIT_EXHAUSTED)
             
-        return CustomException(detail=Exceptions.WRONG_API)
+        return CustomException(detail="No Service Found on this API Key")
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
     return CustomException(detail=Exceptions.CREDENTIAL_ERROR_EXCEPTION)
