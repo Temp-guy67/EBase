@@ -8,6 +8,8 @@ from host_app.common import util
 from typing import Optional
 from sqlalchemy import or_
 
+from host_app.mail_manager.config import send_email_to_client
+
 
 def get_user_by_user_id(db: Session, user_id: str, is_sup : Optional[bool] = None, org: Optional[str] = None):
     try:
@@ -74,7 +76,6 @@ def if_account_cred_exist(db:Session, email : str, phone : str):
 async def create_new_user(db: Session, user: UserSignUp, service_org : str):
     try:
         username = user.username
-        password = user.password
         role = user.role
         if not role :
             role = Account.Role.USER
@@ -90,7 +91,12 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        await create_password(db, user_id, password)
+        first_time_pass = await create_new_password(db, user_id)
+        
+        # mailing
+        user_map = {"username" : username, "email" : user.email, "password" : first_time_pass}
+        send_email_to_client(1, user_map)
+        
         return db_user.to_dict()
 
     except Exception as ex :
@@ -98,19 +104,20 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
     return None
 
 
-async def create_password(db:Session, user_id:str, password : str):
+async def create_new_password(db:Session, user_id:str):
     try:
+        # salt is being used as first password
         salt = await generate_salt(CommonConstants.SALT_LENGTH)
-        hashed_password = await create_hashed_password(password, salt)
+        hashed_password = await create_hashed_password(salt, salt)
         db_user = Password(user_id=user_id, hashed_password=hashed_password, salt=salt )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        return db_user
+        return salt
 
 
     except Exception as ex :
-        logging.exception("[CRUD][Exception in create_password] {} ".format(ex))
+        logging.exception("[CRUD][Exception in create_new_password] {} ".format(ex))
 
 
 async def get_password_data(db: Session, user_id: str):

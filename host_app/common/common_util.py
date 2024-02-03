@@ -10,6 +10,7 @@ from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import util
 from host_app.common.exceptions import Exceptions, CustomException
+from host_app.mail_manager.config import send_email_to_client
 
 
 def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
@@ -68,6 +69,9 @@ async def update_password(user:dict, new_password, db: Session):
         if res :
             await delete_user_details_from_redis(user_id)
             await  delete_access_token_in_redis(user_id)
+            
+            user_map = {"username" : user["username"], "email" : user["email"]}
+            send_email_to_client(2, user_map)
             
         return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
 
@@ -183,14 +187,3 @@ async def update_map_set(user_data: UserUpdate):
     except Exception as ex :
         logging.exception("[Common_Util][Exception in update_map_set] {} ".format(ex))
 
-
-async def set_otp_request(user_id : str):
-    try :
-        otp_created = await util.create_otp()
-        redis_util.set_str(RedisConstant.USER_OTP, str(otp_created), 600)
-        logging.info("OTP has been set for {user_id} and valid for 10 mints only")
-        return otp_created
-
-    except Exception as ex :
-        logging.exception("[Common_Util][Exception in set_otp_request] {} ".format(ex))
-    return False

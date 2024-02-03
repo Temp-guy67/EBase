@@ -121,7 +121,7 @@ class Service(Base):
         VERIFIED=1
         
     
-    REQUEST_COUNT[Subsription.TEST] = 10
+    REQUEST_COUNT[Subsription.TEST] = 20
     REQUEST_COUNT[Subsription.FREE] = 50
     REQUEST_COUNT[Subsription.NOOB] = 200
     REQUEST_COUNT[Subsription.PRO] = 500

@@ -14,14 +14,25 @@ get_subject = {
     1:"Account Created Successfully", 2:"Password Has been Updated Successfully", 3:"Order Created Successfully" , 4:"Order Updated Successfully", 5:"Service Account Verified Successfully"
 }
 
-
+# user - email, username, password
 def get_account_body(user : dict):
-    body = f"""<p>Hello {user["username"]}, <br> Your account has been created. Kindly use this <b> OTP : {user["otp"]} </b> to verify your account and activate it for further usage  </p>"""
+    body = f"""<p>Hello {user["username"]}, <br> Your account has been created. Kindly use this <b> Password : {user["password"]} </b> to login and activate it for further usage. You can change the password anytime  </p>"""
     return body
 
-
+# user - email, username
 def get_password_body(user : dict):
     body = f"""<p>Hello {user["username"]}, <br> Your password has been updaed. </p>"""
+    return body
+
+# user - email, username, order_id
+def get_order_body(user : dict):
+    body = f"""<p>Hello {user["username"]}, <br> Your order (OrderId : {user["order_id"]}) has been received. </p>"""
+    return body
+
+# user - email, username, order_id, order_status in string
+def get_order_status_body(user : dict):
+    body = f"""<p>Hello {user["username"]}, <br> Your order (OrderId : {user["order_id"]}) has been updated. <br>  <b> Current Status : {user["status"]} </b> </p>"""
+    return body
 
 
 def send_email_to_client(type: int, user: dict):
@@ -30,16 +41,14 @@ def send_email_to_client(type: int, user: dict):
         message_body = get_account_body(user)
     elif type == 2 :
         message_body = get_password_body(user)
+    elif type == 3 :
+        message_body = get_order_body(user)
+    elif type == 4 :
+        message_body = get_order_status_body(user)
 
     to_address = user["email"]
     
     mail_util.send_email(to_address, subj, message_body)
-
-
-
-
-
-
 
 
 
