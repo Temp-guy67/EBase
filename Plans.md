@@ -6,8 +6,8 @@ X-Access-Token
 
 
 Superadmin:
-Mail : superadmin@supermail.com
-Api : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiJTaTJadmFVWHZiVnpVSXQ3TzBINldmSzVkTU5mVmd2Z2pXVTN4YnBkQWFNIn0.JB3IAj0Tup3B2VOWUN9n01QCQaUVtnxJfvrXjZVB2us
+Mail : ebasebusiness123@gmail.com
+Api : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiIyT3cwUkdNMDFva2psdkVkLWZiU19hQVVoX3NpWGx1QktvOTVPODFydEh3In0.P66B_rmIXZTheQPMiyCFXoCZ3EwBqEPDN7mgmKgMVMM
 
 
 Test :
@@ -25,3 +25,6 @@ userId -> request count map
 
 To Do list :
 1. Email and phone number validation check for before deploying
+
+# `4DI.Ko#
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0MUB0ZXN0bWFpbC5jb20iLCJleHAiOjE3MDcwMzAwMDV9.QIU-rfZ0tY6b_puIp68yYW_jcBmjC4UcyjXgcF-qDmg

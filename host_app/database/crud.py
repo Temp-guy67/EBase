@@ -49,10 +49,10 @@ def get_user_by_email_login(db: Session, email: str):
         logging.exception("[CRUD][Exception in get_user_by_email_login] {} ".format(ex))
 
 
-async def get_user_by_username(db: Session, username: str):
+def get_user_by_username(db: Session, username: str):
     try:
         user = db.query(Account).filter(Account.username == username, Account.account_state == Account.AccountState.ACTIVE).first()
-        return user
+        return user.to_dict()
 
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_username] {} ".format(ex))
@@ -65,9 +65,12 @@ def get_user_by_phone(db: Session, phone: str):
         logging.exception("[CRUD][Exception in get_user_by_phone] {} ".format(ex))
 
 
-def if_account_cred_exist(db:Session, email : str, phone : str):
+def if_account_cred_exist(db:Session, email : str, phone : str, username : Optional[str] = None):
     try:
-        user_obj = db.query(Account).filter(or_(Account.email == email, Account.phone == phone)).first()
+        if username:
+            user_obj = db.query(Account).filter(or_(Account.email == email, Account.phone == phone, Account.username == username)).first()
+        else :
+            user_obj = db.query(Account).filter(or_(Account.email == email, Account.phone == phone)).first()
         return user_obj.to_dict() if user_obj else None
     except Exception as ex :
         logging.exception("[CRUD][Exception in if_account_cred_exist] {} ".format(ex))

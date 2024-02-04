@@ -34,7 +34,6 @@ class UserUpdate(BaseModel):
     phone : Union[str, None] = None
     new_password : Union[str, None] = None
     new_role : Union[int, None] = None
-    opr : Union[str, None] = None
     password : str 
 
 
@@ -48,7 +47,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Union[str, None] = None
-
+    
 
 class OrderCreate(BaseModel):
     product_id : str

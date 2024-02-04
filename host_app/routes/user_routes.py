@@ -17,8 +17,21 @@ user_router = APIRouter(
 )
 
 
-@user_router.get("/me/")
+@user_router.get("/me/", summary="To get profile details")
 async def read_users_me(user: UserInDB = Depends(verification.get_current_active_user)):
+    """
+    Profile Details:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **User Object or any issue detected**
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
@@ -28,8 +41,26 @@ async def read_users_me(user: UserInDB = Depends(verification.get_current_active
         logging.exception("[USER_ROUTES][Exception in read_users_me] {} ".format(ex))
 
 
-@user_router.post("/update/")
+@user_router.post("/update/", summary="To Update user details : email, phone_no and username")
 async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Update Profile Details:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+    - **email**: Optional - if you want to update mail, then only
+    - **username**: Optional - if you want to update username, then only
+    - **phone**: Optional - if you want to update phone, then only
+
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
+    
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
@@ -53,7 +84,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
             
         res = await common_util.update_account_info(db, user_id, user_id, user_update_map, user["service_org"])
         if type(res) != type(dict()):
-            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED).__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " +res).__repr__()) 
 
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
 
@@ -61,8 +92,22 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         logging.exception("[USER_ROUTES][Exception in update_user] {} | user_id {}".format(ex, user["user_id"]))
 
 
-@user_router.post("/update/password/")
+@user_router.post("/update/password/", summary="To Update user Password")
 async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Update Password :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+    - **new_password**: Optional - if you want to update password then only
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
@@ -92,8 +137,21 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
         logging.exception("[USER_ROUTES][Exception in update_user_password] {} | user_id {}".format(ex, user["user_id"]))
         
 
-@user_router.get("/delete/")
+@user_router.get("/delete/", summary="To Delete user Account")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Delete User Account :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
@@ -119,8 +177,21 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
         logging.exception("[USER_ROUTES][Exception in delete_user] {} ".format(ex))
 
 
-@user_router.get("/logout/")
+@user_router.get("/logout/", summary="To Logout current Session")
 async def logout(user: UserInDB = Depends(verification.get_current_active_user)):
+    """
+    To Logout current Session:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())

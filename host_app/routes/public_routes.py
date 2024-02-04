@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, HTTPException, status, Request, APIRouter
 from host_app.common.exceptions import Exceptions, CustomException
 from host_app.database.schemas import UserSignUp, UserLogin, ServiceSignup
@@ -56,6 +57,7 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         
         email=user.email
         phone = user.phone
+        username = user.username
 
         # check = await email_validation_check(email)
         # if not check :
@@ -65,7 +67,7 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         # if not check :
         #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID PHONE NUMBER PATTERN").__repr__())
 
-        if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone)
+        if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone, username=username)
         if(if_account_existed):
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
@@ -222,6 +224,7 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
         logging.exception("[PUBLIC_ROUTES][Exception in service_sign_up] {} ".format(ex))
 
 
+
 async def check_if_service_existed(db: Session, service_email : str, service_org : str):
     reason = []
     try:
@@ -240,10 +243,18 @@ async def check_if_service_existed(db: Session, service_email : str, service_org
     return reason
 
 
-async def check_if_account_existed(db: Session, email : str, phone : str):
+
+
+# Helper method 
+
+
+async def check_if_account_existed(db: Session, email : str, phone : str, username : Optional[str] = None):
     reason = []
     try:
-        db_client = crud.if_account_cred_exist(db=db, email=email, phone=phone)
+        if username :
+            db_client = crud.if_account_cred_exist(db=db, email=email, phone=phone, username=username)
+        else :
+            db_client = crud.if_account_cred_exist(db=db, email=email, phone=phone)
 
         if db_client:
             if db_client["email"] == email :
@@ -252,13 +263,15 @@ async def check_if_account_existed(db: Session, email : str, phone : str):
             elif db_client["phone"] == phone:
                 reason.append(phone)
                 reason.append("ACCOUNT_PHONE")
+            elif db_client["username"] == username:
+                reason.append(username)
+                reason.append("ACCOUNT_USERNAME")
 
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in check_if_account_existed] {} ".format(ex))
     return reason
 
 
-# Helper method 
 async def email_validation_check(email:str) -> bool:
     try:
         accepted_domain = ["gmail.com", "hotmail.com", "outlook.com"]

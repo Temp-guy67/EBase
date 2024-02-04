@@ -17,8 +17,23 @@ order_router = APIRouter(
 )
 
 
-@order_router.post("/create")
+@order_router.post("/create", summary=" To create a new order")
 async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Create a new order :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
+    
+
     try: 
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())

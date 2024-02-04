@@ -24,6 +24,7 @@ class Exceptions:
     INCORRECT_EMAIL_PASSWORD="Incorrect email or password"
     ACCOUNT_CREATION_FAILED="Account Creation Failed"
     EMAIL_HAS_BEEN_REGISTERED="Email has been registered"
+    USERNAME_HAS_BEEN_TAKEN="User name has been taken, Try with different User Name"
     PHONE_NUMBER_HAS_BEEN_REGISTERED="Phone number has been registered"
     CREDENTIAL_ERROR_EXCEPTION="Credential Error"
     WRONG_API="Wrong API"

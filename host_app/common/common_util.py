@@ -101,6 +101,12 @@ async def update_account_info(db: Session, user_id: str, updater:str, user_updat
                 res = crud.get_user_by_phone(db, v)
                 if res :
                     return Exceptions.PHONE_NUMBER_HAS_BEEN_REGISTERED
+                
+            if k == possible_update[2]:
+                res = crud.get_user_by_username(db, v)
+                if res :
+                    return Exceptions.USERNAME_HAS_BEEN_TAKEN
+
             if k in possible_update :
                 user_update_map[k] = v
         
