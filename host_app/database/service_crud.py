@@ -64,7 +64,7 @@ async def create_new_service(db: Session, req :Request, service_user: ServiceSig
     try:
         ip_ports = service_user.ip_ports
         if not ip_ports :
-            ip_ports = list[req.client.host]
+            ip_ports = [req.client.host]
 
         ip_ports_str = await util.zipper(ip_ports)
         service_org = service_user.service_org

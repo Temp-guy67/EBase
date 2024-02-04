@@ -48,8 +48,21 @@ while updating anything, will add org_user_id + admin org that will ensure damn
 
 '''
 
-@service_router.get("/me/")
+@service_router.get("/me/", summary="To get profile details")
 async def get_admin(admin_data: UserInDB = Depends(verification.get_current_active_user)):
+    """
+    Profile Details:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **User Object or any issue detected**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -66,8 +79,24 @@ async def get_admin(admin_data: UserInDB = Depends(verification.get_current_acti
         logging.exception("[SERVICE_ROUTES][Exception in get_admin] {} ".format(ex))
 
 
-@service_router.post("/update/{org_user_id}")
+@service_router.post("/update/{org_user_id}", summary="To Update any user under the org | details : email, phone_no and username")
 async def update_user_data(org_user_id: str, update_data: UserUpdate, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    Update any user under ORG:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+    - **email**: Optional - if you want to update mail, then only
+    - **username**: Optional - if you want to update username, then only
+    - **phone**: Optional - if you want to update phone, then only
+
+    *Response:*
+    - Response Body :
+        **User Object or any issue detected**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -94,10 +123,26 @@ async def update_user_data(org_user_id: str, update_data: UserUpdate, admin_data
         logging.exception("[SERVICE_ROUTES][Exception in update_user_data] {} ".format(ex))
 
 # own data update
-@service_router.post("/update/")
+@service_router.post("/update/", summary="To Update Admin(own) details : email, phone_no and username")
 async def update_admin_account_data(update_data: UserUpdate, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Update Profile Details:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+    - **email**: Optional - if you want to update mail, then only
+    - **username**: Optional - if you want to update username, then only
+    - **phone**: Optional - if you want to update phone, then only
+
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
-        print("  ")
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
         
@@ -122,8 +167,22 @@ async def update_admin_account_data(update_data: UserUpdate, admin_data: UserInD
         logging.exception("[SERVICE_ROUTES][Exception in update_admin_account_data] {} ".format(ex))
 
 
-@service_router.get("/verify/user/{org_user_id}")
+@service_router.get("/verify/user/{org_user_id}", summary="To verify any user under org")
 async def verify_user_under_org(org_user_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user),  db: Session = Depends(get_db)):
+    """
+    To verify any user under org:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -141,8 +200,22 @@ async def verify_user_under_org(org_user_id: str, admin_data: UserInDB = Depends
 
 
 # not done - His own password of account 
-@service_router.post("/updatepassword/")
+@service_router.post("/updatepassword/", summary="To Update Admin Account Password")
 async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Update Password :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required`
+    - **new_password**: Optional - if you want to update password then only
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue and a mail for updating password {check spam folder}**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -178,6 +251,10 @@ async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB =
 # Service admin can Update - ip_ports - his own
 @service_router.post("/update/ipports/{ipports}")
 async def update_ip_ports(user_data : UserUpdate, admin_data: UserInDB = Depends(verification.get_current_active_user)):
+    """
+    *UNDER CONSTRUCTION*
+
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -188,8 +265,21 @@ async def update_ip_ports(user_data : UserUpdate, admin_data: UserInDB = Depends
         logging.exception("[SERVICE_ROUTES][Exception in update_user_password] {} ".format(ex))
 
     
-@service_router.post("/delete/{org_user_id}", summary="To delete any user")
+@service_router.post("/delete/{org_user_id}", summary="To Delete ANY userS Account under the org")
 async def delete_user(org_user_id : str, extra_data : UserDelete, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Delete User Account :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **password**: `required` - Admin password
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -221,6 +311,19 @@ async def delete_user(org_user_id : str, extra_data : UserDelete, admin_data: Us
 # ------------- 
 @service_router.get("/getalluser/")
 async def get_all_user_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get all users under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -241,6 +344,19 @@ async def get_all_user_under_org(admin_data: UserInDB = Depends(verification.get
     
 @service_router.get("/getalluser/unverified")
 async def get_all_unverified_users_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get all unverified users under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -261,6 +377,19 @@ async def get_all_unverified_users_under_org(admin_data: UserInDB = Depends(veri
 
 @service_router.get("/getuser/{user_id}")
 async def get_user_under_org(user_id:str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get any specific user by user_id under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -281,6 +410,19 @@ async def get_user_under_org(user_id:str, admin_data: UserInDB = Depends(verific
 
 @service_router.get("/getorder/{order_id}")
 async def get_order_under_org(order_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get ANY specific order by user under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -300,6 +442,20 @@ async def get_order_under_org(order_id: str, admin_data: UserInDB = Depends(veri
 
 @service_router.get("/getallorder/")
 async def get_all_orders_under_org(admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get all orders by users under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
+    
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -321,6 +477,19 @@ async def get_all_orders_under_org(admin_data: UserInDB = Depends(verification.g
 
 @service_router.get("/getorder/user/{user_id}")
 async def get_orders_by_user_under_org(user_id:str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get all orders by user under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -341,6 +510,22 @@ async def get_orders_by_user_under_org(user_id:str, admin_data: UserInDB = Depen
 
 @service_router.post("/order/update/{order_id}")
 async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To update order by user under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - **order_status**: Optional 
+    - **order_quantity**: Optional
+    - **delivery_address**: Optional
+    - **receivers_mobile**: Optional
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
@@ -367,6 +552,19 @@ async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery
 
 @service_router.get("/order/cancel/{order_id}")
 async def cancel_orders_by_user_under_org(order_id: str, admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To cancel any order by user under ORG :
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response or any issue**
+    """
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())

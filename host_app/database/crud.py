@@ -1,5 +1,6 @@
 import logging, random
-from host_app.database.schemas import UserSignUp, UserSignUpResponse
+from host_app.common.exceptions import Exceptions
+from host_app.database.schemas import UserSignUp
 from host_app.database.models import Account, Password
 from host_app.common.util import create_hashed_password, generate_salt
 from host_app.common.constants import CommonConstants
@@ -22,7 +23,7 @@ def get_user_by_user_id(db: Session, user_id: str, is_sup : Optional[bool] = Non
         else :
             res = db.query(Account).filter(Account.user_id == user_id).first()
             
-        return res.to_dict()
+        return res.to_dict() if res else None
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_user_id] {} ".format(ex))
 
@@ -44,7 +45,7 @@ def get_user_by_email_login(db: Session, email: str):
             .filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE)
             .all()
         )
-        return joined_data
+        return joined_data 
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_email_login] {} ".format(ex))
 
@@ -52,7 +53,7 @@ def get_user_by_email_login(db: Session, email: str):
 def get_user_by_username(db: Session, username: str):
     try:
         user = db.query(Account).filter(Account.username == username, Account.account_state == Account.AccountState.ACTIVE).first()
-        return user.to_dict()
+        return user.to_dict() if user else None
 
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_username] {} ".format(ex))
@@ -86,9 +87,9 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
             
         alpha_int = random.randint(1,26)
         if not username :
-            username = "User_" + service_org + "_" + str(role) + await util.generate_secure_random_string()
+            username = "User_" + service_org + str(role) + await util.generate_secure_random_string()
 
-        user_id = service_org + "_" + str(role) + "_" +chr(64 + alpha_int)+ str(random.randint(1000,9999))
+        user_id = service_org + str(role) + "_" +chr(64 + alpha_int)+ str(random.randint(1000,9999))
         
         db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org, role=role)
         db.add(db_user)

@@ -26,11 +26,14 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
     - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
 
     *Body:*
-    - **password**: `required`
+    - **product_id**: `required`
+    - **delivery_address**: `required`
+    - **receivers_mobile**: `required`
+    - **order_quantity**: `required` in int
 
     *Response:*
     - Response Body :
-        **Success Response or any issue**
+        **Success Response of Order Object or any issue. Check mail for order confirmation**
     """
     
 
@@ -57,8 +60,21 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
         logging.exception("[ORDER_ROUTES][Exception in create_order] {} ".format(ex))
 
 
-@order_router.get("/")
+@order_router.get("/", summary="To get all order created by this user")
 async def get_orders(user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get all order created by this user:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **All the Order created by the user **
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
@@ -76,8 +92,21 @@ async def get_orders(user: UserInDB = Depends(verification.get_current_active_us
         logging.exception("[ORDER_ROUTES][Exception in get_orders] {} ".format(ex))
 
 
-@order_router.get("/{order_id}")
+@order_router.get("/{order_id}", summary="To get any specific order created by this user")
 async def get_single_order_info(order_id: str, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To get any specific order created by this user:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **the Order created by the user **
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
@@ -95,8 +124,21 @@ async def get_single_order_info(order_id: str, user: UserInDB = Depends(verifica
         logging.exception("[ORDER_ROUTES][Exception in get_single_order_info] {} ".format(ex))
 
 
-@order_router.get("/cancel/{order_id}")
+@order_router.get("/cancel/{order_id}", summary="To cancel any order")
 async def cancel_order(order_id: str, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+    """
+    To Cancel any specific order created by this user:
+    *Header:*
+    - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
+    - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
+
+    *Body:*
+    - Nothing
+
+    *Response:*
+    - Response Body :
+        **Success Response **
+    """
     try:
         if not isinstance(user, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())

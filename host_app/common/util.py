@@ -30,7 +30,10 @@ async def generate_salt(saltLength : int):
 
 async def zipper(arr : list):
     try :
-        s = "_!_".join(arr)
+        if len(arr) > 1 :
+            s = "_!_".join(arr)
+        else :
+            s = arr[0]
         return s
         
     except Exception as ex :
