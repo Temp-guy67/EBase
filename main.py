@@ -1,4 +1,5 @@
 import logging, prop_file
+from host_app.mail_manager.config import send_email_to_client
 from fastapi import FastAPI
 from services import onStartService
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,7 +64,7 @@ async def redis_check():
     res = await redis_util.get_str("arghya")
     return {"response" : res}
 
-# @app.get("/mail")
-# async def redis_check():
-#     user = {"name" : "Arghya", "otp" : "1234", "email" : "tukurtukur777@gmail.com"}
-#     send_email_to_client(1,user)
+@app.get("/mail")
+async def redis_check():
+    user = {"username" : "Arghya", "password" : "1234", "email" : "profiletemp66@gmail.com"}
+    send_email_to_client(1,user)

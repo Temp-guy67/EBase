@@ -7,8 +7,8 @@ from typing import Optional
 
 SMTP_SERVER="smtp.gmail.com"
 SMTP_PORT=587
-SMTP_USER_NAME="profiletemp66@gmail.com"
-SMTP_PASSWORD="rcvgecikrvjgwldg"
+SMTP_USER_NAME="ebasebusiness123@gmail.com"
+SMTP_PASSWORD="zsfzeugkslhn xkdm"
 
 
 def send_email(to_address, subject, message_body, image_path: Optional[str] = None):

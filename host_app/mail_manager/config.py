@@ -1,4 +1,4 @@
-from host_app.mail_manager.mail_constants import MailConstants as mc
+from host_app.mail_manager.mail_constants import MailConstants, get_mail_html
 from host_app.mail_manager import mail_util
 
 '''
@@ -15,9 +15,13 @@ get_subject = {
 }
 
 # user - email, username, password
-def get_account_body(user : dict):
-    body = f"""<p>Hello {user["username"]}, <br> Your account has been created. Kindly use this <b> Password : {user["password"]} </b> to login and activate it for further usage. You can change the password anytime  </p>"""
-    return body
+def get_account_body(type, user : dict):
+    subject = get_subject[type]
+    body = f"""Your account has been created. Kindly use this <b> Password : {user["password"]} </b> to login and activate it for further usage. You can change the password anytime  </p>"""
+    user["body"] = body
+    user["subject"] = subject
+    msg = get_mail_html(user)
+    return msg
 
 # user - email, username
 def get_password_body(user : dict):
@@ -30,15 +34,19 @@ def get_order_body(user : dict):
     return body
 
 # user - email, username, order_id, order_status in string
-def get_order_status_body(user : dict):
-    body = f"""<p>Hello {user["username"]}, <br> Your order (OrderId : {user["order_id"]}) has been updated. <br>  <b> Current Status : {user["status"]} </b> </p>"""
-    return body
+def get_order_status_body(type:int, user : dict):
+    subject = get_subject[type]
+    body = f"""Your order (OrderId : {user["order_id"]}) has been updated. <br>  <b> Current Status : {user["status"]} </b> </p>"""
+    user["body"] = body
+    user["subject"] = subject
+    msg =  get_mail_html(user)
+    return msg
 
 
 def send_email_to_client(type: int, user: dict):
     subj = get_subject[type]
     if type == 1 :
-        message_body = get_account_body(user)
+        message_body = get_account_body(1, user)
     elif type == 2 :
         message_body = get_password_body(user)
     elif type == 3 :
@@ -49,6 +57,7 @@ def send_email_to_client(type: int, user: dict):
     to_address = user["email"]
     
     mail_util.send_email(to_address, subj, message_body)
+    print(" MAIL SEND ")
 
 
 
