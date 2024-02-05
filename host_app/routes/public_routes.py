@@ -72,8 +72,9 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
         res = await crud.create_new_user(db=db, user=user, service_org=verification_result["service_org"])
+        # Exceptions.ACCOUNT_CREATION_FAILED
         if not res:
-            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.ACCOUNT_CREATION_FAILED).__repr__())
+            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=res).__repr__())
         
         response_obj = ResponseObject()  
         response_obj.set_data(res)
@@ -190,9 +191,9 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
             return JSONResponse(status_code=401, content=CustomException(detail="INVALID ORG PATTERN, org must be of two letters only in Capital").__repr__())
         
         
-        check = await email_validation_check(service_email)
-        if not check :
-            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+        # check = await email_validation_check(service_email)
+        # if not check :
+        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         
 
         is_service_existed = await check_if_service_existed(db=db, service_email=service_email, service_org=service_org)

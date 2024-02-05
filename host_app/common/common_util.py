@@ -47,7 +47,7 @@ async def get_user_details(user_id, db: Session = Depends(get_db)):
         user_details = await redis_util.get_hm(RedisConstant.USER_OBJECT + user_id)
         if not user_details :
             user_details = crud.get_user_by_user_id(db,user_id)
-        return user_details
+        return user_details if user_details else Exceptions.USER_NOT_FOUND
 
     except Exception as ex :
         logging.exception("[common_util][Exception in get_user_details] {} ".format(ex))
@@ -73,7 +73,7 @@ async def update_password(user:dict, new_password, db: Session):
             user_map = {"username" : user["username"], "email" : user["email"]}
             send_email_to_client(2, user_map)
             
-        return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
+            return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_password] {} ".format(ex))

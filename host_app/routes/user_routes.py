@@ -92,7 +92,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         logging.exception("[USER_ROUTES][Exception in update_user] {} | user_id {}".format(ex, user["user_id"]))
 
 
-@user_router.post("/update/password/", summary="To Update user Password")
+@user_router.post("/updatepassword/", summary="To Update user Password")
 async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     """
     To Update Password :
@@ -106,7 +106,7 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
 
     *Response:*
     - Response Body :
-        **Success Response or any issue**
+        **Success Response or any issue and a mail for updating password {check spam folder}**
     """
     try:
         if not isinstance(user, dict):
