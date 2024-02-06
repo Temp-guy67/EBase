@@ -59,13 +59,13 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         phone = user.phone
         username = user.username
 
-        # check = await email_validation_check(email)
-        # if not check :
-        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+        check = await email_validation_check(email)
+        if not check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         
-        # check = await phone_validation_check(phone)
-        # if not check :
-        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID PHONE NUMBER PATTERN").__repr__())
+        check = await phone_validation_check(phone)
+        if not check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID PHONE NUMBER PATTERN").__repr__())
 
         if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone, username=username)
         if(if_account_existed):
@@ -191,9 +191,9 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
             return JSONResponse(status_code=401, content=CustomException(detail="INVALID ORG PATTERN, org must be of two letters only in Capital").__repr__())
         
         
-        # check = await email_validation_check(service_email)
-        # if not check :
-        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+        check = await email_validation_check(service_email)
+        if not check :
+            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         
 
         is_service_existed = await check_if_service_existed(db=db, service_email=service_email, service_org=service_org)

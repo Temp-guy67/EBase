@@ -26,7 +26,7 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
     - **X-Access-Token**: `required` in Header (Just put your token you got by Login response header. that in authorize box on top right)
 
     *Body:*
-    - **product_id**: `required`
+    - **product_id**: `required` Product_ID must be start with "prd". e.g: prd_123.
     - **delivery_address**: `required`
     - **receivers_mobile**: `required`
     - **order_quantity**: `required` in int
@@ -48,9 +48,7 @@ async def create_order(order_info: OrderCreate, user: UserInDB = Depends(verific
         if not prd_check:
             return JSONResponse(status_code=401, content=CustomException(detail="INVALID PRODUCT ID PATTERN").__repr__())
 
-
         order = await order_util.create_order(db, user_id, user_org, order_info)
-        
         if not order:
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.FAILED_TO_CREATE_NEW_ORDER).__repr__())
 
