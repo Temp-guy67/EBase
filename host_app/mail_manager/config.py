@@ -11,7 +11,7 @@ from host_app.mail_manager import mail_util
 
 to_address = 'tukurtukur777@gmail.com'
 get_subject = {
-    1:"Account Created Successfully", 2:"Password Has been Updated Successfully", 3:"Order Created Successfully" , 4:"Order Updated Successfully", 5:"Service Account Verified Successfully"
+    1:"Account Created Successfully!", 2:"Password Has been Updated Successfully", 3:"Order Created Successfully" , 4:"Order Updated Successfully", 5:"Service Account Verified Successfully"
 }
 
 # user - email, username, password
@@ -46,18 +46,18 @@ def get_order_status_body(type:int, user : dict):
 def send_email_to_client(type: int, user: dict):
     subj = get_subject[type]
     if type == 1 :
-        message_body = get_account_body(1, user)
+        message_body = get_account_body(type, user)
     elif type == 2 :
-        message_body = get_password_body(user)
+        message_body = get_password_body(type,user)
     elif type == 3 :
-        message_body = get_order_body(user)
+        message_body = get_order_body(type,user)
     elif type == 4 :
-        message_body = get_order_status_body(user)
+        message_body = get_order_status_body(type, user)
 
     to_address = user["email"]
     
     mail_util.send_email(to_address, subj, message_body)
-    print(" MAIL SEND ")
+    # print(" MAIL SEND ")
 
 
 

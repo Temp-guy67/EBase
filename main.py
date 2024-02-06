@@ -64,7 +64,7 @@ async def redis_check():
     res = await redis_util.get_str("arghya")
     return {"response" : res}
 
-@app.get("/mail")
-async def redis_check():
-    user = {"username" : "Arghya", "password" : "1234", "email" : "profiletemp66@gmail.com"}
-    send_email_to_client(1,user)
+# @app.get("/mail")
+# async def redis_check():
+#     user = {"username" : "Arghya", "order_id" : "1234", "email" : "profiletemp66@gmail.com", "status" : "IN_TRANSIT"}
+#     send_email_to_client(4, user)

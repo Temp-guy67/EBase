@@ -86,7 +86,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         if type(res) != type(dict()):
             return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " +res).__repr__()) 
 
-        return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
+        return JSONResponse(status_code=200,content=ResponseObject(data=res).to_dict())
 
     except Exception as ex:
         logging.exception("[USER_ROUTES][Exception in update_user] {} | user_id {}".format(ex, user["user_id"]))
@@ -129,7 +129,7 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
         res = await common_util.update_password(user, new_password, db)
 
         if type(res) != type(dict()):
-            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail= Exceptions.OPERATION_FAILED + " | " + res).__repr__())
         
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
     
@@ -167,7 +167,7 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
             
         res = await common_util.delete_user(user_id, user_org, db)
         if type(res) != type(dict()):
-            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " + res).__repr__())
         
         await common_util.delete_access_token_in_redis(user_id)
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())

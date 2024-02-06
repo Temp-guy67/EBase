@@ -159,7 +159,7 @@ async def update_admin_account_data(update_data: UserUpdate, admin_data: UserInD
         
         res = await common_util.update_account_info(db, admin_id, admin_id, user_update_map, admin_data["service_org"])
         if not res :
-            return JSONResponse(status_code=401, content=CustomException(detail="Operation Failed").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail="Operation Failed; Try Again with valid data").__repr__()) 
 
         return JSONResponse(status_code=200, content=ResponseObject(data=res).to_dict())
 
@@ -240,7 +240,7 @@ async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB =
 
         res = await common_util.update_password(admin_data, new_password, db)
         if type(res) != type(dict()):
-            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " +res).__repr__())
         
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
 
@@ -300,7 +300,7 @@ async def delete_user(org_user_id : str, extra_data : UserDelete, admin_data: Us
             
         res = await common_util.delete_user(org_user_id, admin_org, db)
         if type(res) != type(dict()):
-            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=res).__repr__())
+            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " +res).__repr__())
         
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
 
