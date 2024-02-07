@@ -6,13 +6,14 @@ X-Access-Token
 
 
 Superadmin:
-Mail : ebasebusiness123@gmail.com
-Api : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiIyT3cwUkdNMDFva2psdkVkLWZiU19hQVVoX3NpWGx1QktvOTVPODFydEh3In0.P66B_rmIXZTheQPMiyCFXoCZ3EwBqEPDN7mgmKgMVMM
+Mail : superadmin@supermail.com
+Api : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiI1M25mSmRya2x0M25wanJJUVVmQzdkeEJqa2lBYUpWVHZielpyQ21YZVJJIn0.CBtSaf9zOatKw0yL-c452sVIEhmWkftlM70SHvb-OMI
 
 
 Test :
-API : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiJSdUdpZ2dvcWM5dU51dHpvYzNnMEpaT0VrZDhHTG51ZjJ0WEx6NHBiejBjIn0.ejhZBcKIkSi0ArZvBKLQwRzNrb8Co2ytty7j0TSk4hQ
-MAIL : taposh@gmail.com
+Mail :test_org@testmail.com / test_org_password
+API : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiJidFRuVlRrUmhzRm56NUxxRmliS2d6QU9vZGotZHNZOGV3c3BHUEVWTWhvIn0.DOWXAeYjdq9z-YzA6MDH6QYNmwJgrw-w1I8-Dv_GQM4
+
 
 userId -> request count map
 

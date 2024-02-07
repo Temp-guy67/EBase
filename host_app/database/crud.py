@@ -83,7 +83,6 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
         role = user.role
         if not role :
             role = Account.Role.USER
-        role = int(role)
             
         alpha_int = random.randint(1,26)
         if not username :
@@ -91,7 +90,12 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
 
         user_id = service_org + str(role) + "_" +chr(64 + alpha_int)+ str(random.randint(1000,9999))
         
-        db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org, role=role)
+        # Extra Check
+        if service_org == "TT":
+            db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org, role=role, is_verified=1)
+        else:
+            db_user = Account(email=user.email, phone=user.phone, user_id=user_id, username=username, service_org=service_org, role=role)
+
         db.add(db_user)
         db.commit()
         db.refresh(db_user)

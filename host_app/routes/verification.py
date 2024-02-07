@@ -115,7 +115,7 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
         # Only test method will be allowed 
         # basic one will have limited
         
-        if service_obj :
+        if isinstance(service_obj, dict) :
             service_org = service_obj["service_org"]            
             ip_ports = service_obj["ip_ports"]
 
@@ -130,12 +130,12 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
             if daily_req_left :
                 await common_util.reduce_daily_req_counts(api_key, service_obj)
 
-                return {"daily_req_left" : int(daily_req_left) - 1 , "is_service_verified" : is_service_verified, "service_org" : service_org}
+                return {"daily_req_left" : int(daily_req_left) - 1 , "is_service_verified" : is_service_verified, "service_org" : service_org, "is_test_org_user" : 1}
             
             elif daily_req_left == "0" :
                 return CustomException(detail=Exceptions.REQUEST_LIMIT_EXHAUSTED)
             
-        return CustomException(detail="No Service Found on this API Key")
+        return CustomException(detail="No Service Found on this API Key, try again")
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
     return CustomException(detail=Exceptions.CREDENTIAL_ERROR_EXCEPTION)
@@ -170,5 +170,3 @@ async def get_encrypted_api_key(api_key:str):
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in get_encrypted_api_key] {} ".format(ex))
     
-
-

@@ -70,7 +70,7 @@ async def update_password(user:dict, new_password, db: Session):
             await delete_user_details_from_redis(user_id)
             await  delete_access_token_in_redis(user_id)
             
-            user_map = {"username" : user["username"], "email" : user["email"]}
+            # user_map = {"username" : user["username"], "email" : user["email"]}
             # send_email_to_client(2, user_map)
             
             return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}

@@ -108,11 +108,16 @@ async def update_user_data(org_user_id: str, update_data: UserUpdate, admin_data
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
 
+        # Extra Check
+        if admin_data["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+
         user_update_map = await common_util.update_map_set(update_data)
     
         if not user_update_map :
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="Nothing to Update").__repr__()) 
-        
+
+
         res = await common_util.update_account_info(db, org_user_id, admin_id, user_update_map, admin_data["service_org"])
         if not res :
             return JSONResponse(status_code=401, content=CustomException(detail="Operation Failed").__repr__()) 
@@ -151,6 +156,10 @@ async def update_admin_account_data(update_data: UserUpdate, admin_data: UserInD
 
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+        
+        # Extra Check
+        if admin_data["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
 
         user_update_map = await common_util.update_map_set(update_data)
         
@@ -224,6 +233,10 @@ async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB =
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
         
+        # Extra Check
+        if admin_data["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+        
         admin_id = admin_data["user_id"]
         logging.info("Data received for update_admin_password :  admin_id : {}".format(admin_id))
         old_password, new_password = update_data.password, update_data.new_password
@@ -286,7 +299,12 @@ async def delete_user(org_user_id : str, extra_data : UserDelete, admin_data: Us
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+
+
+        # Extra Check
+        if admin_data["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__())  
         
         logging.info("Data received for delete_user : user_id {} action user_id : {}".format(org_user_id, admin_data["user_id"]))
 
@@ -533,6 +551,7 @@ async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+        
         
         admin_id = admin_data["user_id"]
         logging.info("Data received for update_orders_by_user_under_org | admin user_id : {} | order_id : {}".format(admin_id, order_id))

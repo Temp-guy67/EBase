@@ -124,3 +124,6 @@ async def get_all_orders_by_user(db: Session, user_id: Optional[str] = None, ser
 
     except Exception as ex :
         logging.exception("[SERVICE_UTIL][Exception in get_single_order] {} ".format(ex))
+
+def redis_flu():
+    redis_util.flush_all()

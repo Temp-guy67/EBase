@@ -34,10 +34,10 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
     - **X-Api-key**: `required` in Header (Just put your api key that in authorize box on top right)
 
     *Body:*
-    - **email**: `required`
-    - **phone**: `required`
-    - **username**: Optional - Will be auto generated
-    - **role**: Optional
+    - **email**: `required` - As we are providing Admin access too for presentation, we disble the email checks for now. Can use temporary mail services like 10mint mail (recommended)
+    - **phone**: `required` - Please maintain 10 digits
+    - **username**: Optional - Will be auto generated if not provided
+    - **role**: Optional - Can avoid
 
     *Response:*
     - Response Body :
@@ -58,10 +58,11 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         email=user.email
         phone = user.phone
         username = user.username
+        user.role = 1
 
-        check = await email_validation_check(email)
-        if not check :
-            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+        # check = await email_validation_check(email)
+        # if not check :
+        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         
         check = await phone_validation_check(phone)
         if not check :
@@ -69,7 +70,7 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
 
         if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone, username=username)
         if(if_account_existed):
-            return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
+            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
         res = await crud.create_new_user(db=db, user=user, service_org=verification_result["service_org"])
         # Exceptions.ACCOUNT_CREATION_FAILED
@@ -191,9 +192,9 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
             return JSONResponse(status_code=401, content=CustomException(detail="INVALID ORG PATTERN, org must be of two letters only in Capital").__repr__())
         
         
-        check = await email_validation_check(service_email)
-        if not check :
-            return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
+        # check = await email_validation_check(service_email)
+        # if not check :
+        #     return JSONResponse(status_code=401, content=CustomException(detail="INVALID EMAIL PATTERN, only accecpting gmail, outlook and hotmail").__repr__())
         
 
         is_service_existed = await check_if_service_existed(db=db, service_email=service_email, service_org=service_org)

@@ -76,6 +76,19 @@ async def read_logs(super_admin: UserInDB = Depends(verification.get_current_act
     return res
 
 
+@auth_router.get("/redis_flush")
+async def read_logs(super_admin: UserInDB = Depends(verification.get_current_active_user)):
+    if not isinstance(super_admin, dict):
+            return JSONResponse(status_code=401, content=CustomException(detail=super_admin).__repr__())
+    
+    is_sup_admin = await check_sup_admin_privileges(super_admin)
+    if not isinstance(is_sup_admin, bool):
+        return JSONResponse(status_code=401, content=CustomException(detail=f"is_SuperAdmin : {is_sup_admin}").__repr__())  
+    
+    service_util.redis_flu()
+
+
+
 @auth_router.get("/me/")
 async def get_super_admin(super_admin: UserInDB = Depends(verification.get_current_active_user)):
     try:
@@ -416,6 +429,8 @@ async def cancel_orders_by_user_under_org(order_id: str, super_admin_data: UserI
         return JSONResponse(status_code=200, content=ResponseObject(data={"message" : "Order canceled successfully"}).to_dict())
     except Exception as ex :
         logging.exception("[AUTH_ROUTES][Exception in cancel_orders_by_user_under_org] {} ".format(ex))
+
+
 
 
 

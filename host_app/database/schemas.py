@@ -8,7 +8,7 @@ class User(BaseModel):
 
 class UserSignUp(User):
     username : Union[str, None] = None
-    role : Union[str, None] = None
+    role : Union[int, None] = None
 
 
 class UserInDB(User):
