@@ -98,8 +98,8 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
 
     *Response:*
     - Response Body :
-        **User Object**
-        **Access Token** Will be valid upto 30 mints. Must add in Header (Just put in authorize box on top right) for further use
+        **User Object** and 
+        **Access Token** Will be valid upto 30 mints. `required` Must add in Header (Just put in authorize box on top right) for further use
         
     """
     try:

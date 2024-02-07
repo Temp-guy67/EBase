@@ -23,9 +23,6 @@ userId -> request count map
 
 3. org will be created by us 
 
-
-To Do list :
-1. Email and phone number validation check for before deploying
-
-# `4DI.Ko#
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0MUB0ZXN0bWFpbC5jb20iLCJleHAiOjE3MDcwMzAwMDV9.QIU-rfZ0tY6b_puIp68yYW_jcBmjC4UcyjXgcF-qDmg
+new one 
+1. Proper documentaion for optional cases
+2. New for Password chage

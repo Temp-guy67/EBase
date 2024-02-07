@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from host_app.common.exceptions import CustomException, Exceptions
 from host_app.logs import log_manager
 from host_app.common.response_object import ResponseObject
-from host_app.database.schemas import OrderQuery, UserInDB, UserDelete, UserUpdate
+from host_app.database.schemas import OrderQuery, UserInDB, UserDelete, UserPasswordChange, UserUpdate
 from sqlalchemy.orm import Session
 import logging
 from host_app.database import crud, models
@@ -184,7 +184,7 @@ async def verify_user(org_user_id: str, super_admin_data: UserInDB = Depends(ver
 
 # not done - His own password of account  - will start from here
 @auth_router.post("/updatepassword/")
-async def update_super_admin_password(update_data : UserUpdate, super_admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def update_super_admin_password(update_data : UserPasswordChange, super_admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
         if not isinstance(super_admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=super_admin_data).__repr__())

@@ -71,7 +71,7 @@ async def get_orders(user: UserInDB = Depends(verification.get_current_active_us
 
     *Response:*
     - Response Body :
-        **All the Order created by the user **
+        **All the Order created by the user**
     """
     try:
         if not isinstance(user, dict):
@@ -103,7 +103,7 @@ async def get_single_order_info(order_id: str, user: UserInDB = Depends(verifica
 
     *Response:*
     - Response Body :
-        **the Order created by the user **
+        **the Order created by the user**
     """
     try:
         if not isinstance(user, dict):
@@ -135,7 +135,7 @@ async def cancel_order(order_id: str, user: UserInDB = Depends(verification.get_
 
     *Response:*
     - Response Body :
-        **Success Response **
+        **Success Response**
     """
     try:
         if not isinstance(user, dict):
