@@ -139,7 +139,6 @@ async def update_user_data(org_user_id: str, update_data: UserUpdate, super_admi
 @auth_router.post("/update/")
 async def update_admin_account_data(update_data: UserUpdate, super_admin_data: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     try:
-        print("  ")
         if not isinstance(super_admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=super_admin_data).__repr__())
         
@@ -345,7 +344,6 @@ async def get_all_orders_under_org(super_admin_data: UserInDB = Depends(verifica
     try:
         if not isinstance(super_admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=super_admin_data).__repr__())
-        print(" adin")
         is_super_admin = await check_sup_admin_privileges(super_admin_data)
         if not isinstance(is_super_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Super Admin : {is_super_admin}").__repr__())  

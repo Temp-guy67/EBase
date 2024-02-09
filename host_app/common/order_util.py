@@ -123,7 +123,6 @@ async def set_order_update_map(order_query: OrderQuery ):
                     if not 1<=v<=3 :
                         return Exceptions.UNAVAILABLE_ORDER_STATUS
                 order_data[k] = v 
-        print(" order_data sda ", order_data)
         return order_data
     except Exception as ex :
         logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
