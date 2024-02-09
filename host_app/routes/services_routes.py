@@ -110,7 +110,7 @@ async def update_user_data(org_user_id: str, update_data: UserUpdate, admin_data
 
         # Extra Check
         if admin_data["service_org"] == "TT":
-            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusiasm, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
 
         user_update_map = await common_util.update_map_set(update_data)
     

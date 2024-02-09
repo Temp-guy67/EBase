@@ -68,6 +68,9 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         
         logging.info("Data received for update_user : {} | action user_id : {}".format(user_data, user["user_id"]))
 
+        if user["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+
         if not user_data:
             return 
         user_id, password = user["user_id"], user_data.password
@@ -117,6 +120,9 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
         logging.info("Data received for update_user_password : {} | action user_id : {}".format(user_data, user_id))
         old_password, new_password = user_data.password, user_data.new_password
 
+        if user["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+
         if(not old_password or not new_password):
             return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Provide both Old and new password").__repr__()) 
         
@@ -158,6 +164,10 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
         
         logging.info("Data received for delete_user : {}".format(user["user_id"]))
+
+        # Extra Check
+        if user["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
 
         user_id, user_org, password = user["user_id"], user["service_org"], user_data.password
         password_obj = await crud.get_password_data(db, user_id)
