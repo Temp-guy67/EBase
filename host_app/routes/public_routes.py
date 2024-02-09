@@ -144,9 +144,11 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         )
         user_id = user_obj["user_id"]
 
-        common_util.update_access_token_in_redis(user_id, access_token, client_ip)
-        common_util.update_user_details_in_redis(user_id, user_obj)
         await common_util.delete_access_token_in_redis(user_id)
+        
+        common_util.update_access_token_in_redis(user_id, access_token, client_ip, "login")
+        common_util.update_user_details_in_redis(user_id, user_obj)
+        
         
         headers = {"access_token": access_token, "token_type": "bearer"}
         response_obj = ResponseObject()  

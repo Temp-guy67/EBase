@@ -13,9 +13,9 @@ from host_app.common.exceptions import Exceptions, CustomException
 from host_app.mail_manager.config import send_email_to_client
 
 
-def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
+def update_access_token_in_redis(user_id: str, access_token: str, ip: str, session_state: str):
     try :
-        data_map = {"user_id" : user_id, "ip" : ip}
+        data_map = {"user_id" : user_id, "ip" : ip, "session_state" : session_state}
         redis_util.set_hm(access_token, data_map, 1800)
         redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
 

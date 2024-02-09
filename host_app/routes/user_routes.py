@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, Request
 from host_app.common.exceptions import CustomException, Exceptions
 from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
@@ -9,6 +9,7 @@ from host_app.database import crud
 from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.routes import verification
+from host_app.caching import redis_constant, redis_util
 
 
 user_router = APIRouter(
@@ -178,7 +179,7 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
 
 
 @user_router.get("/logout/", summary="To Logout current Session")
-async def logout(user: UserInDB = Depends(verification.get_current_active_user)):
+async def logout(req: Request, user: UserInDB = Depends(verification.get_current_active_user)):
     """
     To Logout current Session:
     *Header:*
@@ -198,8 +199,11 @@ async def logout(user: UserInDB = Depends(verification.get_current_active_user))
         
         user_id = user["user_id"]
         logging.info("Request received for logout | action user_id : {}".format(user_id))
-        await common_util.delete_access_token_in_redis(user_id)
-        
+
+        access_token = await redis_util.get_str(redis_constant.RedisConstant.USER_ACCESS_TOKEN + user_id)
+
+        common_util.update_access_token_in_redis(user_id, access_token, req.client.host, "logout")
+
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data={"details" : "Logout Successful"}).to_dict())
 
     except Exception as ex:
