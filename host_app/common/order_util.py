@@ -15,22 +15,21 @@ async def create_order(db: Session, user_id:str, service_org:str, order_info: Or
         if new_order :
             redis_util.set_hm(RedisConstant.ORDER_OBJ + new_order["order_id"], new_order, 1800)
             await add_order_ids_in_redis(user_id, new_order["order_id"])
+            redis_util.add_to_set(RedisConstant.USER_PRODUCT_SET + new_order["owner_id"], [new_order["product_id"]], 1800)
+
         return new_order
     
     except Exception as ex:
         logging.exception("[ORDER_UTIL][Exception in create_order] {} ".format(ex))
 
 
-
 async def add_order_ids_in_redis(user_id: str, order_id:str)-> None:
     try:
         user_order_ids = await redis_util.get_set(RedisConstant.USER_ORDERS_SET + user_id)
-        
         if user_order_ids:
             redis_util.add_to_set(RedisConstant.USER_ORDERS_SET + user_id, [order_id])
 
         # if not in redis , then leave it . On next query it will be set
-        
     except Exception as ex:
         logging.exception("[ORDER_UTIL][Exception in add_order_ids_in_redis] {} ".format(ex))
 
@@ -126,3 +125,8 @@ async def set_order_update_map(order_query: OrderQuery ):
         return order_data
     except Exception as ex :
         logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
+
+
+async def get_all_products_bought(user_id: str):
+    all_products_bought = await redis_util.get_set(RedisConstant.USER_PRODUCT_SET + user_id)
+    return all_products_bought

@@ -37,13 +37,12 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
     - **email**: `required` - As we are providing Admin access too for presentation, we disble the email checks for now. Can use temporary mail services like 10mint mail (recommended)
     - **phone**: `required` - Please maintain 10 digits
     - **username**: Optional - Will be auto generated if not provided
-    - **role**: Optional - Can avoid
+    - **role**: Optional - Can avoid , or put any integer. 
 
     *Response:*
+    - `Very Very Important` *Password will be mailed, Use it for first login*
     - Response Body :
-        **Password will be mailed, Use it for first login**
         **Newly created User Object**
-        
     """
     try:
         
@@ -145,10 +144,9 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         user_id = user_obj["user_id"]
 
         await common_util.delete_access_token_in_redis(user_id)
-        
+
         common_util.update_access_token_in_redis(user_id, access_token, client_ip, "login")
         common_util.update_user_details_in_redis(user_id, user_obj)
-        
         
         headers = {"access_token": access_token, "token_type": "bearer"}
         response_obj = ResponseObject()  
