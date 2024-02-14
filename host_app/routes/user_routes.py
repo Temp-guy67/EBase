@@ -144,7 +144,7 @@ async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(
         logging.exception("[USER_ROUTES][Exception in update_user_password] {} | user_id {}".format(ex, user["user_id"]))
         
 
-@user_router.get("/delete/", summary="To Delete user Account")
+@user_router.post("/delete/", summary="To Delete user Account")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     """
     To Delete User Account :

@@ -126,7 +126,7 @@ async def delete_user(user_id:str, user_org:str, db: Session):
         # now delete from redis
         if not res :
             return Exceptions.OPERATION_FAILED
-        data = {"user_id" : user_id, "details" : "User Data updated successfully"}
+        data = {"user_id" : user_id, "details" : "User Data Deleted successfully"}
         await delete_user_details_from_redis(user_id)
         return data
         
