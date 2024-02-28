@@ -38,6 +38,7 @@ async def get_all_order_id_by_user(db: Session, user_id: str, org: Optional[str]
     order_ids = []
     try:
         user_order_ids = await redis_util.get_set(RedisConstant.USER_ORDERS_SET + user_id)
+
         if not user_order_ids:
             user_order_ids = await order_crud.get_all_order_id_by_user(db, user_id, org)
             redis_util.add_to_set(RedisConstant.USER_ORDERS_SET + user_id, user_order_ids)
@@ -53,6 +54,10 @@ async def get_all_order_id_by_user(db: Session, user_id: str, org: Optional[str]
 async def get_all_orders(db: Session, user_id: str, org: Optional[str] = None):
     try :
         all_order_ids = await get_all_order_id_by_user(db, user_id, org)
+
+        if not all_order_ids:
+            return  {"data" : "No order found for this User"} 
+        
         all_orders_obj = []
         
         for single_order_id in all_order_ids:
@@ -71,8 +76,9 @@ async def get_single_order(db: Session, order_id:str, user_id: Optional[str] = N
         if not order_obj :
             order_obj = await order_crud.get_order_by_order_id(db, user_id, order_id, org)
             redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, order_obj)
-        return order_obj
-
+            return order_obj
+        else :
+            return  {"data" : "No order found for this Order Id"} 
     except Exception as ex:
         logging.exception("[ORDER_UTIL][Exception in get_single_order] {} ".format(ex))
     
