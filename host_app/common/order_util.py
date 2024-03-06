@@ -41,6 +41,9 @@ async def get_all_order_id_by_user(db: Session, user_id: str, org: Optional[str]
 
         if not user_order_ids:
             user_order_ids = await order_crud.get_all_order_id_by_user(db, user_id, org)
+
+            if not user_order_ids :
+                return {"message" : "No orders found"}
             redis_util.add_to_set(RedisConstant.USER_ORDERS_SET + user_id, user_order_ids)
             
         return user_order_ids
@@ -75,6 +78,8 @@ async def get_single_order(db: Session, order_id:str, user_id: Optional[str] = N
         
         if not order_obj :
             order_obj = await order_crud.get_order_by_order_id(db, user_id, order_id, org)
+            if not order_obj :
+                return {"message" : "No orders found"}
             redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, order_obj)
             return order_obj
         else :
@@ -98,6 +103,8 @@ async def update_order_object(db:Session, user_id:str, order_id:str, order_data:
         
         if updated_order_obj :
             redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, updated_order_obj)
+        else :
+            return {"message" : "No orders found on this Order Id to Update"}
             
         return updated_order_obj
     except Exception as ex :
