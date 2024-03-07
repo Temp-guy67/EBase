@@ -15,7 +15,7 @@ from host_app.mail_manager.config import send_email_to_client
 
 def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
     try :
-        data_map = {"user_id" : user_id, "ip" : ip}
+        data_map = {"user_id" : user_id, "ip" : ip, "state" : "login"}
         redis_util.set_hm(access_token, data_map, 1800)
         redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
 

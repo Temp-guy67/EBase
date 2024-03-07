@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter
 from host_app.common.exceptions import CustomException, Exceptions
 from host_app.common.response_object import ResponseObject
-from host_app.database.schemas import UserInDB, UserDelete, UserUpdate
+from host_app.database.schemas import UserInDB, UserDelete, UserPasswordChange, UserUpdate
 from sqlalchemy.orm import Session
 import logging
 from fastapi.responses import JSONResponse
@@ -93,7 +93,7 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
 
 
 @user_router.post("/updatepassword/", summary="To Update user Password")
-async def update_user_password(user_data : UserUpdate, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
+async def update_user_password(user_data : UserPasswordChange, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     """
     To Update Password :
     *Header:*
