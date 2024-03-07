@@ -32,7 +32,7 @@ class Exceptions:
     WRONG_PASSWORD="Password provided is Wrong"
     SERVICE_NOT_VERIFIED='Your service request is not Verified yet, You can not make any action Now'
     USER_NOT_VERIFIED='Your account is not Verified yet , Kindly Contact Org Admin. You can not make any action Now'
-    NOT_AUTHORIZED="You are not a Authorized"
+    NOT_AUTHORIZED="You are not Authorized to do this Action"
     API_KEY_UNAVAILABLE="Add right api_key in the header"
     TRYING_FROM_DIFFERENT_DEVICE="You are trying from different Device, Try login again"
     FAILED_TO_VALIDATE_CREDENTIALS="Failed to validate Token Credentials, Login Again"

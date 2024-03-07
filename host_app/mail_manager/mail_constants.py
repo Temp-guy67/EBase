@@ -41,7 +41,7 @@ def get_mail_html(user:dict):
         </tr>
         <tr>
             <td>
-                <b style="display: block; color: #343434; font-size: 20px; padding-bottom: 10px;">Hello {user["username"]}</b>
+                <b style="display: block; color: #343434; font-size: 20px; padding-bottom: 10px;">Hello {user["username"]},</b>
                 <span style="display: block; font-size: 17px;color: #343434;">{user["body"]}
                     <br>
                     <br>
