@@ -104,8 +104,9 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
         # mailing
         user_map = {"username" : username, "email" : user.email, "password" : first_time_pass}
         send_email_to_client(1, user_map)
-        
-        return db_user.to_dict()
+        new_user = db_user.to_dict()
+        new_user["message"] = "Your password has been sent to your mail Adderess, Kindly use it for your first login."
+        return new_user
 
     except Exception as ex :
         logging.exception("[CRUD][Exception in create_new_user] {} ".format(ex))

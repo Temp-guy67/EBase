@@ -37,13 +37,12 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
     - **email**: `required` - As we are providing Admin access too for presentation, we disble the email checks for now. Can use temporary mail services like 10mint mail (recommended)
     - **phone**: `required` - Please maintain 10 digits
     - **username**: Optional - Will be auto generated if not provided
-    - **role**: Optional - Can avoid
+    - **role**: Optional - Can avoid , or put any integer. 
 
     *Response:*
+    - `Very Very Important` *Password will be mailed, Use it for first login*
     - Response Body :
-        **Password will be mailed, Use it for first login**
         **Newly created User Object**
-        
     """
     try:
         

@@ -23,7 +23,6 @@ async def update_access_token_in_redis(user_id:str, access_token: str, state : i
             if prev_data_map :
                 if prev_data_map["state"] == SessionUtils.AccessTokenState.VALID:
                     prev_data_map["state"] = SessionUtils.AccessTokenState.EXPIRED
-                    print(" Prev data map is : " , prev_data_map , "acc ",prev_access_token)
                     redis_util.set_hm(prev_access_token, prev_data_map, 1800)
                 
             
@@ -142,7 +141,7 @@ async def delete_user(user_id:str, user_org:str, db: Session):
         # now delete from redis
         if not res :
             return Exceptions.OPERATION_FAILED
-        data = {"user_id" : user_id, "details" : "User Data updated successfully"}
+        data = {"user_id" : user_id, "details" : "User Data Deleted successfully"}
         await delete_user_details_from_redis(user_id)
         return data
         

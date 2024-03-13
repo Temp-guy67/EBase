@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, Request
 from host_app.common.exceptions import CustomException, Exceptions
 from host_app.common.response_object import ResponseObject
 from host_app.database.schemas import UserInDB, UserDelete, UserPasswordChange, UserUpdate
@@ -9,6 +9,7 @@ from host_app.database import crud
 from host_app.database.database import get_db
 from host_app.common import common_util
 from host_app.routes import verification
+from host_app.caching import redis_constant, redis_util
 
 
 user_router = APIRouter(
@@ -67,6 +68,9 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         
         logging.info("Data received for update_user : {} | action user_id : {}".format(user_data, user["user_id"]))
 
+        if user["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+
         if not user_data:
             return 
         user_id, password = user["user_id"], user_data.password
@@ -116,6 +120,9 @@ async def update_user_password(user_data : UserPasswordChange, user: UserInDB = 
         logging.info("Data received for update_user_password : {} | action user_id : {}".format(user_data, user_id))
         old_password, new_password = user_data.password, user_data.new_password
 
+        if user["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+
         if(not old_password or not new_password):
             return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Provide both Old and new password").__repr__()) 
         
@@ -137,7 +144,7 @@ async def update_user_password(user_data : UserPasswordChange, user: UserInDB = 
         logging.exception("[USER_ROUTES][Exception in update_user_password] {} | user_id {}".format(ex, user["user_id"]))
         
 
-@user_router.get("/delete/", summary="To Delete user Account")
+@user_router.post("/delete/", summary="To Delete user Account")
 async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verification.get_current_active_user), db: Session = Depends(get_db)):
     """
     To Delete User Account :
@@ -157,6 +164,10 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
             return JSONResponse(status_code=401, content=CustomException(detail=user).__repr__())
         
         logging.info("Data received for delete_user : {}".format(user["user_id"]))
+
+        # Extra Check
+        if user["service_org"] == "TT":
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
 
         user_id, user_org, password = user["user_id"], user["service_org"], user_data.password
         password_obj = await crud.get_password_data(db, user_id)
@@ -178,7 +189,7 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
 
 
 @user_router.get("/logout/", summary="To Logout current Session")
-async def logout(user: UserInDB = Depends(verification.get_current_active_user)):
+async def logout(req: Request, user: UserInDB = Depends(verification.get_current_active_user)):
     """
     To Logout current Session:
     *Header:*
@@ -198,8 +209,11 @@ async def logout(user: UserInDB = Depends(verification.get_current_active_user))
         
         user_id = user["user_id"]
         logging.info("Request received for logout | action user_id : {}".format(user_id))
-        await common_util.delete_access_token_in_redis(user_id)
-        
+
+        access_token = await redis_util.get_str(redis_constant.RedisConstant.USER_ACCESS_TOKEN + user_id)
+
+        common_util.update_access_token_in_redis(user_id, access_token, req.client.host, "logout")
+
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data={"details" : "Logout Successful"}).to_dict())
 
     except Exception as ex:

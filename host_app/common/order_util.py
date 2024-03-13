@@ -15,22 +15,21 @@ async def create_order(db: Session, user_id:str, service_org:str, order_info: Or
         if new_order :
             redis_util.set_hm(RedisConstant.ORDER_OBJ + new_order["order_id"], new_order, 1800)
             await add_order_ids_in_redis(user_id, new_order["order_id"])
+            redis_util.add_to_set(RedisConstant.USER_PRODUCT_SET + new_order["owner_id"], [new_order["product_id"]], 1800)
+
         return new_order
     
     except Exception as ex:
         logging.exception("[ORDER_UTIL][Exception in create_order] {} ".format(ex))
 
 
-
 async def add_order_ids_in_redis(user_id: str, order_id:str)-> None:
     try:
         user_order_ids = await redis_util.get_set(RedisConstant.USER_ORDERS_SET + user_id)
-        
         if user_order_ids:
             redis_util.add_to_set(RedisConstant.USER_ORDERS_SET + user_id, [order_id])
 
         # if not in redis , then leave it . On next query it will be set
-        
     except Exception as ex:
         logging.exception("[ORDER_UTIL][Exception in add_order_ids_in_redis] {} ".format(ex))
 
@@ -39,8 +38,12 @@ async def get_all_order_id_by_user(db: Session, user_id: str, org: Optional[str]
     order_ids = []
     try:
         user_order_ids = await redis_util.get_set(RedisConstant.USER_ORDERS_SET + user_id)
+
         if not user_order_ids:
             user_order_ids = await order_crud.get_all_order_id_by_user(db, user_id, org)
+
+            if not user_order_ids :
+                return {"message" : "No orders found"}
             redis_util.add_to_set(RedisConstant.USER_ORDERS_SET + user_id, user_order_ids)
             
         return user_order_ids
@@ -54,6 +57,10 @@ async def get_all_order_id_by_user(db: Session, user_id: str, org: Optional[str]
 async def get_all_orders(db: Session, user_id: str, org: Optional[str] = None):
     try :
         all_order_ids = await get_all_order_id_by_user(db, user_id, org)
+
+        if not all_order_ids:
+            return  {"data" : "No order found for this User"} 
+        
         all_orders_obj = []
         
         for single_order_id in all_order_ids:
@@ -71,9 +78,12 @@ async def get_single_order(db: Session, order_id:str, user_id: Optional[str] = N
         
         if not order_obj :
             order_obj = await order_crud.get_order_by_order_id(db, user_id, order_id, org)
+            if not order_obj :
+                return {"message" : "No orders found"}
             redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, order_obj)
-        return order_obj
-
+            return order_obj
+        else :
+            return  {"data" : "No order found for this Order Id"} 
     except Exception as ex:
         logging.exception("[ORDER_UTIL][Exception in get_single_order] {} ".format(ex))
     
@@ -93,6 +103,8 @@ async def update_order_object(db:Session, user_id:str, order_id:str, order_data:
         
         if updated_order_obj :
             redis_util.set_hm(RedisConstant.ORDER_OBJ + order_id, updated_order_obj)
+        else :
+            return {"message" : "No orders found on this Order Id to Update"}
             
         return updated_order_obj
     except Exception as ex :
@@ -123,7 +135,11 @@ async def set_order_update_map(order_query: OrderQuery ):
                     if not 1<=v<=3 :
                         return Exceptions.UNAVAILABLE_ORDER_STATUS
                 order_data[k] = v 
-        print(" order_data sda ", order_data)
         return order_data
     except Exception as ex :
         logging.exception("[SERVICE_ROUTES][Exception in check_admin_privileges] {} ".format(ex))
+
+
+async def get_all_products_bought(user_id: str):
+    all_products_bought = await redis_util.get_set(RedisConstant.USER_PRODUCT_SET + user_id)
+    return all_products_bought

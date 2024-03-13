@@ -32,7 +32,7 @@ class Exceptions:
     WRONG_PASSWORD="Password provided is Wrong"
     SERVICE_NOT_VERIFIED='Your service request is not Verified yet, You can not make any action Now'
     USER_NOT_VERIFIED='Your account is not Verified yet , Kindly Contact Org Admin. You can not make any action Now'
-    NOT_AUTHORIZED="You are not a Authorized"
+    NOT_AUTHORIZED="You are not Authorized to do this Action"
     API_KEY_UNAVAILABLE="Add right api_key in the header"
     TRYING_FROM_DIFFERENT_DEVICE="You are trying from different Device, Try login again"
     FAILED_TO_VALIDATE_CREDENTIALS="Failed to validate Token Credentials, Login Again"
@@ -40,6 +40,8 @@ class Exceptions:
     USER_HAS_BEEN_DELETED="User Has been deleted, Contact Service Admin to reactive"
     ACCESS_TOKEN_EXPIRED="Try Login Again, Access Token has been expired"
     ACCESS_TOKEN_NOT_VALID="Try Login Again, Access Token's no longer Valid"
+    ORDER_ALREADY_BOUGHT="You have bought this order right now. Same order can't be bought on the span of 30 mints"
+
 
     # Order Exceptions
     FAILED_TO_CREATE_NEW_ORDER="Failed to Create Order"

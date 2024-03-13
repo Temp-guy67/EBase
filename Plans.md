@@ -11,7 +11,7 @@ Api : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiI1M25mSmRya2x
 
 
 Test :
-Mail :test_org@testmail.com / test_org_password
+Mail :test_org@testmail.com/ test_org_password
 API : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiJidFRuVlRrUmhzRm56NUxxRmliS2d6QU9vZGotZHNZOGV3c3BHUEVWTWhvIn0.DOWXAeYjdq9z-YzA6MDH6QYNmwJgrw-w1I8-Dv_GQM4
 
 
@@ -26,3 +26,5 @@ userId -> request count map
 new one 
 1. Proper documentaion for optional cases
 2. New for Password chage
+
+[.] IF no order is found , no order has been created. Wrong order id, wrong userid

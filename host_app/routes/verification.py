@@ -63,7 +63,12 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         user_id_ip_details = await redis_util.get_hm(token)
         logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details))
 
+
         if user_id_ip_details:
+            
+            if user_id_ip_details["session_state"] == "logout":
+
+                return "Access Token no Longer Valid | Login Again"
             # If from different ip or device check
             if user_id_ip_details["ip"] != req.client.host:
                 return Exceptions.TRYING_FROM_DIFFERENT_DEVICE

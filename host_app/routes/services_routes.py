@@ -72,7 +72,7 @@ async def get_admin(admin_data: UserInDB = Depends(verification.get_current_acti
         is_admin = await check_admin_privileges(admin_data) 
 
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__()) 
         
         return JSONResponse(status_code=200, content=ResponseObject(data=admin_data).to_dict())
     except Exception as ex:
@@ -106,11 +106,11 @@ async def update_user_data(org_user_id: str, update_data: UserUpdate, admin_data
     
         is_admin =  await check_admin_privileges(admin_data) 
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__()) 
 
         # Extra Check
         if admin_data["service_org"] == "TT":
-            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusiasm, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
 
         user_update_map = await common_util.update_map_set(update_data)
     
@@ -155,7 +155,7 @@ async def update_admin_account_data(update_data: UserUpdate, admin_data: UserInD
         is_admin =  await check_admin_privileges(admin_data) 
 
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__()) 
         
         # Extra Check
         if admin_data["service_org"] == "TT":
@@ -198,7 +198,7 @@ async def verify_user_under_org(org_user_id: str, admin_data: UserInDB = Depends
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         res = await service_util.verify_user(db, org_user_id, admin_data["user_id"], admin_data["service_org"])
         if res :
@@ -231,7 +231,7 @@ async def update_admin_password(update_data : UserUpdate, admin_data: UserInDB =
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         # Extra Check
         if admin_data["service_org"] == "TT":
@@ -299,7 +299,7 @@ async def delete_user(org_user_id : str, extra_data : UserDelete, admin_data: Us
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__()) 
 
 
         # Extra Check
@@ -348,7 +348,7 @@ async def get_all_user_under_org(admin_data: UserInDB = Depends(verification.get
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         logging.info("Data received for get_all_user_under_org | admin user_id : {}".format(admin_data["user_id"]))
         res = await service_util.get_all_users(db, admin_data["service_org"])
@@ -381,7 +381,7 @@ async def get_all_unverified_users_under_org(admin_data: UserInDB = Depends(veri
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         logging.info("Data received for get_all_unverified_users_under_org : admin user_id : {}".format(admin_data["user_id"]))
         res = await service_util.get_all_unverified_users(db, admin_data["service_org"])
@@ -414,7 +414,7 @@ async def get_user_under_org(user_id:str, admin_data: UserInDB = Depends(verific
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         logging.info("Data received for user_id : {} | admin user_id : {}".format(user_id, admin_data["user_id"]))
         res = await service_util.get_user(db, user_id, admin_data["service_org"])
@@ -447,7 +447,7 @@ async def get_order_under_org(order_id: str, admin_data: UserInDB = Depends(veri
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         admin_id = admin_data["user_id"]
         logging.info("Data received for get_order_under_org | order_id : {} | admin user_id : {}".format(order_id, admin_id))
         res = await order_util.get_single_order(db, order_id, admin_id, admin_data["service_org"])
@@ -479,7 +479,7 @@ async def get_all_orders_under_org(admin_data: UserInDB = Depends(verification.g
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         admin_id = admin_data["user_id"]
         logging.info("[service_routes][get_all_orders_under_org]Data received for get_all_orders_under_org | admin user_id : {}".format( admin_id))
@@ -513,7 +513,7 @@ async def get_orders_by_user_under_org(user_id:str, admin_data: UserInDB = Depen
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         admin_id = admin_data["user_id"]
         logging.info("Data received for get_orders_by_user_under_org | admin user_id : {} | user_id {}".format(admin_id, user_id))
@@ -549,7 +549,7 @@ async def update_orders_by_user_under_org(order_id: str, order_query: OrderQuery
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         
         admin_id = admin_data["user_id"]
@@ -589,7 +589,7 @@ async def cancel_orders_by_user_under_org(order_id: str, admin_data: UserInDB = 
         
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
-            return JSONResponse(status_code=401, content=CustomException(detail=f"Is Admin : {is_admin}").__repr__())  
+            return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
         
         admin_id = admin_data["user_id"]
         logging.info("Data received for cancel_orders_by_user_under_org | admin user_id : {} | order_id : {}".format(admin_id, order_id))
