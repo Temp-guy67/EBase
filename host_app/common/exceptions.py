@@ -38,7 +38,10 @@ class Exceptions:
     FAILED_TO_VALIDATE_CREDENTIALS="Failed to validate Token Credentials, Login Again"
     OPERATION_FAILED="Operaion Failed"
     USER_HAS_BEEN_DELETED="User Has been deleted, Contact Service Admin to reactive"
+    ACCESS_TOKEN_EXPIRED="Try Login Again, Access Token has been expired"
+    ACCESS_TOKEN_NOT_VALID="Try Login Again, Access Token's no longer Valid"
     ORDER_ALREADY_BOUGHT="You have bought this order right now. Same order can't be bought on the span of 30 mints"
+
 
     # Order Exceptions
     FAILED_TO_CREATE_NEW_ORDER="Failed to Create Order"

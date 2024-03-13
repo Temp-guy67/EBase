@@ -14,6 +14,7 @@ from host_app.common.constants import APIConstants, ServiceParameters
 from host_app.caching import redis_util
 from host_app.database import crud, schemas
 from host_app.common.constants import ServiceParameters
+from host_app.database.models import SessionUtils
 
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 security = HTTPBearer()
@@ -51,8 +52,16 @@ def create_access_token(data: dict, expires_delta: timedelta):
 async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)], api_key : str = Depends(api_key_from_header), db: Session = Depends(get_db)):
     try:
         token = credentials.credentials
+        current_timestamp = int(datetime.now().timestamp())
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        exp_time : int = payload.get("exp") 
+        if (exp_time <= current_timestamp):
+            logging.info("[VERIFICATION][Token expires for URI : {} | request_data : {}]".format(req.url.path, user_id_ip_details) )
+            return Exceptions.ACCESS_TOKEN_EXPIRED
+        
         user_id_ip_details = await redis_util.get_hm(token)
-        logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details) )
+        logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details))
 
 
         if user_id_ip_details:
@@ -63,6 +72,9 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
             # If from different ip or device check
             if user_id_ip_details["ip"] != req.client.host:
                 return Exceptions.TRYING_FROM_DIFFERENT_DEVICE
+            
+            if user_id_ip_details["state"] == SessionUtils.AccessTokenState.EXPIRED:
+                return Exceptions.ACCESS_TOKEN_NOT_VALID
             
             user_data = await common_util.get_user_details(user_id_ip_details["user_id"], db)
             if not user_data :
@@ -79,9 +91,8 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         
         if not int(verification_result["is_service_verified"]) :
             return Exceptions.SERVICE_NOT_VERIFIED
-        # Now will encrypt and get from DB 
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
+
+        
         
         if email is None:
             return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS

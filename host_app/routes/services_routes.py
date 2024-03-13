@@ -477,7 +477,6 @@ async def get_all_orders_under_org(admin_data: UserInDB = Depends(verification.g
     try:
         if not isinstance(admin_data, dict):
             return JSONResponse(status_code=401, content=CustomException(detail=admin_data).__repr__())
-
         is_admin = await check_admin_privileges(admin_data)
         if not isinstance(is_admin, bool):
             return JSONResponse(status_code=401, content=CustomException(detail=is_admin).__repr__())  
