@@ -11,13 +11,28 @@ from host_app.database.database import get_db
 from host_app.common import util
 from host_app.common.exceptions import Exceptions, CustomException
 from host_app.mail_manager.config import send_email_to_client
+from host_app.database.models import SessionUtils
 
 
-def update_access_token_in_redis(user_id:str, access_token: str, ip: str):
+async def update_access_token_in_redis(user_id:str, access_token: str, state : int , ip: Optional[str] = None) -> bool:
     try :
-        data_map = {"user_id" : user_id, "ip" : ip, "state" : "login"}
+        prev_access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
+        
+        if prev_access_token:
+            prev_data_map = await redis_util.get_hm(prev_access_token)
+            if prev_data_map :
+                if prev_data_map["state"] == SessionUtils.AccessTokenState.VALID:
+                    prev_data_map["state"] = SessionUtils.AccessTokenState.EXPIRED
+                    print(" Prev data map is : " , prev_data_map , "acc ",prev_access_token)
+                    redis_util.set_hm(prev_access_token, prev_data_map, 1800)
+                
+            
+        data_map = {"user_id" : user_id, "ip" : ip, "state" : state}
         redis_util.set_hm(access_token, data_map, 1800)
         redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
+        prev_data_map = await redis_util.get_hm(prev_access_token)
+        print(" Curr data map is : " , data_map , "acc ",access_token)
+        return True
 
     except Exception as ex :
         logging.exception("[common_util][Exception in update_access_token_in_redis] {} ".format(ex))
@@ -27,8 +42,9 @@ async def delete_access_token_in_redis(user_id : str):
     try:
         access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
         if access_token :
-            redis_util.delete_from_redis(access_token)
-            redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
+            await update_access_token_in_redis(user_id, access_token, SessionUtils.AccessTokenState.EXPIRED)
+            # redis_util.delete_from_redis(access_token)
+            # redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
 
     except Exception as ex :
         logging.exception("[common_util][Exception in delete_access_token_in_redis] {} ".format(ex))

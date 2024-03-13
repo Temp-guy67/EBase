@@ -45,6 +45,13 @@ class Account(Base):
         }
 
 
+class SessionUtils():
+    class AccessTokenState:
+        VALID=1
+        EXPIRED=0
+        
+    
+
 class Password(Base):
     __tablename__ = "password"
     id = Column(Integer,  primary_key=True, index=True, autoincrement=True)

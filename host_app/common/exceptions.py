@@ -38,6 +38,7 @@ class Exceptions:
     FAILED_TO_VALIDATE_CREDENTIALS="Failed to validate Token Credentials, Login Again"
     OPERATION_FAILED="Operaion Failed"
     USER_HAS_BEEN_DELETED="User Has been deleted, Contact Service Admin to reactive"
+    ACCESS_TOKEN_EXPIRED="Try Login Again, Access Token has been expired"
 
     # Order Exceptions
     FAILED_TO_CREATE_NEW_ORDER="Failed to Create Order"

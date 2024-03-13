@@ -5,11 +5,12 @@ async def connect_redis():
     global redis_client
     
     # for AWS redis
+
     
     redis_client = redis.Redis(
-    host='redis-15144.c15.us-east-1-4.ec2.cloud.redislabs.com',
-    port=15144,
-    password='test_pass1', decode_responses=True)
+    host='redis-14958.c212.ap-south-1-1.ec2.cloud.redislabs.com',
+    port=14958,
+    password='test1', decode_responses=True)
 
     # for aws put http://port
     # for local redis

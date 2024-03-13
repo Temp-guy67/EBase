@@ -14,6 +14,7 @@ from host_app.common.constants import APIConstants, ServiceParameters
 from host_app.caching import redis_util
 from host_app.database import crud, schemas
 from host_app.common.constants import ServiceParameters
+from host_app.database.models import SessionUtils
 
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 security = HTTPBearer()
@@ -52,20 +53,28 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
     try:
         token = credentials.credentials
         user_id_ip_details = await redis_util.get_hm(token)
+        print(" ACCESS TOKEN : ", token)
         logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details) )
+        
+        current_timestamp = int(datetime.now().timestamp())
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("Payload is ", payload , " cur time stamp ", current_timestamp)
 
-        if user_id_ip_details:
-            # If from different ip or device check
-            if user_id_ip_details["ip"] != req.client.host:
-                return Exceptions.TRYING_FROM_DIFFERENT_DEVICE
+        # if user_id_ip_details:
+        #     # If from different ip or device check
+        #     if user_id_ip_details["ip"] != req.client.host:
+        #         return Exceptions.TRYING_FROM_DIFFERENT_DEVICE
             
-            user_data = await common_util.get_user_details(user_id_ip_details["user_id"], db)
-            if not user_data :
-                return Exceptions.USER_NOT_FOUND
-            elif user_data["active_state"] != 1 :
-                return Exceptions.USER_HAS_BEEN_DELETED
-            else:
-                return user_data
+        #     if user_id_ip_details["state"] == SessionUtils.AccessTokenState.EXPIRED:
+        #         return Exceptions.ACCESS_TOKEN_EXPIRED
+            
+        #     user_data = await common_util.get_user_details(user_id_ip_details["user_id"], db)
+        #     if not user_data :
+        #         return Exceptions.USER_NOT_FOUND
+        #     elif user_data["account_state"] != 1 :
+        #         return Exceptions.USER_HAS_BEEN_DELETED
+        #     else:
+        #         return user_data
                 
 
         verification_result = await verify_api_key(db, api_key, req)
@@ -76,6 +85,7 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
             return Exceptions.SERVICE_NOT_VERIFIED
         # Now will encrypt and get from DB 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print( " Payload is ", payload)
         email: str = payload.get("sub")
         
         if email is None:
