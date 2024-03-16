@@ -180,7 +180,7 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
         if type(res) != type(dict()):
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " + res).__repr__())
         
-        await common_util.delete_access_token_in_redis(user_id)
+        # await common_util.delete_access_token_in_redis(user_id)
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
     
         
@@ -212,7 +212,7 @@ async def logout(req: Request, user: UserInDB = Depends(verification.get_current
 
         access_token = await redis_util.get_str(redis_constant.RedisConstant.USER_ACCESS_TOKEN + user_id)
 
-        common_util.update_access_token_in_redis(user_id, access_token, req.client.host, "logout")
+        common_util.update_email_map_in_redis(user_id, access_token, req.client.host, "logout")
 
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data={"details" : "Logout Successful"}).to_dict())
 

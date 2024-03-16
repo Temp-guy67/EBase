@@ -53,21 +53,21 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
     try:
         token = credentials.credentials
         current_timestamp = int(datetime.now().timestamp())
+        
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         exp_time : int = payload.get("exp") 
+        
         if (exp_time <= current_timestamp):
-            logging.info("[VERIFICATION][Token expires for URI : {} | request_data : {}]".format(req.url.path, user_id_ip_details) )
             return Exceptions.ACCESS_TOKEN_EXPIRED
         
-        user_id_ip_details = await redis_util.get_hm(token)
+        user_id_ip_details = await redis_util.get_hm(email)
         logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details))
 
 
         if user_id_ip_details:
             
-            if user_id_ip_details["session_state"] == "logout":
-
+            if user_id_ip_details["state"] == SessionUtils.AccessTokenState.EXPIRED:
                 return "Access Token no Longer Valid | Login Again"
             # If from different ip or device check
             if user_id_ip_details["ip"] != req.client.host:
@@ -89,7 +89,7 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         if type(verification_result) != type(dict()) :
             return verification_result
         
-        if not int(verification_result["is_service_verified"]) :
+        elif not int(verification_result["is_service_verified"]) :
             return Exceptions.SERVICE_NOT_VERIFIED
 
         
@@ -120,21 +120,25 @@ async def get_current_active_user(current_user: Annotated[schemas.UserInDB, Depe
 
 async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Optional[str] = None):
     try:
-        client_ip = req.client.host
+        if not enc_api_key :
+            return CustomException(detail=Exceptions.API_KEY_UNAVAILABLE)
+        
         api_key = await decrypt_enc_api_key(enc_api_key)
         if not api_key:
-            return CustomException(detail=Exceptions.API_KEY_UNAVAILABLE)
+            return CustomException(detail=Exceptions.INVALID_API)
 
         daily_req_left = None
         service_obj = await common_util.get_service_details(db, api_key) 
         
+
         # Only test method will be allowed 
         # basic one will have limited
         
         if isinstance(service_obj, dict) :
             service_org = service_obj["service_org"]            
-            ip_ports = service_obj["ip_ports"]
-
+            # ip_ports = service_obj["ip_ports"]
+            # client_ip = req.client.host
+            
             # if "*" in ip_ports:
             #     logging.info("Sending all ip ok")
             # elif client_ip not in ip_ports:
@@ -150,8 +154,8 @@ async def verify_api_key(db: Session, enc_api_key: str, req: Request, email: Opt
             
             elif daily_req_left == "0" :
                 return CustomException(detail=Exceptions.REQUEST_LIMIT_EXHAUSTED)
-            
-        return CustomException(detail="No Service Found on this API Key, try again")
+        else :
+            return service_obj
     except Exception as ex :
         logging.exception("[VERIFICATION][Exception in verify_api_key] {} ".format(ex))
     return CustomException(detail=Exceptions.CREDENTIAL_ERROR_EXCEPTION)

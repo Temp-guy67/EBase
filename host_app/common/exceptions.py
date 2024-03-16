@@ -15,34 +15,33 @@ class CustomException(HTTPException):
         super().__init__(status_code=status_code, detail=detail, headers=headers)
 
     def __repr__(self) -> str:
-        return {'data' : {}, 'is_success' : 'false', 'error' : f"(status_code={self.status_code!r}, detail={self.detail})"}
+        return {"data" : {}, "is_success" : "false", "error" : f"(status_code={self.status_code!r}, detail={self.detail})"}
     
 
 class Exceptions:
-    REQUEST_LIMIT_EXHAUSTED="Request Limit reached"
-    USER_NOT_FOUND="User Not Available"
-    INCORRECT_EMAIL_PASSWORD="Incorrect email or password"
-    ACCOUNT_CREATION_FAILED="Account Creation Failed"
-    EMAIL_HAS_BEEN_REGISTERED="Email has been registered"
-    USERNAME_HAS_BEEN_TAKEN="User name has been taken, Try with different User Name"
-    PHONE_NUMBER_HAS_BEEN_REGISTERED="Phone number has been registered"
-    CREDENTIAL_ERROR_EXCEPTION="Credential Error"
-    WRONG_API="Wrong API"
-    WRONG_IP="This IP is not configured for this API"
-    WRONG_PASSWORD="Password provided is Wrong"
-    SERVICE_NOT_VERIFIED='Your service request is not Verified yet, You can not make any action Now'
-    USER_NOT_VERIFIED='Your account is not Verified yet , Kindly Contact Org Admin. You can not make any action Now'
-    NOT_AUTHORIZED="You are not Authorized to do this Action"
-    API_KEY_UNAVAILABLE="Add right api_key in the header"
-    TRYING_FROM_DIFFERENT_DEVICE="You are trying from different Device, Try login again"
-    FAILED_TO_VALIDATE_CREDENTIALS="Failed to validate Token Credentials, Login Again"
-    OPERATION_FAILED="Operaion Failed"
-    USER_HAS_BEEN_DELETED="User Has been deleted, Contact Service Admin to reactive"
-    ACCESS_TOKEN_EXPIRED="Try Login Again, Access Token has been expired"
-    ACCESS_TOKEN_NOT_VALID="Try Login Again, Access Token's no longer Valid"
-    ORDER_ALREADY_BOUGHT="You have bought this order right now. Same order can't be bought on the span of 30 mints"
-
-
-    # Order Exceptions
-    FAILED_TO_CREATE_NEW_ORDER="Failed to Create Order"
-    UNAVAILABLE_ORDER_STATUS="Unavailable Order Status"
+    REQUEST_LIMIT_EXHAUSTED= "REQUEST_LIMIT_EXHAUSTED"
+    USER_NOT_FOUND="USER_NOT_FOUND"
+    INCORRECT_EMAIL_PASSWORD="INCORRECT_EMAIL_PASSWORD"
+    ACCOUNT_CREATION_FAILED="ACCOUNT_CREATION_FAILED"
+    EMAIL_HAS_BEEN_REGISTERED="EMAIL_HAS_BEEN_REGISTERED"
+    USERNAME_HAS_BEEN_TAKEN="USERNAME_HAS_BEEN_TAKEN"
+    PHONE_NUMBER_HAS_BEEN_REGISTERED="PHONE_NUMBER_HAS_BEEN_REGISTERED"
+    CREDENTIAL_ERROR_EXCEPTION="CREDENTIAL_ERROR_EXCEPTION"
+    INVALID_API="INVALID_API"
+    WRONG_IP="WRONG_IP"
+    WRONG_PASSWORD="WRONG_PASSWORD"
+    
+    SERVICE_NOT_AVAILABLE="THIS SERVICE NOT AVAILABLE"
+    SERVICE_NOT_VERIFIED =" YOUR SERVICE REQUEST IS NOT VERIFIED YET, YOU CAN NOT MAKE ANY ACTION NOW "
+    USER_NOT_VERIFIED =" YOUR ACCOUNT IS NOT VERIFIED YET , KINDLY CONTACT ORG ADMIN. YOU CAN NOT MAKE ANY ACTION NOW "
+    NOT_AUTHORIZED =" YOU ARE NOT AUTHORIZED TO DO THIS ACTION "
+    API_KEY_UNAVAILABLE =" ADD RIGHT API_KEY IN THE HEADER "
+    TRYING_FROM_DIFFERENT_DEVICE =" YOU ARE TRYING FROM DIFFERENT DEVICE, TRY LOGIN AGAIN "
+    FAILED_TO_VALIDATE_CREDENTIALS =" FAILED TO VALIDATE TOKEN CREDENTIALS, LOGIN AGAIN "
+    OPERATION_FAILED =" OPERAION FAILED "
+    USER_HAS_BEEN_DELETED =" USER HAS BEEN DELETED, CONTACT SERVICE ADMIN TO REACTIVE "
+    ACCESS_TOKEN_EXPIRED =" TRY LOGIN AGAIN, ACCESS TOKEN HAS BEEN EXPIRED "
+    ACCESS_TOKEN_NOT_VALID =" TRY LOGIN AGAIN, ACCESS TOKEN IS NO LONGER VALID "
+    ORDER_ALREADY_BOUGHT =" YOU HAVE BOUGHT THIS ORDER RIGHT NOW. SAME ORDER CAN NOT BE BOUGHT ON THE SPAN OF 30 MINTS "
+    FAILED_TO_CREATE_NEW_ORDER =" FAILED TO CREATE ORDER "
+    UNAVAILABLE_ORDER_STATUS =" UNAVAILABLE ORDER STATUS "

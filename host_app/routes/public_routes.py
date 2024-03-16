@@ -45,14 +45,15 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
         **Newly created User Object**
     """
     try:
-        
-        logging.info("Data received for Signup : {}".format(user))
+        logging.info("[PUBLIC_ROUTES][Data received for Signup] : {}".format(user))
         verification_result = await verification.verify_api_key(db, api_key, req)
-        if type(verification_result) != type(dict()) :
-            return JSONResponse(status_code=403,  headers=dict(), content=verification_result.__repr__())
         
-        if not int(verification_result["is_service_verified"]) :
-            return JSONResponse(status_code=401,  headers=dict(), content=verification_result.__repr__())
+        if type(verification_result) != type(dict()) :
+            return JSONResponse(status_code=403, content=verification_result.__repr__())
+        
+        elif not int(verification_result["is_service_verified"]) :
+            return JSONResponse(status_code=401, content=verification_result.__repr__())
+
         
         email=user.email
         phone = user.phone
@@ -69,12 +70,12 @@ async def sign_up(user: UserSignUp, req: Request, api_key : str = Depends(api_ke
 
         if_account_existed = await check_if_account_existed(db=db, email=email, phone=phone, username=username)
         if(if_account_existed):
-            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
+            return JSONResponse(status_code=401, content=CustomException(detail="{} ALREADY REGISTERED AS {}".format(if_account_existed[0], if_account_existed[1])).__repr__())
 
         res = await crud.create_new_user(db=db, user=user, service_org=verification_result["service_org"])
         # Exceptions.ACCOUNT_CREATION_FAILED
         if not res:
-            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=res).__repr__())
+            return JSONResponse(status_code=401, content=CustomException(detail=res).__repr__())
         
         response_obj = ResponseObject()  
         response_obj.set_data(res)
@@ -102,40 +103,33 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         
     """
     try:
-        logging.info("Data received for Login : {}".format(userlogin.model_dump()))
+        logging.info("[PUBLIC_ROUTES][Data received for Login] : {}".format(userlogin.model_dump()))
         
         verification_result = await verification.verify_api_key(db, api_key, req, userlogin.email)
         if not isinstance(verification_result, dict) :
-            return JSONResponse(status_code=403, headers=dict(), content=verification_result.__repr__())
+            return JSONResponse(status_code=403, content=verification_result.__repr__())
         
-        if not int(verification_result["is_service_verified"]) :
-            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail=Exceptions.SERVICE_NOT_VERIFIED).__repr__())
+        elif not int(verification_result["is_service_verified"]) :
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.SERVICE_NOT_VERIFIED).__repr__())
 
-
-        client_ip = req.client.host
-        user_agent = req.headers.get("user-agent")
-        
         db_user = crud.get_user_by_email_login(db, email=userlogin.email)
-        if not db_user :
-            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Account Does not exist").__repr__())
-        
-        account_obj = db_user[0][0]
-        password_obj = db_user[0][1]
+
+        if not db_user:
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.USER_NOT_FOUND).__repr__())
+            
+        account_obj, password_obj = db_user[0][0], db_user[0][1]
         
         user_obj = account_obj.to_dict()
-        user_obj["client_ip"] = client_ip
-        user_obj["user_agent"] = user_agent
-        
         if user_obj["account_state"] != 1 :
-            return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Account Does not exist").__repr__())
-
-        if not account_obj:
-            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.USER_NOT_FOUND).__repr__())
+            return JSONResponse(status_code=401, content=CustomException(detail="Account Does not exist").__repr__())
         
-        res = await verification.verify_password(userlogin.password, password_obj.hashed_password, password_obj.salt)
-
-        if not res:
-            return JSONResponse(status_code=401, headers=dict(),content=CustomException(detail=Exceptions.INCORRECT_EMAIL_PASSWORD).__repr__())
+        client_ip = req.client.host
+        user_obj["client_ip"] = client_ip
+        user_obj["user_agent"] = req.headers.get("user-agent")
+        
+        is_password_valid = await verification.verify_password(userlogin.password, password_obj.hashed_password, password_obj.salt)
+        if not is_password_valid:
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.INCORRECT_EMAIL_PASSWORD).__repr__())
         
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = verification.create_access_token(
@@ -143,9 +137,8 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         )
         user_id = user_obj["user_id"]
 
-        await common_util.update_access_token_in_redis(user_id, access_token, models.SessionUtils.AccessTokenState.VALID, client_ip)
+        await common_util.update_email_map_in_redis(user_id, user_obj["email"], models.SessionUtils.AccessTokenState.VALID, client_ip)
         common_util.update_user_details_in_redis(user_id, user_obj)
-        # await common_util.delete_access_token_in_redis(user_id)
         
         headers = {"access_token": access_token, "token_type": "bearer"}
         response_obj = ResponseObject()  
@@ -181,7 +174,7 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
         **Newly created User Object**
     """
     try:
-        logging.info("Data received for service_sign_up : {} ".format(service_user.model_dump()))
+        logging.info("[PUBLIC_ROUTES][Data received for service_sign_up] : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
         service_email = service_user.registration_mail
         service_org = service_user.service_org
@@ -304,3 +297,6 @@ async def org_validation_check(org: str) -> bool:
     except Exception as ex :
         logging.exception("[PUBLIC_ROUTES][Exception in phone_validation_check] {} ".format(ex))
     return False
+
+
+        

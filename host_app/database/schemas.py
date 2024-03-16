@@ -79,6 +79,12 @@ class ServiceSignup(BaseModel):
     registration_mail : str 
     ip_ports :  Union[list, None] = None    
 
+class ServiceObject(BaseModel):
+    service_org : str
+    is_verified : int
+    daily_request_count : str
+    registration_mail : str 
+    ip_ports :  str
             
 
 

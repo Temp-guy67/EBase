@@ -4,7 +4,7 @@ from host_app.common.constants import CommonConstants
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
-from host_app.database.schemas import UserUpdate
+from host_app.database.schemas import ServiceObject, UserUpdate
 from host_app.caching.redis_constant import RedisConstant
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
@@ -14,39 +14,39 @@ from host_app.mail_manager.config import send_email_to_client
 from host_app.database.models import SessionUtils
 
 
-async def update_access_token_in_redis(user_id:str, access_token: str, state : int , ip: Optional[str] = None) -> bool:
+#  Emial map { email : {user_id, ip, state}}
+
+async def update_email_map_in_redis(user_id:str, email: str, state : int , ip: Optional[str] = None) -> bool:
     try :
-        prev_access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
+        prev_email_map = await redis_util.get_str(RedisConstant.USER_EMAIL_MAP + email)
         
-        if prev_access_token:
-            prev_data_map = await redis_util.get_hm(prev_access_token)
+        if prev_email_map:
+            prev_data_map = await redis_util.get_hm(prev_email_map)
             if prev_data_map :
                 if prev_data_map["state"] == SessionUtils.AccessTokenState.VALID:
                     prev_data_map["state"] = SessionUtils.AccessTokenState.EXPIRED
-                    redis_util.set_hm(prev_access_token, prev_data_map, 1800)
+                    redis_util.set_hm(prev_email_map, prev_data_map, 1800)
                 
             
         data_map = {"user_id" : user_id, "ip" : ip, "state" : state}
-        redis_util.set_hm(access_token, data_map, 1800)
-        redis_util.set_str(RedisConstant.USER_ACCESS_TOKEN + user_id, access_token, 1800)
-        prev_data_map = await redis_util.get_hm(prev_access_token)
-        print(" Curr data map is : " , data_map , "acc ",access_token)
+        redis_util.set_hm(email, data_map, 1800)
+        redis_util.set_str(RedisConstant.USER_EMAIL_MAP + user_id, email, 1800)
         return True
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in update_access_token_in_redis] {} ".format(ex))
+        logging.exception("[common_util][Exception in update_email_map_in_redis] {} ".format(ex))
 
 
-async def delete_access_token_in_redis(user_id : str):
+async def delete_email_map_in_redis(user_id : str):
     try:
-        access_token = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
-        if access_token :
-            await update_access_token_in_redis(user_id, access_token, SessionUtils.AccessTokenState.EXPIRED)
+        email = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
+        if email :
+            await update_email_map_in_redis(user_id, email, SessionUtils.AccessTokenState.EXPIRED)
             # redis_util.delete_from_redis(access_token)
             # redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in delete_access_token_in_redis] {} ".format(ex))
+        logging.exception("[common_util][Exception in delete_email_map_in_redis] {} ".format(ex))
 
 
 def update_user_details_in_redis(user_id:str, user_obj: dict):
@@ -141,7 +141,7 @@ async def delete_user(user_id:str, user_org:str, db: Session):
         # now delete from redis
         if not res :
             return Exceptions.OPERATION_FAILED
-        data = {"user_id" : user_id, "details" : "User Data Deleted successfully"}
+        data = {"user_id" : user_id, "details" : "User Data updated successfully"}
         await delete_user_details_from_redis(user_id)
         return data
         
@@ -153,24 +153,20 @@ async def delete_user(user_id:str, user_org:str, db: Session):
 async def get_service_details(db: Session, api_key: str):
     try:
         service_obj = dict()
-        # await delete_api_cache_from_redis(api_key)
-        
         service_data_obj = await redis_util.get_hm(RedisConstant.SERVICE_API + api_key)
-
+        
         if not service_data_obj :
             service_data_obj = service_crud.get_service_by_api_key(db, api_key)
-            
             if not service_data_obj :
-                return CustomException(detail="Service Info Not Available")
+                return CustomException(detail=Exceptions.SERVICE_NOT_AVAILABLE)
             
         service_obj["service_org"] = service_data_obj["service_org"]
         service_obj["is_verified"] = service_data_obj["is_verified"]
         service_obj["daily_request_count"] = service_data_obj["daily_request_count"]
         service_obj["ip_ports"] = service_data_obj["ip_ports"]
         service_obj["registration_mail"] = service_data_obj["registration_mail"]
-
-        redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
         
+        redis_util.set_hm(RedisConstant.SERVICE_API + api_key, service_obj, 86400)
         return service_obj
     
     except Exception as ex :
