@@ -75,6 +75,8 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
             return 
         user_id, password = user["user_id"], user_data.password
         password_obj = await crud.get_password_data(db, user_id)
+        
+        
 
         is_password_verified = await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
 
