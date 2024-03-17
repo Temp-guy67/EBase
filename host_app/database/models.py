@@ -43,14 +43,7 @@ class Account(Base):
             'service_org' : self.service_org,
             'account_state': self.account_state
         }
-
-
-class SessionUtils():
-    class AccessTokenState:
-        VALID=1
-        EXPIRED=0
-        
-    
+ 
 
 class Password(Base):
     __tablename__ = "password"

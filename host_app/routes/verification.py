@@ -14,7 +14,6 @@ from host_app.common.constants import APIConstants, ServiceParameters
 from host_app.caching import redis_util
 from host_app.database import crud, schemas
 from host_app.common.constants import ServiceParameters
-from host_app.database.models import SessionUtils
 
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 security = HTTPBearer()
