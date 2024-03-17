@@ -10,7 +10,6 @@ from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import util
 from host_app.common.exceptions import Exceptions, CustomException
-from host_app.database.models import SessionUtils
 
 
 #  Email map { email : {user_id, ip, access_token}}
@@ -20,27 +19,13 @@ async def update_access_token_map_in_redis(user_id:str, email: str, access_token
         data_map = {"user_id" : user_id, "ip" : ip, "access_token" : access_token}
         redis_util.set_hm(email, data_map, 1800)
         return True
-
     except Exception as ex :
         logging.exception("[COMMON_UTIL][Exception in update_access_token_map_in_redis] {} ".format(ex))
-
-
-async def delete_email_map_in_redis(user_id : str):
-    try:
-        email = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
-        if email :
-            await update_access_token_map_in_redis(user_id, email, SessionUtils.AccessTokenState.EXPIRED)
-            # redis_util.delete_from_redis(access_token)
-            # redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
-
-    except Exception as ex :
-        logging.exception("[COMMON_UTIL][Exception in delete_email_map_in_redis] {} ".format(ex))
 
 
 def update_user_details_in_redis(user_id:str, user_obj: dict):
     try :
         redis_util.set_hm(RedisConstant.USER_OBJECT + user_id, user_obj, 1800)
-
     except Exception as ex :
         logging.exception("[COMMON_UTIL][Exception in update_user_details_in_redis] {} ".format(ex))
 
@@ -50,10 +35,10 @@ async def get_user_details(user_id:str, db: Session = Depends(get_db)):
         user_details = await redis_util.get_hm(RedisConstant.USER_OBJECT + user_id)
         if not user_details :
             user_details = crud.get_user_by_user_id(db,user_id)
-        return user_details
-
+        return user_details 
     except Exception as ex :
         logging.exception("[COMMON_UTIL][Exception in get_user_details] {} ".format(ex))
+        
 
 async def delete_user_details_from_redis(user_id:str):
     redis_util.delete_from_redis(RedisConstant.USER_OBJECT + user_id)

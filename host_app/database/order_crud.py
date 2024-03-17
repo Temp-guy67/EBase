@@ -51,9 +51,12 @@ async def get_all_order_id_by_user(db:Session, user_id: str, org: Optional[str] 
 
 async def get_order_by_order_id(db: Session, user_id : str, order_id: str, org: Optional[str] = None):
     try:
-        order_obj =  db.query(Orders).filter(Orders.order_id == order_id, Orders.owner_id== user_id).first()
-        if order_obj :
-            return order_obj.to_dict()
+        if not org : 
+            order_obj = db.query(Orders).filter(Orders.order_id == order_id, Orders.owner_id== user_id).first()
+        else:
+            order_obj = db.query(Orders).filter(Orders.order_id == order_id, Orders.service_org== org).first()
+            
+        return order_obj.to_dict() if order_obj else {"message" : f"No order found on this Order_id {order_id}"}
         
     except Exception as ex :
         logging.exception("[ORDER_CRUD][Exception in get_order_by_order_id] {} ".format(ex))

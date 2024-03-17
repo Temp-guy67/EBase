@@ -5,8 +5,6 @@ async def connect_redis():
     global redis_client
     
     # for AWS redis
-
-    
     redis_client = redis.Redis(
     host='redis-14958.c212.ap-south-1-1.ec2.cloud.redislabs.com',
     port=14958,
@@ -15,14 +13,12 @@ async def connect_redis():
     # for aws put http://port
     # for local redis
     # redis_client = redis.Redis(host="localhost", port="6379", decode_responses=True)
-    
     logging.info("Redis Inititated for this session Successfully {} ".format(redis_client))
 
 # Convert the Redis Hash back to a Python dictionary
 # python_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in stored_dict.items()}
 
 # To set in Millis use `pexpire`
-
 # In redis cloud they convert the byte to string and provides, but in out redis , they dont
 
 def flush_all():
@@ -36,19 +32,16 @@ def delete_from_redis(key:str):
         logging.exception("[REDIS_UTIL][Exception in delete_from_redis] {} ".format(ex))
 
 
-
 async def is_exists(key : str):
     try:
-        res =  redis_client.exists(key)
+        res = redis_client.exists(key)
         return True if res else False
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in is_exists] {} ".format(ex))
 
 
-
 def set_hm(key:str, val:dict, ttl_in_sec: int = 3600):
     try:
-        logging.info("[REDIS_UTIL][Data received to set in redis][Key]{}[Val]{}".format(key,val))
         if key and val :
             json_string = json.dumps(val)
             set_str(key, json_string, ttl_in_sec)
@@ -66,7 +59,6 @@ async def get_hm(key:str):
         logging.exception("[REDIS_UTIL][Exception in get_hm] {} ".format(ex))
 
 
-
 # String only
 def set_str(key: str, val:str, ttl_in_sec:int = 3600):
     try:
@@ -78,13 +70,11 @@ def set_str(key: str, val:str, ttl_in_sec:int = 3600):
 
 async def get_str(key: str):
     try:
-        logging.info(f" [RedisUtil] [Data Received] {key} ")
         byte_data = redis_client.get(key)
         return byte_data
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in get_str] {} ".format(ex))
     
-
 
 # Set culture
 def add_to_set(set_name:str, val:list, ttl_in_sec: int = 1800):
@@ -119,13 +109,10 @@ async def remove_from_set(set_name:str, item:str):
         logging.exception("[REDIS_UTIL][Exception in remove_from_set] {} ".format(ex))
 
 
-
-# hget 
-        
+# hget     
 def set_hset(key:str, field : str, val:str):
     try:
         redis_client.hset(key, field, val)
-
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in set_hget] {} ".format(ex))
     
@@ -134,7 +121,6 @@ async def get_hget(key:str, field : str):
     try:
         res = redis_client.hget(key, field)
         return res
-
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in get_hget] {} ".format(ex))
 
@@ -143,6 +129,5 @@ async def get_hgetall(key:str):
     try:
         all_data = redis_client.hgetall(key)
         return all_data
-    
     except Exception as ex :
         logging.exception("[REDIS_UTIL][Exception in get_hgetall] {} ".format(ex))

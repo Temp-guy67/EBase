@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from host_app.common import util
 from typing import Optional
 from sqlalchemy import or_
-
 from host_app.mail_manager.config import send_email_to_client
 
 
@@ -17,21 +16,27 @@ def get_user_by_user_id(db: Session, user_id: str, is_sup : Optional[bool] = Non
         res = None
         if is_sup :
             res = db.query(Account).filter(Account.user_id == user_id).first()
-            
         elif org :
             res = db.query(Account).filter(Account.user_id == user_id, Account.service_org == org, Account.account_state == Account.AccountState.ACTIVE).first()
         else :
-            res = db.query(Account).filter(Account.user_id == user_id).first()
+            res = db.query(Account).filter(Account.user_id == user_id, Account.account_state == Account.AccountState.ACTIVE).first()
             
-        return res.to_dict() if res else None
+        return res.to_dict() if res else res
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_user_id] {} ".format(ex))
 
 
-def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str, is_sup : Optional[bool] = None, org: Optional[str] = None):
     try:
-        db_user = db.query(Account).filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE).first()
-        return db_user.to_dict() if db_user else None
+        res = None
+        if is_sup :
+            res = db.query(Account).filter(Account.email == email).first()
+        elif org :
+            res = db.query(Account).filter(Account.email == email, Account.service_org == org, Account.account_state == Account.AccountState.ACTIVE).first()
+        else :
+            res = db.query(Account).filter(Account.email == email, Account.account_state == Account.AccountState.ACTIVE).first()
+            
+        return res.to_dict() if res else res
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_user_by_email] {} ".format(ex))
 
@@ -99,10 +104,10 @@ async def create_new_user(db: Session, user: UserSignUp, service_org : str):
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        first_time_pass = await create_new_password(db, user_id)
+        first_time_password = await create_new_password(db, user_id)
         
         # mailing
-        user_map = {"username" : username, "email" : user.email, "password" : first_time_pass}
+        user_map = {"username" : username, "email" : user.email, "password" : first_time_password}
         send_email_to_client(1, user_map)
         new_user = db_user.to_dict()
         new_user["message"] = "Your password has been sent to your mail Adderess, Kindly use it for your first login."
@@ -123,8 +128,6 @@ async def create_new_password(db:Session, user_id:str):
         db.commit()
         db.refresh(db_user)
         return salt
-
-
     except Exception as ex :
         logging.exception("[CRUD][Exception in create_new_password] {} ".format(ex))
 
@@ -173,7 +176,6 @@ async def update_account_data(db: Session, user_id: str, updater:str, user_updat
         logging.exception("[CRUD][Exception in update_account_data] {} ".format(ex))
 
 
-
 async def delete_user(db: Session, user_id: str, service_org: Optional[str] = None):
     try:
         if service_org :
@@ -207,11 +209,12 @@ async def get_all_users(db: Session, is_sup: Optional[bool] = None, service_org:
             res = db.query(Account).filter(Account.account_state == Account.AccountState.ACTIVE).all()
 
         res_arr = {}
-        for e in res :
-            dicu = e.to_dict()
-            res_arr[dicu["user_id"]] = dicu
-
-        return res_arr
+        if res :
+            for e in res :
+                dicu = e.to_dict()
+                res_arr[dicu["user_id"]] = dicu
+        else :
+            res_arr = {"message" : "No Users Has been Found"}
     except Exception as ex :
         logging.exception("[CRUD][Exception in get_all_users] {} ".format(ex))
 
@@ -226,9 +229,12 @@ async def get_all_unverified_users(db: Session, is_sup: Optional[bool] = None, o
             res = db.query(Account).filter(Account.is_verified == Account.Verification.NOT_VERIFIED, Account.account_state == Account.AccountState.ACTIVE).all()
 
         res_arr = {}
-        for e in res :
-            dicu = e.to_dict()
-            res_arr[dicu["user_id"]] = dicu
+        if res :
+            for e in res :
+                dicu = e.to_dict()
+                res_arr[dicu["user_id"]] = dicu
+        else :
+            res_arr = {"message" : "All Users are Verified now"}
 
         return res_arr
     except Exception as ex :
