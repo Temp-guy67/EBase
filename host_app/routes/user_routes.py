@@ -69,12 +69,14 @@ async def update_user(user_data : UserUpdate, user: UserInDB = Depends(verificat
         logging.info("Data received for update_user : {} | action user_id : {}".format(user_data, user["user_id"]))
 
         if user["service_org"] == "TT":
-            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.NO_UPDATE_FOR_TEST_ORG_RULE).__repr__()) 
 
         if not user_data:
             return 
         user_id, password = user["user_id"], user_data.password
         password_obj = await crud.get_password_data(db, user_id)
+        
+        
 
         is_password_verified = await verification.verify_password(password, password_obj.hashed_password, password_obj.salt)
 
@@ -121,7 +123,7 @@ async def update_user_password(user_data : UserPasswordChange, user: UserInDB = 
         old_password, new_password = user_data.password, user_data.new_password
 
         if user["service_org"] == "TT":
-            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.NO_UPDATE_FOR_TEST_ORG_RULE).__repr__()) 
 
         if(not old_password or not new_password):
             return JSONResponse(status_code=401, headers=dict(), content=CustomException(detail="Provide both Old and new password").__repr__()) 
@@ -167,7 +169,7 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
 
         # Extra Check
         if user["service_org"] == "TT":
-            return JSONResponse(status_code=401, content=CustomException(detail="I understand your enthusa, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE").__repr__()) 
+            return JSONResponse(status_code=401, content=CustomException(detail=Exceptions.NO_UPDATE_FOR_TEST_ORG_RULE).__repr__()) 
 
         user_id, user_org, password = user["user_id"], user["service_org"], user_data.password
         password_obj = await crud.get_password_data(db, user_id)
@@ -180,7 +182,7 @@ async def delete_user(user_data : UserDelete, user: UserInDB = Depends(verificat
         if type(res) != type(dict()):
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail=Exceptions.OPERATION_FAILED + " | " + res).__repr__())
         
-        await common_util.delete_access_token_in_redis(user_id)
+        # await common_util.delete_access_token_in_redis(user_id)
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
     
         
@@ -212,7 +214,7 @@ async def logout(req: Request, user: UserInDB = Depends(verification.get_current
 
         access_token = await redis_util.get_str(redis_constant.RedisConstant.USER_ACCESS_TOKEN + user_id)
 
-        common_util.update_access_token_in_redis(user_id, access_token, req.client.host, "logout")
+        common_util.update_access_token_map_in_redis(user_id, access_token, req.client.host, "logout")
 
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data={"details" : "Logout Successful"}).to_dict())
 

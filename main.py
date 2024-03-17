@@ -1,6 +1,6 @@
 import logging, prop_file
 from host_app.mail_manager.config import send_email_to_client
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from services import onStartService
 from fastapi.middleware.cors import CORSMiddleware
 from host_app.database.database import Base, engine
@@ -31,8 +31,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods or specify specific methods (e.g., ["GET", "POST"])
     allow_headers=["*"],  # Allow all headers or specify specific headers (e.g., ["Authorization"])
 )
-
-
 Base.metadata.create_all(bind=engine)
 bucket = TokenBucket(capacity=20, refill_rate=15)
 

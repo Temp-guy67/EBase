@@ -200,7 +200,7 @@ async def delete_user(db: Session, user_id: str, service_org: Optional[str] = No
 async def get_all_users(db: Session, is_sup: Optional[bool] = None, service_org: Optional[str] = None, skip: int = 0, limit: int = 100):
     try:
         if is_sup:
-            res = res = db.query(Account).all()
+            res = db.query(Account).all()
         elif service_org :
             res = db.query(Account).filter(Account.service_org == service_org, Account.account_state == Account.AccountState.ACTIVE).all()
         else :

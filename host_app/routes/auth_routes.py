@@ -271,7 +271,7 @@ async def get_all_user_under_org(super_admin_data: UserInDB = Depends(verificati
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Super Admin : {is_super_admin}").__repr__())  
         
         logging.info("Data received for get_all_user_under_org | admin user_id : {}".format(super_admin_data["user_id"]))
-        res = await service_util.get_all_users(db, super_admin_data["service_org"])
+        res = await service_util.get_all_users(db, True, super_admin_data["service_org"])
         if not res:
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="No User found").__repr__())
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())
@@ -291,7 +291,7 @@ async def get_all_unverified_users_under_org(super_admin_data: UserInDB = Depend
             return JSONResponse(status_code=401, content=CustomException(detail=f"Is Super Admin : {is_super_admin}").__repr__())  
         
         logging.info("Data received for get_all_unverified_users_under_org : admin user_id : {}".format(super_admin_data["user_id"]))
-        res = await service_util.get_all_unverified_users(db, super_admin_data["service_org"])
+        res = await service_util.get_all_unverified_users(db, True, super_admin_data["service_org"])
         if not res:
             return JSONResponse(status_code=401,  headers=dict(), content=CustomException(detail="No User found").__repr__())
         return JSONResponse(status_code=200, headers=dict(),content=ResponseObject(data=res).to_dict())

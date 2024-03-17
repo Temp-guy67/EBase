@@ -19,7 +19,7 @@ TAGS_METADATA=[
         "description": "User Level Operations",
         "externalDocs": {
             "description": "User Docs",
-            "url": "https://fastapi.tiangolo.com/",
+            "url": "https://www.notion.so/whosarghya/Users-APIs-72f5027f6fc349b99bcd43d508f360bf",
         },
     },
     {
@@ -27,7 +27,7 @@ TAGS_METADATA=[
         "description": "Public APIs, To create new services, Signups and Logins",
         "externalDocs": {
             "description": "Public Docs",
-            "url": "https://fastapi.tiangolo.com/",
+            "url": "https://www.notion.so/whosarghya/Public-APIs-cca7c67f7caf4e59b3ee5020b59f582c",
         },
     },
     {
@@ -35,7 +35,7 @@ TAGS_METADATA=[
         "description": "User level operations too, for order purpose",
         "externalDocs": {
             "description": "Order Docs",
-            "url": "https://fastapi.tiangolo.com/",
+            "url": "https://www.notion.so/whosarghya/Order-APIs-185d9216396b4f988547f96e2b61f9e2",
         },
     },
     {
@@ -51,7 +51,7 @@ TAGS_METADATA=[
         "description": "For Service/Org User, in words ADMIN",
         "externalDocs": {
             "description": "Admin docs",
-            "url": "https://fastapi.tiangolo.com/",
+            "url": "https://www.notion.so/whosarghya/Admin-APIs-c37d5d51ac9b4179a30ab49df1fccdc9",
         },
     },
 ]
