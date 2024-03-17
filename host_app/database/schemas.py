@@ -37,8 +37,8 @@ class UserUpdate(BaseModel):
     password : str 
     
 class UserPasswordChange(BaseModel):
-    new_role : Union[int, None] = None
     password : str 
+    new_password : str
 
 
 class UserDelete(BaseModel):
