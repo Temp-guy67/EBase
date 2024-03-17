@@ -45,3 +45,4 @@ class Exceptions:
     ORDER_ALREADY_BOUGHT =" YOU HAVE BOUGHT THIS ORDER RIGHT NOW. SAME ORDER CAN NOT BE BOUGHT ON THE SPAN OF 30 MINTS "
     FAILED_TO_CREATE_NEW_ORDER =" FAILED TO CREATE ORDER "
     UNAVAILABLE_ORDER_STATUS =" UNAVAILABLE ORDER STATUS "
+    NO_UPDATE_FOR_TEST_ORG_RULE="I understand your enthusiasm, But as You cant do this action being under TEST_ORG. I encourage you to create a new service and contact super admin to get verified and then test the complete features of EBASE, For more follow thi link : "

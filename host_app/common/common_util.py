@@ -4,49 +4,37 @@ from host_app.common.constants import CommonConstants
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from host_app.caching import redis_util
-from host_app.database.schemas import ServiceObject, UserUpdate
+from host_app.database.schemas import UserUpdate
 from host_app.caching.redis_constant import RedisConstant
 from host_app.database import crud, service_crud
 from host_app.database.database import get_db
 from host_app.common import util
 from host_app.common.exceptions import Exceptions, CustomException
-from host_app.mail_manager.config import send_email_to_client
 from host_app.database.models import SessionUtils
 
 
-#  Emial map { email : {user_id, ip, state}}
+#  Email map { email : {user_id, ip, access_token}}
 
-async def update_email_map_in_redis(user_id:str, email: str, state : int , ip: Optional[str] = None) -> bool:
+async def update_access_token_map_in_redis(user_id:str, email: str, access_token : str , ip: Optional[str] = None) -> bool:
     try :
-        prev_email_map = await redis_util.get_str(RedisConstant.USER_EMAIL_MAP + email)
-        
-        if prev_email_map:
-            prev_data_map = await redis_util.get_hm(prev_email_map)
-            if prev_data_map :
-                if prev_data_map["state"] == SessionUtils.AccessTokenState.VALID:
-                    prev_data_map["state"] = SessionUtils.AccessTokenState.EXPIRED
-                    redis_util.set_hm(prev_email_map, prev_data_map, 1800)
-                
-            
-        data_map = {"user_id" : user_id, "ip" : ip, "state" : state}
+        data_map = {"user_id" : user_id, "ip" : ip, "access_token" : access_token}
         redis_util.set_hm(email, data_map, 1800)
-        redis_util.set_str(RedisConstant.USER_EMAIL_MAP + user_id, email, 1800)
         return True
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in update_email_map_in_redis] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in update_access_token_map_in_redis] {} ".format(ex))
 
 
 async def delete_email_map_in_redis(user_id : str):
     try:
         email = await redis_util.get_str(RedisConstant.USER_ACCESS_TOKEN + user_id)
         if email :
-            await update_email_map_in_redis(user_id, email, SessionUtils.AccessTokenState.EXPIRED)
+            await update_access_token_map_in_redis(user_id, email, SessionUtils.AccessTokenState.EXPIRED)
             # redis_util.delete_from_redis(access_token)
             # redis_util.delete_from_redis(RedisConstant.USER_ACCESS_TOKEN + user_id)
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in delete_email_map_in_redis] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in delete_email_map_in_redis] {} ".format(ex))
 
 
 def update_user_details_in_redis(user_id:str, user_obj: dict):
@@ -54,18 +42,18 @@ def update_user_details_in_redis(user_id:str, user_obj: dict):
         redis_util.set_hm(RedisConstant.USER_OBJECT + user_id, user_obj, 1800)
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in update_user_details_in_redis] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in update_user_details_in_redis] {} ".format(ex))
 
 
-async def get_user_details(user_id, db: Session = Depends(get_db)):
+async def get_user_details(user_id:str, db: Session = Depends(get_db)):
     try :
         user_details = await redis_util.get_hm(RedisConstant.USER_OBJECT + user_id)
         if not user_details :
             user_details = crud.get_user_by_user_id(db,user_id)
-        return user_details if user_details else Exceptions.USER_NOT_FOUND
+        return user_details
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in get_user_details] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in get_user_details] {} ".format(ex))
 
 async def delete_user_details_from_redis(user_id:str):
     redis_util.delete_from_redis(RedisConstant.USER_OBJECT + user_id)
@@ -91,7 +79,7 @@ async def update_password(user:dict, new_password, db: Session):
             return {"user_id" : user_id, "messege":"Password has been Updated Sucessfully"}
 
     except Exception as ex :
-        logging.exception("[common_util][Exception in update_password] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in update_password] {} ".format(ex))
              
 
 # Common update, it will update anything literally except password and return a boolean 
@@ -146,7 +134,7 @@ async def delete_user(user_id:str, user_org:str, db: Session):
         return data
         
     except Exception as ex :
-        logging.exception("[Common_Util][Exception in delete_user] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in delete_user] {} ".format(ex))
 
 
 # Only use it for verification
@@ -170,7 +158,7 @@ async def get_service_details(db: Session, api_key: str):
         return service_obj
     
     except Exception as ex :
-        logging.exception("[Common_Util][Exception in get_service_details] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in get_service_details] {} ".format(ex))
 
 
 async def update_service_object_in_redis(api_key:str, service_obj:dict):
@@ -202,5 +190,5 @@ async def update_map_set(user_data: UserUpdate):
                 
         return user_update_map
     except Exception as ex :
-        logging.exception("[Common_Util][Exception in update_map_set] {} ".format(ex))
+        logging.exception("[COMMON_UTIL][Exception in update_map_set] {} ".format(ex))
 

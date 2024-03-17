@@ -18,7 +18,7 @@ API : EBASE_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFQSS1LZXkiOiJidFRuVlRrUmh
 New Access Token Map :
 Improve code flow
 
-user_mail -> USER_ID
-user_mail -> ACCESS_TOKEN MAP
+
+user_mail -> ACCESS_TOKEN, USER_ID, IP
 USER_ID -> USER_OBJECT_MAP
 

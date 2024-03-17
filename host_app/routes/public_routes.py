@@ -100,13 +100,12 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
     - Response Body :
         **User Object** and 
         **Access Token** Will be valid upto 30 mints. `required` Must add in Header (Just put in authorize box on top right) for further use
-        
     """
     try:
         logging.info("[PUBLIC_ROUTES][Data received for Login] : {}".format(userlogin.model_dump()))
         
         verification_result = await verification.verify_api_key(db, api_key, req, userlogin.email)
-        if not isinstance(verification_result, dict) :
+        if not isinstance(verification_result, dict):
             return JSONResponse(status_code=403, content=verification_result.__repr__())
         
         elif not int(verification_result["is_service_verified"]) :
@@ -137,7 +136,7 @@ async def user_login(userlogin : UserLogin, req: Request, api_key : str = Depend
         )
         user_id = user_obj["user_id"]
 
-        await common_util.update_email_map_in_redis(user_id, user_obj["email"], models.SessionUtils.AccessTokenState.VALID, client_ip)
+        await common_util.update_access_token_map_in_redis(user_id, user_obj["email"], access_token, client_ip)
         common_util.update_user_details_in_redis(user_id, user_obj)
         
         headers = {"access_token": access_token, "token_type": "bearer"}
@@ -176,8 +175,7 @@ async def service_sign_up(service_user: ServiceSignup, req :Request, db: Session
     try:
         logging.info("[PUBLIC_ROUTES][Data received for service_sign_up] : {} ".format(service_user.model_dump()))
         responseObject = ResponseObject()
-        service_email = service_user.registration_mail
-        service_org = service_user.service_org
+        service_email, service_org = service_user.registration_mail, service_user.service_org
         
         org_check = await org_validation_check(service_org)
         if not org_check :

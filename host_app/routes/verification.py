@@ -64,17 +64,12 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
         user_id_ip_details = await redis_util.get_hm(email)
         logging.info("[VERIFICATION][received request for URI : {} | request_data : {} ]".format(req.url.path, user_id_ip_details))
 
-
         if user_id_ip_details:
-            
-            if user_id_ip_details["state"] == SessionUtils.AccessTokenState.EXPIRED:
+            if user_id_ip_details["access_token"] != token:
                 return "Access Token no Longer Valid | Login Again"
             # If from different ip or device check
-            if user_id_ip_details["ip"] != req.client.host:
+            elif user_id_ip_details["ip"] != req.client.host:
                 return Exceptions.TRYING_FROM_DIFFERENT_DEVICE
-            
-            if user_id_ip_details["state"] == SessionUtils.AccessTokenState.EXPIRED:
-                return Exceptions.ACCESS_TOKEN_NOT_VALID
             
             user_data = await common_util.get_user_details(user_id_ip_details["user_id"], db)
             if not user_data :
@@ -83,23 +78,18 @@ async def get_current_user(req: Request, credentials: Annotated[HTTPAuthorizatio
                 return Exceptions.USER_HAS_BEEN_DELETED
             else:
                 return user_data
-                
 
         verification_result = await verify_api_key(db, api_key, req)
-        if type(verification_result) != type(dict()) :
+        if not isinstance(verification_result, dict):
             return verification_result
-        
         elif not int(verification_result["is_service_verified"]) :
             return Exceptions.SERVICE_NOT_VERIFIED
 
-        
-        
         if email is None:
             return Exceptions.FAILED_TO_VALIDATE_CREDENTIALS
         token_data = schemas.TokenData(email=email)
 
         db_user = crud.get_user_by_email(db=db, email=token_data.email)
-        
         if not db_user :
             return Exceptions.USER_NOT_FOUND
             
