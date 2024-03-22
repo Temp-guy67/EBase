@@ -65,3 +65,20 @@ async def generate_secure_random_string():
 
 async def create_otp():
     return random.randint(10000,99999)
+
+
+async def send_failed_response():
+    try:
+        pass
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in create_org] {} ".format(ex))
+
+
+async def send_success_response():
+    try:
+        pass
+
+    except Exception as ex :
+        logging.exception("[PUBLIC_ROUTES][Exception in create_org] {} ".format(ex))
+
